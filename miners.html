@@ -21,7 +21,7 @@
             color: #ffffff;
             min-height: 100vh;
             padding: 20px;
-            padding-bottom: 80px;
+            padding-bottom: 90px;
         }
 
         .container {
@@ -33,40 +33,55 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 123, 255, 0.2);
+            padding: 25px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 25px;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 8px 32px rgba(0, 123, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+            transform: perspective(1000px) rotateX(2deg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header h1 {
             font-size: 2rem;
-            margin-bottom: 10px;
-            color: #0d6efd;
-            text-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #0d6efd 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(13, 110, 253, 0.5);
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .balance-display {
-            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-            padding: 15px 25px;
-            border-radius: 15px;
+            background: linear-gradient(145deg, #0d6efd, #0a58ca);
+            padding: 18px 30px;
+            border-radius: 20px;
             display: inline-block;
             margin-top: 15px;
-            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4),
-                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
-            transform: perspective(1000px) rotateX(5deg);
+            box-shadow: 
+                0 10px 30px rgba(13, 110, 253, 0.5),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2),
+                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
+            transform: perspective(1000px) translateZ(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 1.1rem;
+            font-weight: 600;
         }
 
         .balance-display i {
             color: #ffd700;
-            margin-right: 8px;
+            margin-right: 10px;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
         }
 
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             margin-bottom: 30px;
             flex-wrap: wrap;
         }
@@ -74,198 +89,284 @@
         .tab-btn {
             flex: 1;
             min-width: 150px;
-            padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
+            padding: 18px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
             border: 2px solid rgba(13, 110, 253, 0.3);
-            border-radius: 15px;
+            border-radius: 18px;
             color: #ffffff;
             font-size: 1rem;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            font-weight: 600;
         }
 
         .tab-btn:hover {
-            background: rgba(13, 110, 253, 0.2);
+            background: linear-gradient(145deg, rgba(13, 110, 253, 0.2), rgba(13, 110, 253, 0.1));
             border-color: #0d6efd;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 12px 35px rgba(13, 110, 253, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
-            border-color: #0d6efd;
-            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.6),
-                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #0d6efd, #0a58ca);
+            border-color: #00d4ff;
+            box-shadow: 
+                0 12px 40px rgba(13, 110, 253, 0.7),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2),
+                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
+            transform: translateY(-2px);
         }
 
         /* Miner Cards */
         .miners-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
             margin-bottom: 30px;
         }
 
         .miner-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(13, 110, 253, 0.1) 100%);
-            border-radius: 20px;
-            padding: 25px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(13, 110, 253, 0.05));
+            border-radius: 25px;
+            padding: 30px;
             border: 2px solid rgba(13, 110, 253, 0.3);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
-                        0 0 20px rgba(13, 110, 253, 0.2);
-            transition: all 0.3s;
+            box-shadow: 
+                0 15px 45px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(13, 110, 253, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             transform: perspective(1000px) rotateY(0deg);
+            backdrop-filter: blur(10px);
         }
 
         .miner-card:hover {
-            transform: perspective(1000px) rotateY(5deg) translateY(-10px);
-            box-shadow: 0 15px 40px rgba(13, 110, 253, 0.4),
-                        0 0 30px rgba(13, 110, 253, 0.3);
-            border-color: #0d6efd;
+            transform: perspective(1000px) rotateY(5deg) translateY(-15px) scale(1.03);
+            box-shadow: 
+                0 20px 60px rgba(13, 110, 253, 0.5),
+                0 0 50px rgba(13, 110, 253, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border-color: #00d4ff;
         }
 
         .miner-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             background: linear-gradient(135deg, #0d6efd 0%, #00d4ff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(13, 110, 253, 0.5);
+            filter: drop-shadow(0 0 20px rgba(13, 110, 253, 0.6));
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .miner-card h3 {
-            color: #0d6efd;
+            color: #00d4ff;
             margin-bottom: 15px;
-            font-size: 1.4rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
         }
 
         .miner-stats {
-            margin: 15px 0;
+            margin: 20px 0;
         }
 
         .stat-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.95rem;
         }
 
         .stat-label {
-            color: #a0a0a0;
+            color: #a8b3cf;
+            font-weight: 500;
         }
 
         .stat-value {
             color: #ffffff;
-            font-weight: bold;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
         }
 
         .stat-value.highlight {
-            color: #0d6efd;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Currency Formatting */
+        .currency {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
         }
 
         /* Buttons */
         .btn {
             width: 100%;
-            padding: 15px;
+            padding: 18px;
             border: none;
-            border-radius: 12px;
+            border-radius: 15px;
             font-size: 1.1rem;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 20px;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            background: linear-gradient(145deg, #0d6efd, #0a58ca);
             color: #ffffff;
-            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4),
-                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 
+                0 10px 30px rgba(13, 110, 253, 0.5),
+                inset 0 2px 5px rgba(255, 255, 255, 0.2),
+                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(13, 110, 253, 0.6);
+            background: linear-gradient(145deg, #0a58ca, #084298);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 15px 45px rgba(13, 110, 253, 0.7),
+                inset 0 2px 5px rgba(255, 255, 255, 0.3);
         }
 
         .btn-primary:active {
-            transform: translateY(0px);
+            transform: translateY(-1px) scale(0.98);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+            background: linear-gradient(145deg, #00d4ff, #0088ff);
             color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-success:hover {
-            background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%);
-            transform: translateY(-2px);
+            background: linear-gradient(145deg, #0088ff, #0066cc);
+            transform: translateY(-3px);
         }
 
         .btn:disabled {
-            background: #333333;
+            background: linear-gradient(145deg, #333333, #222222);
             cursor: not-allowed;
-            opacity: 0.5;
+            opacity: 0.6;
+            box-shadow: none;
         }
 
         /* Active Miners */
         .active-miner-card {
-            background: linear-gradient(135deg, rgba(13, 110, 253, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+            background: linear-gradient(145deg, rgba(13, 110, 253, 0.15), rgba(0, 212, 255, 0.08));
             border: 2px solid #0d6efd;
+            box-shadow: 
+                0 15px 50px rgba(13, 110, 253, 0.4),
+                0 0 40px rgba(13, 110, 253, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
         .timer {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
-            margin: 15px 0;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #0d6efd;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+            margin: 20px 0;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00d4ff;
+            box-shadow: 
+                inset 0 3px 15px rgba(0, 0, 0, 0.6),
+                0 5px 20px rgba(0, 212, 255, 0.3);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
         }
 
         .progress-bar {
             width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            height: 14px;
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.05));
+            border-radius: 12px;
             overflow: hidden;
-            margin: 15px 0;
+            margin: 20px 0;
+            box-shadow: 
+                inset 0 2px 8px rgba(0, 0, 0, 0.6),
+                0 2px 5px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #0d6efd 0%, #00d4ff 100%);
             transition: width 1s linear;
-            box-shadow: 0 0 10px rgba(13, 110, 253, 0.8);
+            box-shadow: 
+                0 0 20px rgba(0, 212, 255, 0.9),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .earnings-display {
-            background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
-            padding: 12px;
-            border-radius: 10px;
+            background: linear-gradient(145deg, #00d4ff, #0088ff);
+            padding: 15px;
+            border-radius: 12px;
             text-align: center;
-            font-weight: bold;
-            margin: 10px 0;
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+            font-weight: 700;
+            margin: 15px 0;
+            box-shadow: 
+                0 8px 25px rgba(0, 212, 255, 0.5),
+                inset 0 2px 5px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 8px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 1.1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         /* Loading & Messages */
         .loading {
             text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            color: #0d6efd;
+            padding: 60px;
+            font-size: 1.3rem;
+            color: #00d4ff;
+            font-weight: 600;
         }
 
         .loading i {
             animation: spin 1s linear infinite;
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 20px;
         }
 
         @keyframes spin {
@@ -274,28 +375,33 @@
         }
 
         .message {
-            padding: 15px;
-            border-radius: 12px;
-            margin: 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
             text-align: center;
-            animation: slideIn 0.5s;
+            animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 600;
+            font-size: 1.05rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
         }
 
         .message.success {
-            background: rgba(0, 212, 255, 0.2);
+            background: linear-gradient(145deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.15));
             border: 2px solid #00d4ff;
             color: #00d4ff;
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
         }
 
         .message.error {
-            background: rgba(220, 53, 69, 0.2);
+            background: linear-gradient(145deg, rgba(220, 53, 69, 0.25), rgba(220, 53, 69, 0.15));
             border: 2px solid #dc3545;
             color: #ff6b6b;
+            box-shadow: 0 8px 30px rgba(220, 53, 69, 0.4);
         }
 
         @keyframes slideIn {
             from {
-                transform: translateY(-20px);
+                transform: translateY(-30px);
                 opacity: 0;
             }
             to {
@@ -306,14 +412,85 @@
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: #a0a0a0;
+            padding: 80px 20px;
+            color: #6c757d;
         }
 
         .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            opacity: 0.3;
+            font-size: 5rem;
+            margin-bottom: 25px;
+            opacity: 0.2;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(145deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 46, 0.95));
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 
+                0 -5px 30px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(13, 110, 253, 0.3);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #8899aa;
+            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 12px;
+            min-width: 70px;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            transition: all 0.3s;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-item:hover {
+            color: #0d6efd;
+            transform: translateY(-3px);
+        }
+
+        .nav-item:hover i {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 10px rgba(13, 110, 253, 0.8));
+        }
+
+        .nav-item.active {
+            color: #00d4ff;
+            background: linear-gradient(145deg, rgba(13, 110, 253, 0.2), rgba(0, 212, 255, 0.1));
+            box-shadow: 
+                0 5px 20px rgba(13, 110, 253, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-item.active i {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
         }
 
         /* Responsive */
@@ -323,11 +500,28 @@
             }
             
             .header h1 {
-                font-size: 1.5rem;
+                font-size: 1.6rem;
+            }
+
+            .balance-display {
+                font-size: 1rem;
+                padding: 15px 25px;
             }
             
             .tabs {
                 flex-direction: column;
+            }
+
+            .timer {
+                font-size: 1.5rem;
+            }
+
+            .nav-item span {
+                font-size: 0.7rem;
+            }
+
+            .nav-item i {
+                font-size: 1.3rem;
             }
         }
     </style>
@@ -340,7 +534,7 @@
             <div class="balance-display">
                 <i class="fas fa-wallet"></i>
                 <span>Balance: </span>
-                <span id="userBalance">0.00000000</span>
+                <span id="userBalance" class="currency">0.00000000</span>
                 <span> USDT</span>
             </div>
         </div>
@@ -361,17 +555,43 @@
         <!-- Available Miners Section -->
         <div id="availableMiners" class="miners-grid">
             <div class="loading">
-                <i class="fas fa-spinner"></i> Loading miners...
+                <i class="fas fa-spinner"></i>
+                <div>Loading miners...</div>
             </div>
         </div>
 
         <!-- Active Miners Section -->
         <div id="activeMiners" style="display: none;">
             <div class="loading">
-                <i class="fas fa-spinner"></i> Loading active miners...
+                <i class="fas fa-spinner"></i>
+                <div>Loading active miners...</div>
             </div>
         </div>
     </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="miners.html" class="nav-item active">
+            <i class="fas fa-server"></i>
+            <span>Miners</span>
+        </a>
+        <a href="tasks.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="invite.html" class="nav-item">
+            <i class="fas fa-user-plus"></i>
+            <span>Invite</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
 
     <script>
         // ============================================
@@ -387,6 +607,30 @@
 
         let currentUser = null;
         let activeMinersInterval = null;
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function formatCurrency(amount, decimals = 8) {
+            return parseFloat(amount).toFixed(decimals);
+        }
+
+        function formatTime(ms) {
+            if (ms <= 0) return 'Completed!';
+
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+            if (days > 0) {
+                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
+            } else if (hours > 0) {
+                return `$${hours}h$$ {minutes}m ${seconds}s`;
+            } else {
+                return `$${minutes}m$$ {seconds}s`;
+            }
+        }
 
         // ============================================
         // MINER TEMPLATES
@@ -483,7 +727,7 @@
         function updateBalanceDisplay() {
             if (currentUser) {
                 document.getElementById('userBalance').textContent = 
-                    parseFloat(currentUser.balance).toFixed(8);
+                    formatCurrency(currentUser.balance, 8);
             }
         }
 
@@ -528,16 +772,16 @@
                         <i class="fas ${miner.icon}"></i>
                     </div>
                     <h3>${miner.name}</h3>
-                    <p style="color: #a0a0a0; margin-bottom: 15px;">${miner.description}</p>
+                    <p style="color: #a8b3cf; margin-bottom: 15px;">${miner.description}</p>
                     
                     <div class="miner-stats">
                         <div class="stat-row">
                             <span class="stat-label">Cost:</span>
-                            <span class="stat-value highlight">$${miner.cost}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">$${formatCurrency(miner.cost, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Earnings Rate:</span>
-                            <span class="stat-value">$${miner.earnings_rate}$$ {miner.crypto}/hour</span>
+                            <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Duration:</span>
@@ -545,11 +789,11 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Total Earnings:</span>
-                            <span class="stat-value highlight">$${totalEarnings.toFixed(2)}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Profit:</span>
-                            <span class="stat-value" style="color: #00d4ff;">$${profit.toFixed(2)}$$ {miner.crypto}</span>
+                            <span class="stat-value currency" style="color: #00d4ff;">$${formatCurrency(profit, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">ROI:</span>
@@ -579,12 +823,10 @@
                 return;
             }
 
-            const confirmed = confirm(`Purchase $${miner.name} for$$ {miner.cost} ${miner.crypto}?`);
+            const confirmed = confirm(`Purchase $${miner.name} for$$ {formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
             if (!confirmed) return;
 
             try {
-                tg.MainButton.showProgress();
-
                 const startTime = new Date();
                 const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
 
@@ -633,20 +875,17 @@
                 // Send Telegram notification
                 await sendTelegramMessage(
                     currentUser.telegram_id,
-                    `🎉 Miner Activated!\n\n` +
+                    `🎉 <b>Miner Activated!</b>\n\n` +
                     `💎 ${miner.name}\n` +
-                    `⚡ Earnings: $${miner.earnings_rate}$$ {miner.crypto}/hour\n` +
+                    `⚡ Earnings: $${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour\n` +
                     `⏱️ Duration: ${miner.duration_hours} hours\n` +
-                    `💰 Total Earnings: $${(miner.earnings_rate * miner.duration_hours).toFixed(2)}$$ {miner.crypto}\n\n` +
+                    `💰 Total Earnings: $${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)}$$ {miner.crypto}\n\n` +
                     `Mining will complete at: ${endTime.toLocaleString()}`
                 );
-
-                tg.MainButton.hideProgress();
 
             } catch (error) {
                 console.error('Purchase error:', error);
                 showMessage('Purchase failed: ' + error.message, 'error');
-                tg.MainButton.hideProgress();
             }
         }
 
@@ -674,7 +913,7 @@
             } catch (error) {
                 console.error('Error loading active miners:', error);
                 document.getElementById('activeMiners').innerHTML = 
-                    '<div class="message error">Error loading miners</div>';
+                    '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners</div>';
             }
         }
 
@@ -723,7 +962,7 @@
                 <h3>${miner.miner_name}</h3>
                 
                 <div class="earnings-display">
-                    <i class="fas fa-coins"></i> Current Earnings: $${currentEarnings.toFixed(8)}$$ {miner.crypto}
+                    <i class="fas fa-coins"></i> Current Earnings: <span class="currency">${formatCurrency(currentEarnings, 8)}</span> ${miner.crypto}
                 </div>
 
                 <div class="timer" id="timer-${miner.id}">
@@ -737,7 +976,7 @@
                 <div class="miner-stats">
                     <div class="stat-row">
                         <span class="stat-label">Earnings Rate:</span>
-                        <span class="stat-value">$${miner.earnings_rate}$$ {miner.crypto}/hour</span>
+                        <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Duration:</span>
@@ -745,7 +984,7 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Earnings:</span>
-                        <span class="stat-value highlight">$${totalEarnings.toFixed(8)}$$ {miner.crypto}</span>
+                        <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Started:</span>
@@ -813,7 +1052,7 @@
                 const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
                 const earningsDisplay = document.querySelector(`#miner-${minerId} .earnings-display`);
                 if (earningsDisplay) {
-                    earningsDisplay.innerHTML = `<i class="fas fa-coins"></i> Current Earnings: $${currentEarnings.toFixed(8)}$$ {miner.crypto}`;
+                    earningsDisplay.innerHTML = `<i class="fas fa-coins"></i> Current Earnings: <span class="currency">${formatCurrency(currentEarnings, 8)}</span> ${miner.crypto}`;
                 }
 
                 if (remaining === 0 && miner.active) {
@@ -825,24 +1064,7 @@
             }
         }
 
-        function formatTime(ms) {
-            if (ms <= 0) return 'Completed!';
-
-            const seconds = Math.floor((ms / 1000) % 60);
-            const minutes = Math.floor((ms / (1000 * 60)) % 60);
-            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
-            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-
-            if (days > 0) {
-                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
-            } else if (hours > 0) {
-                return `$${hours}h$$ {minutes}m ${seconds}s`;
-            } else {
-                return `$${minutes}m$$ {seconds}s`;
-            }
-        }
-
-                // ============================================
+        // ============================================
         // COMPLETE MINER
         // ============================================
         async function completeMiner(miner) {
@@ -894,7 +1116,7 @@
                 // Reload active miners
                 await loadActiveMiners();
 
-                showMessage(`${miner.miner_name} completed! Earned $${totalEarnings.toFixed(8)}$$ {miner.crypto}`, 'success');
+                showMessage(`${miner.miner_name} completed! Earned $${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}`, 'success');
 
             } catch (error) {
                 console.error('Error completing miner:', error);
@@ -948,9 +1170,9 @@
 ✅ <b>Mining Completed!</b>
 
 💎 <b>Miner:</b> ${miner.miner_name}
-⚡ <b>Earnings Rate:</b> $${miner.earnings_rate}$$ {miner.crypto}/hour
+⚡ <b>Earnings Rate:</b> $${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour
 ⏱️ <b>Duration:</b> ${miner.duration_hours} hours
-💰 <b>Total Earned:</b> $${totalEarnings.toFixed(8)}$$ {miner.crypto}
+💰 <b>Total Earned:</b> $${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}
 
 Your earnings have been added to your balance!
             `;
@@ -1068,14 +1290,6 @@ Your earnings have been added to your balance!
         });
 
         // ============================================
-        // HANDLE TELEGRAM BACK BUTTON
-        // ============================================
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => {
-            window.location.href = 'index.html';
-        });
-
-        // ============================================
         // HANDLE VISIBILITY CHANGE
         // ============================================
         document.addEventListener('visibilitychange', () => {
@@ -1092,13 +1306,9 @@ Your earnings have been added to your balance!
         });
 
         // ============================================
-        // TELEGRAM MAIN BUTTON CONFIGURATION
+        // TELEGRAM WEB APP READY
         // ============================================
-        tg.MainButton.setText('Back to Dashboard');
-        tg.MainButton.onClick(() => {
-            window.location.href = 'index.html';
-        });
-        tg.MainButton.show();
+        tg.ready();
 
     </script>
 </body>
