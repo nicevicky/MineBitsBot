@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mining Machines - Crypto Miner Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f3460 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 123, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #0d6efd;
+            text-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
+        }
+
+        .balance-display {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            padding: 15px 25px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-top: 15px;
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4),
+                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
+            transform: perspective(1000px) rotateX(5deg);
+        }
+
+        .balance-display i {
+            color: #ffd700;
+            margin-right: 8px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(13, 110, 253, 0.3);
+            border-radius: 15px;
+            color: #ffffff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-btn:hover {
+            background: rgba(13, 110, 253, 0.2);
+            border-color: #0d6efd;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.4);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border-color: #0d6efd;
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.6),
+                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Miner Cards */
+        .miners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .miner-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(13, 110, 253, 0.1) 100%);
+            border-radius: 20px;
+            padding: 25px;
+            border: 2px solid rgba(13, 110, 253, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+                        0 0 20px rgba(13, 110, 253, 0.2);
+            transition: all 0.3s;
+            transform: perspective(1000px) rotateY(0deg);
+        }
+
+        .miner-card:hover {
+            transform: perspective(1000px) rotateY(5deg) translateY(-10px);
+            box-shadow: 0 15px 40px rgba(13, 110, 253, 0.4),
+                        0 0 30px rgba(13, 110, 253, 0.3);
+            border-color: #0d6efd;
+        }
+
+        .miner-icon {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #0d6efd 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(13, 110, 253, 0.5);
+        }
+
+        .miner-card h3 {
+            color: #0d6efd;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .miner-stats {
+            margin: 15px 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+        }
+
+        .stat-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .stat-value.highlight {
+            color: #0d6efd;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(13, 110, 253, 0.4),
+                        inset 0 -3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(13, 110, 253, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+            color: #ffffff;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #0088ff 0%, #0066cc 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #333333;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Active Miners */
+        .active-miner-card {
+            background: linear-gradient(135deg, rgba(13, 110, 253, 0.2) 0%, rgba(0, 212, 255, 0.1) 100%);
+            border: 2px solid #0d6efd;
+        }
+
+        .timer {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d6efd 0%, #00d4ff 100%);
+            transition: width 1s linear;
+            box-shadow: 0 0 10px rgba(13, 110, 253, 0.8);
+        }
+
+        .earnings-display {
+            background: linear-gradient(135deg, #00d4ff 0%, #0088ff 100%);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+        }
+
+        /* Loading & Messages */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #0d6efd;
+        }
+
+        .loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: center;
+            animation: slideIn 0.5s;
+        }
+
+        .message.success {
+            background: rgba(0, 212, 255, 0.2);
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+        }
+
+        .message.error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 2px solid #dc3545;
+            color: #ff6b6b;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0a0a0;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .miners-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-server"></i> Mining Machines</h1>
+            <div class="balance-display">
+                <i class="fas fa-wallet"></i>
+                <span>Balance: </span>
+                <span id="userBalance">0.00000000</span>
+                <span> USDT</span>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('available')">
+                <i class="fas fa-shopping-cart"></i> Available Miners
+            </button>
+            <button class="tab-btn" onclick="switchTab('active')">
+                <i class="fas fa-cogs"></i> My Active Miners
+            </button>
+        </div>
+
+        <!-- Message Display -->
+        <div id="messageContainer"></div>
+
+        <!-- Available Miners Section -->
+        <div id="availableMiners" class="miners-grid">
+            <div class="loading">
+                <i class="fas fa-spinner"></i> Loading miners...
+            </div>
+        </div>
+
+        <!-- Active Miners Section -->
+        <div id="activeMiners" style="display: none;">
+            <div class="loading">
+                <i class="fas fa-spinner"></i> Loading active miners...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const BOT_TOKEN = 'YOUR_BOT_TOKEN';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentUser = null;
+        let activeMinersInterval = null;
+
+        // ============================================
+        // MINER TEMPLATES
+        // ============================================
+        const AVAILABLE_MINERS = [
+            {
+                name: 'Nano Miner',
+                crypto: 'USDT',
+                cost: 10,
+                earnings_rate: 0.5,
+                duration_hours: 24,
+                icon: 'fa-microchip',
+                description: 'Perfect for beginners'
+            },
+            {
+                name: 'Basic Miner',
+                crypto: 'USDT',
+                cost: 50,
+                earnings_rate: 3,
+                duration_hours: 48,
+                icon: 'fa-server',
+                description: 'Steady earnings'
+            },
+            {
+                name: 'Pro Miner',
+                crypto: 'USDT',
+                cost: 150,
+                earnings_rate: 10,
+                duration_hours: 72,
+                icon: 'fa-hdd',
+                description: 'High performance'
+            },
+            {
+                name: 'Elite Miner',
+                crypto: 'USDT',
+                cost: 500,
+                earnings_rate: 40,
+                duration_hours: 168,
+                icon: 'fa-database',
+                description: 'Professional grade'
+            },
+            {
+                name: 'Mega Miner',
+                crypto: 'USDT',
+                cost: 1000,
+                earnings_rate: 90,
+                duration_hours: 336,
+                icon: 'fa-cloud',
+                description: 'Maximum power'
+            },
+            {
+                name: 'Ultimate Miner',
+                crypto: 'USDT',
+                cost: 5000,
+                earnings_rate: 500,
+                duration_hours: 720,
+                icon: 'fa-rocket',
+                description: 'Ultimate mining power'
+            }
+        ];
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initUser();
+            displayAvailableMiners();
+            loadActiveMiners();
+        });
+
+        async function initUser() {
+            const user = tg.initDataUnsafe?.user;
+            if (!user) {
+                showMessage('Please open this page through Telegram', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', user.id)
+                    .single();
+
+                if (error) throw error;
+                currentUser = data;
+                updateBalanceDisplay();
+            } catch (error) {
+                console.error('Error loading user:', error);
+                showMessage('Error loading user data', 'error');
+            }
+        }
+
+        function updateBalanceDisplay() {
+            if (currentUser) {
+                document.getElementById('userBalance').textContent = 
+                    parseFloat(currentUser.balance).toFixed(8);
+            }
+        }
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        function switchTab(tab) {
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+
+            if (tab === 'available') {
+                document.getElementById('availableMiners').style.display = 'grid';
+                document.getElementById('activeMiners').style.display = 'none';
+                if (activeMinersInterval) {
+                    clearInterval(activeMinersInterval);
+                }
+            } else {
+                document.getElementById('availableMiners').style.display = 'none';
+                document.getElementById('activeMiners').style.display = 'block';
+                loadActiveMiners();
+                startActiveMinersUpdate();
+            }
+        }
+
+        // ============================================
+        // DISPLAY AVAILABLE MINERS
+        // ============================================
+        function displayAvailableMiners() {
+            const container = document.getElementById('availableMiners');
+            container.innerHTML = '';
+
+            AVAILABLE_MINERS.forEach(miner => {
+                const totalEarnings = miner.earnings_rate * miner.duration_hours;
+                const profit = totalEarnings - miner.cost;
+                const roi = ((profit / miner.cost) * 100).toFixed(2);
+
+                const card = document.createElement('div');
+                card.className = 'miner-card';
+                card.innerHTML = `
+                    <div class="miner-icon">
+                        <i class="fas ${miner.icon}"></i>
+                    </div>
+                    <h3>${miner.name}</h3>
+                    <p style="color: #a0a0a0; margin-bottom: 15px;">${miner.description}</p>
+                    
+                    <div class="miner-stats">
+                        <div class="stat-row">
+                            <span class="stat-label">Cost:</span>
+                            <span class="stat-value highlight">$${miner.cost}$$ {miner.crypto}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Earnings Rate:</span>
+                            <span class="stat-value">$${miner.earnings_rate}$$ {miner.crypto}/hour</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Duration:</span>
+                            <span class="stat-value">${miner.duration_hours} hours</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Total Earnings:</span>
+                            <span class="stat-value highlight">$${totalEarnings.toFixed(2)}$$ {miner.crypto}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Profit:</span>
+                            <span class="stat-value" style="color: #00d4ff;">$${profit.toFixed(2)}$$ {miner.crypto}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">ROI:</span>
+                            <span class="stat-value" style="color: #00d4ff;">${roi}%</span>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick='purchaseMiner(${JSON.stringify(miner)})'>
+                        <i class="fas fa-shopping-cart"></i> Purchase Miner
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ============================================
+        // PURCHASE MINER
+        // ============================================
+        async function purchaseMiner(miner) {
+            if (!currentUser) {
+                showMessage('User not loaded', 'error');
+                return;
+            }
+
+            if (parseFloat(currentUser.balance) < miner.cost) {
+                showMessage('Insufficient balance!', 'error');
+                return;
+            }
+
+            const confirmed = confirm(`Purchase $${miner.name} for$$ {miner.cost} ${miner.crypto}?`);
+            if (!confirmed) return;
+
+            try {
+                tg.MainButton.showProgress();
+
+                const startTime = new Date();
+                const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
+
+                // Insert miner
+                const { data: minerData, error: minerError } = await supabase
+                    .from('miners')
+                    .insert({
+                        user_id: currentUser.telegram_id,
+                        miner_name: miner.name,
+                        crypto: miner.crypto,
+                        cost: miner.cost,
+                        earnings_rate: miner.earnings_rate,
+                        duration_hours: miner.duration_hours,
+                        start_time: startTime.toISOString(),
+                        end_time: endTime.toISOString(),
+                        active: true
+                    })
+                    .select()
+                    .single();
+
+                if (minerError) throw minerError;
+
+                // Update user balance
+                const newBalance = parseFloat(currentUser.balance) - miner.cost;
+                const { error: balanceError } = await supabase
+                    .from('users')
+                    .update({ balance: newBalance })
+                    .eq('telegram_id', currentUser.telegram_id);
+
+                if (balanceError) throw balanceError;
+
+                // Record transaction
+                await supabase.from('transactions').insert({
+                    user_id: currentUser.telegram_id,
+                    type: 'purchase',
+                    amount: -miner.cost,
+                    description: `Purchased ${miner.name}`,
+                    reference_id: minerData.id
+                });
+
+                currentUser.balance = newBalance;
+                updateBalanceDisplay();
+
+                showMessage(`${miner.name} purchased successfully! Mining started.`, 'success');
+                
+                // Send Telegram notification
+                await sendTelegramMessage(
+                    currentUser.telegram_id,
+                    `🎉 Miner Activated!\n\n` +
+                    `💎 ${miner.name}\n` +
+                    `⚡ Earnings: $${miner.earnings_rate}$$ {miner.crypto}/hour\n` +
+                    `⏱️ Duration: ${miner.duration_hours} hours\n` +
+                    `💰 Total Earnings: $${(miner.earnings_rate * miner.duration_hours).toFixed(2)}$$ {miner.crypto}\n\n` +
+                    `Mining will complete at: ${endTime.toLocaleString()}`
+                );
+
+                tg.MainButton.hideProgress();
+
+            } catch (error) {
+                console.error('Purchase error:', error);
+                showMessage('Purchase failed: ' + error.message, 'error');
+                tg.MainButton.hideProgress();
+            }
+        }
+
+        // ============================================
+        // LOAD ACTIVE MINERS
+        // ============================================
+        async function loadActiveMiners() {
+            if (!currentUser) return;
+
+            try {
+                const { data: miners, error } = await supabase
+                    .from('miners')
+                    .select('*')
+                    .eq('user_id', currentUser.telegram_id)
+                    .eq('active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayActiveMiners(miners);
+                
+                // Check for expired miners
+                await checkExpiredMiners(miners);
+
+            } catch (error) {
+                console.error('Error loading active miners:', error);
+                document.getElementById('activeMiners').innerHTML = 
+                    '<div class="message error">Error loading miners</div>';
+            }
+        }
+
+        function displayActiveMiners(miners) {
+            const container = document.getElementById('activeMiners');
+            
+            if (!miners || miners.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-server"></i>
+                        <h3>No Active Miners</h3>
+                        <p>Purchase a miner to start earning!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            miners.forEach(miner => {
+                const card = createActiveMinerCard(miner);
+                container.appendChild(card);
+            });
+        }
+
+        function createActiveMinerCard(miner) {
+            const card = document.createElement('div');
+            card.className = 'miner-card active-miner-card';
+            card.id = `miner-${miner.id}`;
+
+            const now = new Date();
+            const endTime = new Date(miner.end_time);
+            const startTime = new Date(miner.start_time);
+            const totalDuration = endTime - startTime;
+            const elapsed = now - startTime;
+            const remaining = Math.max(0, endTime - now);
+            const progress = Math.min(100, (elapsed / totalDuration) * 100);
+
+            const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
+            const totalEarnings = miner.duration_hours * miner.earnings_rate;
+
+            card.innerHTML = `
+                <div class="miner-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <h3>${miner.miner_name}</h3>
+                
+                <div class="earnings-display">
+                    <i class="fas fa-coins"></i> Current Earnings: $${currentEarnings.toFixed(8)}$$ {miner.crypto}
+                </div>
+
+                <div class="timer" id="timer-${miner.id}">
+                    ${formatTime(remaining)}
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-${miner.id}" style="width: ${progress}%"></div>
+                </div>
+
+                <div class="miner-stats">
+                    <div class="stat-row">
+                        <span class="stat-label">Earnings Rate:</span>
+                        <span class="stat-value">$${miner.earnings_rate}$$ {miner.crypto}/hour</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Duration:</span>
+                        <span class="stat-value">${miner.duration_hours} hours</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total Earnings:</span>
+                        <span class="stat-value highlight">$${totalEarnings.toFixed(8)}$$ {miner.crypto}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Started:</span>
+                        <span class="stat-value">${new Date(miner.start_time).toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" disabled>
+                    <i class="fas fa-cog fa-spin"></i> Mining in Progress
+                </button>
+            `;
+
+            return card;
+        }
+
+        // ============================================
+        // TIMER UPDATES
+        // ============================================
+        function startActiveMinersUpdate() {
+            if (activeMinersInterval) {
+                clearInterval(activeMinersInterval);
+            }
+
+            activeMinersInterval = setInterval(async () => {
+                const cards = document.querySelectorAll('.active-miner-card');
+                
+                for (const card of cards) {
+                    const minerId = card.id.replace('miner-', '');
+                    await updateMinerCard(minerId);
+                }
+            }, 1000);
+        }
+
+        async function updateMinerCard(minerId) {
+            try {
+                const { data: miner, error } = await supabase
+                    .from('miners')
+                    .select('*')
+                    .eq('id', minerId)
+                    .single();
+
+                if (error || !miner) return;
+
+                const now = new Date();
+                const endTime = new Date(miner.end_time);
+                const startTime = new Date(miner.start_time);
+                const remaining = Math.max(0, endTime - now);
+
+                const timerElement = document.getElementById(`timer-${minerId}`);
+                const progressElement = document.getElementById(`progress-${minerId}`);
+
+                if (timerElement) {
+                    timerElement.textContent = formatTime(remaining);
+                }
+
+                if (progressElement) {
+                    const totalDuration = endTime - startTime;
+                    const elapsed = now - startTime;
+                    const progress = Math.min(100, (elapsed / totalDuration) * 100);
+                    progressElement.style.width = progress + '%';
+                }
+
+                // Update earnings display
+                const elapsed = now - startTime;
+                const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
+                const earningsDisplay = document.querySelector(`#miner-${minerId} .earnings-display`);
+                if (earningsDisplay) {
+                    earningsDisplay.innerHTML = `<i class="fas fa-coins"></i> Current Earnings: $${currentEarnings.toFixed(8)}$$ {miner.crypto}`;
+                }
+
+                if (remaining === 0 && miner.active) {
+                    await completeMiner(miner);
+                }
+
+            } catch (error) {
+                console.error('Error updating miner card:', error);
+            }
+        }
+
+        function formatTime(ms) {
+            if (ms <= 0) return 'Completed!';
+
+            const seconds = Math.floor((ms / 1000) % 60);
+            const minutes = Math.floor((ms / (1000 * 60)) % 60);
+            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+            if (days > 0) {
+                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
+            } else if (hours > 0) {
+                return `$${hours}h$$ {minutes}m ${seconds}s`;
+            } else {
+                return `$${minutes}m$$ {seconds}s`;
+            }
+        }
+
+                // ============================================
+        // COMPLETE MINER
+        // ============================================
+        async function completeMiner(miner) {
+            try {
+                const totalEarnings = miner.earnings_rate * miner.duration_hours;
+                
+                // Update miner status
+                const { error: minerError } = await supabase
+                    .from('miners')
+                    .update({ 
+                        active: false,
+                        total_earned: totalEarnings,
+                        notified: true
+                    })
+                    .eq('id', miner.id);
+
+                if (minerError) throw minerError;
+
+                // Update user balance
+                const newBalance = parseFloat(currentUser.balance) + totalEarnings;
+                const newTotalEarned = parseFloat(currentUser.total_earned) + totalEarnings;
+
+                const { error: balanceError } = await supabase
+                    .from('users')
+                    .update({ 
+                        balance: newBalance,
+                        total_earned: newTotalEarned
+                    })
+                    .eq('telegram_id', currentUser.telegram_id);
+
+                if (balanceError) throw balanceError;
+
+                // Record transaction
+                await supabase.from('transactions').insert({
+                    user_id: currentUser.telegram_id,
+                    type: 'mining',
+                    amount: totalEarnings,
+                    description: `Mining completed: ${miner.miner_name}`,
+                    reference_id: miner.id
+                });
+
+                currentUser.balance = newBalance;
+                currentUser.total_earned = newTotalEarned;
+                updateBalanceDisplay();
+
+                // Send Telegram notification with Renew button
+                await sendMinerCompletionMessage(miner, totalEarnings);
+
+                // Reload active miners
+                await loadActiveMiners();
+
+                showMessage(`${miner.miner_name} completed! Earned $${totalEarnings.toFixed(8)}$$ {miner.crypto}`, 'success');
+
+            } catch (error) {
+                console.error('Error completing miner:', error);
+            }
+        }
+
+        async function checkExpiredMiners(miners) {
+            const now = new Date();
+            
+            for (const miner of miners) {
+                const endTime = new Date(miner.end_time);
+                if (now >= endTime && miner.active && !miner.notified) {
+                    await completeMiner(miner);
+                }
+            }
+        }
+
+        // ============================================
+        // TELEGRAM BOT INTEGRATION
+        // ============================================
+        async function sendTelegramMessage(chatId, text, replyMarkup = null) {
+            try {
+                const payload = {
+                    chat_id: chatId,
+                    text: text,
+                    parse_mode: 'HTML'
+                };
+
+                if (replyMarkup) {
+                    payload.reply_markup = replyMarkup;
+                }
+
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                return data.ok;
+            } catch (error) {
+                console.error('Error sending Telegram message:', error);
+                return false;
+            }
+        }
+
+        async function sendMinerCompletionMessage(miner, totalEarnings) {
+            const message = `
+✅ <b>Mining Completed!</b>
+
+💎 <b>Miner:</b> ${miner.miner_name}
+⚡ <b>Earnings Rate:</b> $${miner.earnings_rate}$$ {miner.crypto}/hour
+⏱️ <b>Duration:</b> ${miner.duration_hours} hours
+💰 <b>Total Earned:</b> $${totalEarnings.toFixed(8)}$$ {miner.crypto}
+
+Your earnings have been added to your balance!
+            `;
+
+            // Create inline keyboard with Renew button
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        {
+                            text: '🔄 Renew Miner',
+                            callback_data: `renew_miner_$${miner.id}_$$ {miner.miner_name}_${miner.cost}`
+                        }
+                    ],
+                    [
+                        {
+                            text: '🛒 Browse Miners',
+                            web_app: { url: `${window.location.origin}/miners.html` }
+                        }
+                    ],
+                    [
+                        {
+                            text: '💼 View Balance',
+                            web_app: { url: `${window.location.origin}/index.html` }
+                        }
+                    ]
+                ]
+            };
+
+            await sendTelegramMessage(currentUser.telegram_id, message, keyboard);
+        }
+
+        // ============================================
+        // RENEW MINER FUNCTION
+        // ============================================
+        async function renewMiner(minerName, cost) {
+            const minerTemplate = AVAILABLE_MINERS.find(m => m.name === minerName);
+            
+            if (!minerTemplate) {
+                showMessage('Miner template not found', 'error');
+                return;
+            }
+
+            await purchaseMiner(minerTemplate);
+        }
+
+        // Make renewMiner globally accessible for callback handling
+        window.renewMiner = renewMiner;
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showMessage(text, type = 'success') {
+            const container = document.getElementById('messageContainer');
+            const message = document.createElement('div');
+            message.className = `message ${type}`;
+            message.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${text}
+            `;
+            
+            container.innerHTML = '';
+            container.appendChild(message);
+
+            setTimeout(() => {
+                message.remove();
+            }, 5000);
+
+            // Also show Telegram notification
+            if (type === 'success') {
+                tg.showAlert(text);
+            }
+        }
+
+        // ============================================
+        // EARNINGS CALCULATOR
+        // ============================================
+        function calculateCurrentEarnings(miner) {
+            const now = new Date();
+            const startTime = new Date(miner.start_time);
+            const elapsed = now - startTime;
+            const hoursElapsed = elapsed / (1000 * 60 * 60);
+            return hoursElapsed * miner.earnings_rate;
+        }
+
+        // ============================================
+        // AUTO-REFRESH BALANCE
+        // ============================================
+        setInterval(async () => {
+            if (currentUser) {
+                try {
+                    const { data, error } = await supabase
+                        .from('users')
+                        .select('balance, total_earned')
+                        .eq('telegram_id', currentUser.telegram_id)
+                        .single();
+
+                    if (data && !error) {
+                        currentUser.balance = data.balance;
+                        currentUser.total_earned = data.total_earned;
+                        updateBalanceDisplay();
+                    }
+                } catch (error) {
+                    console.error('Error refreshing balance:', error);
+                }
+            }
+        }, 10000); // Refresh every 10 seconds
+
+        // ============================================
+        // CLEANUP ON PAGE UNLOAD
+        // ============================================
+        window.addEventListener('beforeunload', () => {
+            if (activeMinersInterval) {
+                clearInterval(activeMinersInterval);
+            }
+        });
+
+        // ============================================
+        // HANDLE TELEGRAM BACK BUTTON
+        // ============================================
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            window.location.href = 'index.html';
+        });
+
+        // ============================================
+        // HANDLE VISIBILITY CHANGE
+        // ============================================
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Page became visible, refresh data
+                if (currentUser) {
+                    initUser();
+                    const activeTab = document.querySelector('.tab-btn.active');
+                    if (activeTab && activeTab.textContent.includes('Active')) {
+                        loadActiveMiners();
+                    }
+                }
+            }
+        });
+
+        // ============================================
+        // TELEGRAM MAIN BUTTON CONFIGURATION
+        // ============================================
+        tg.MainButton.setText('Back to Dashboard');
+        tg.MainButton.onClick(() => {
+            window.location.href = 'index.html';
+        });
+        tg.MainButton.show();
+
+    </script>
+</body>
+</html>
+
