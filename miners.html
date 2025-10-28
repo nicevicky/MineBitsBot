@@ -2,533 +2,330 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mining Machines - Crypto Miner Bot</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <title>Miners</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0f3460 100%);
-            color: #ffffff;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
             padding-bottom: 90px;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+            word-wrap: break-word;
         }
-
         .container {
-            max-width: 1200px;
+            width: 100%;
+            max-width: 500px;
             margin: 0 auto;
         }
-
-        /* Header */
+        
+        /* Header & Balance */
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding: 25px;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 25px;
-            backdrop-filter: blur(20px);
-            box-shadow: 
-                0 8px 32px rgba(0, 123, 255, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1),
-                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-            transform: perspective(1000px) rotateX(2deg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
         }
-
         .header h1 {
-            font-size: 2rem;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #0d6efd 0%, #00d4ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(13, 110, 253, 0.5);
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-
-        .balance-display {
-            background: linear-gradient(145deg, #0d6efd, #0a58ca);
-            padding: 18px 30px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 15px;
-            box-shadow: 
-                0 10px 30px rgba(13, 110, 253, 0.5),
-                inset 0 2px 5px rgba(255, 255, 255, 0.2),
-                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
-            transform: perspective(1000px) translateZ(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 1.1rem;
+            font-size: 24px;
             font-weight: 600;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
         }
-
-        .balance-display i {
-            color: #ffd700;
+        .header h1 i {
+            color: var(--primary-color);
             margin-right: 10px;
-            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
         }
-
+        .balance-display {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+        .balance-display i {
+            color: var(--yellow);
+            margin-right: 10px;
+        }
+        .balance-display span {
+            color: var(--text-secondary);
+        }
+        .balance-display .currency {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+        
         /* Tabs */
         .tabs {
             display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-
         .tab-btn {
             flex: 1;
-            min-width: 150px;
-            padding: 18px;
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            border: 2px solid rgba(13, 110, 253, 0.3);
-            border-radius: 18px;
-            color: #ffffff;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 
-                0 6px 20px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            font-size: 14px;
             font-weight: 600;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-
-        .tab-btn:hover {
-            background: linear-gradient(145deg, rgba(13, 110, 253, 0.2), rgba(13, 110, 253, 0.1));
-            border-color: #0d6efd;
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 
-                0 12px 35px rgba(13, 110, 253, 0.5),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
         .tab-btn.active {
-            background: linear-gradient(145deg, #0d6efd, #0a58ca);
-            border-color: #00d4ff;
-            box-shadow: 
-                0 12px 40px rgba(13, 110, 253, 0.7),
-                inset 0 2px 5px rgba(255, 255, 255, 0.2),
-                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
-            transform: translateY(-2px);
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border-color: var(--primary-color);
+        }
+        
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        /* Loading & Empty States */
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        .loading i, .empty-state i {
+            font-size: 30px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .loading i {
+            animation: spin 1.5s linear infinite;
+        }
+        .empty-state h3 {
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        /* Miner Cards */
+        /* Miners Grid */
         .miners-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
+            grid-template-columns: 1fr;
+            gap: 15px;
         }
-
+        
+        /* Miner Card */
         .miner-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(13, 110, 253, 0.05));
-            border-radius: 25px;
-            padding: 30px;
-            border: 2px solid rgba(13, 110, 253, 0.3);
-            box-shadow: 
-                0 15px 45px rgba(0, 0, 0, 0.5),
-                0 0 30px rgba(13, 110, 253, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            transform: perspective(1000px) rotateY(0deg);
-            backdrop-filter: blur(10px);
-        }
-
-        .miner-card:hover {
-            transform: perspective(1000px) rotateY(5deg) translateY(-15px) scale(1.03);
-            box-shadow: 
-                0 20px 60px rgba(13, 110, 253, 0.5),
-                0 0 50px rgba(13, 110, 253, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            border-color: #00d4ff;
-        }
-
-        .miner-icon {
-            font-size: 3.5rem;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #0d6efd 0%, #00d4ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(13, 110, 253, 0.6));
-            animation: pulse 2s ease-in-out infinite;
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .miner-icon {
+            font-size: 36px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
         }
-
         .miner-card h3 {
-            color: #00d4ff;
-            margin-bottom: 15px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.4);
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--text-color);
         }
-
         .miner-stats {
+            text-align: left;
             margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-
         .stat-row {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 0.95rem;
+            align-items: center;
+            font-size: 14px;
         }
-
         .stat-label {
-            color: #a8b3cf;
+            color: var(--text-secondary);
+        }
+        .stat-value {
+            color: var(--text-color);
             font-weight: 500;
         }
-
-        .stat-value {
-            color: #ffffff;
-            font-weight: 700;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-        }
-
         .stat-value.highlight {
-            color: #00d4ff;
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            color: var(--yellow);
+            font-weight: 600;
+        }
+        .stat-value .currency {
+            font-weight: 600;
         }
 
-        /* Currency Formatting */
-        .currency {
-            font-family: 'Courier New', monospace;
-            letter-spacing: 0.5px;
+        /* Active Miner Card */
+        .active-miner-card .miner-icon i {
+            color: var(--green);
+            animation: pulse 2s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        .earnings-display {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        .earnings-display .currency {
+            color: var(--green);
+            font-weight: 600;
+        }
+        .timer {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 15px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--bg-color);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
         }
 
         /* Buttons */
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
             border: none;
-            border-radius: 15px;
-            font-size: 1.1rem;
-            font-weight: 700;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin-top: 20px;
-            box-shadow: 
-                0 8px 25px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-
         .btn-primary {
-            background: linear-gradient(145deg, #0d6efd, #0a58ca);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 
-                0 10px 30px rgba(13, 110, 253, 0.5),
-                inset 0 2px 5px rgba(255, 255, 255, 0.2),
-                inset 0 -3px 10px rgba(0, 0, 0, 0.4);
+            background-color: var(--primary-color);
+            color: white;
         }
-
         .btn-primary:hover {
-            background: linear-gradient(145deg, #0a58ca, #084298);
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 
-                0 15px 45px rgba(13, 110, 253, 0.7),
-                inset 0 2px 5px rgba(255, 255, 255, 0.3);
+            background-color: var(--primary-light);
         }
-
-        .btn-primary:active {
-            transform: translateY(-1px) scale(0.98);
-        }
-
         .btn-success {
-            background: linear-gradient(145deg, #00d4ff, #0088ff);
-            color: #ffffff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: var(--green);
+            color: white;
         }
-
-        .btn-success:hover {
-            background: linear-gradient(145deg, #0088ff, #0066cc);
-            transform: translateY(-3px);
-        }
-
-        .btn:disabled {
-            background: linear-gradient(145deg, #333333, #222222);
+        .btn-success:disabled {
+            background-color: #2a5a38;
+            color: #8fbc9b;
             cursor: not-allowed;
-            opacity: 0.6;
-            box-shadow: none;
         }
 
-        /* Active Miners */
-        .active-miner-card {
-            background: linear-gradient(145deg, rgba(13, 110, 253, 0.15), rgba(0, 212, 255, 0.08));
-            border: 2px solid #0d6efd;
-            box-shadow: 
-                0 15px 50px rgba(13, 110, 253, 0.4),
-                0 0 40px rgba(13, 110, 253, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .timer {
-            background: linear-gradient(145deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            margin: 20px 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #00d4ff;
-            box-shadow: 
-                inset 0 3px 15px rgba(0, 0, 0, 0.6),
-                0 5px 20px rgba(0, 212, 255, 0.3);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            font-family: 'Courier New', monospace;
-            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 14px;
-            background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(255, 255, 255, 0.05));
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 20px 0;
-            box-shadow: 
-                inset 0 2px 8px rgba(0, 0, 0, 0.6),
-                0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #0d6efd 0%, #00d4ff 100%);
-            transition: width 1s linear;
-            box-shadow: 
-                0 0 20px rgba(0, 212, 255, 0.9),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .earnings-display {
-            background: linear-gradient(145deg, #00d4ff, #0088ff);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            font-weight: 700;
-            margin: 15px 0;
-            box-shadow: 
-                0 8px 25px rgba(0, 212, 255, 0.5),
-                inset 0 2px 5px rgba(255, 255, 255, 0.3),
-                inset 0 -2px 8px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            font-size: 1.1rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Loading & Messages */
-        .loading {
-            text-align: center;
-            padding: 60px;
-            font-size: 1.3rem;
-            color: #00d4ff;
-            font-weight: 600;
-        }
-
-        .loading i {
-            animation: spin 1s linear infinite;
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .message {
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: center;
-            animation: slideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-weight: 600;
-            font-size: 1.05rem;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-        }
-
-        .message.success {
-            background: linear-gradient(145deg, rgba(0, 212, 255, 0.25), rgba(0, 212, 255, 0.15));
-            border: 2px solid #00d4ff;
-            color: #00d4ff;
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.4);
-        }
-
-        .message.error {
-            background: linear-gradient(145deg, rgba(220, 53, 69, 0.25), rgba(220, 53, 69, 0.15));
-            border: 2px solid #dc3545;
-            color: #ff6b6b;
-            box-shadow: 0 8px 30px rgba(220, 53, 69, 0.4);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateY(-30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-            color: #6c757d;
-        }
-
-        .empty-state i {
-            font-size: 5rem;
-            margin-bottom: 25px;
-            opacity: 0.2;
-        }
-
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-
-        /* Bottom Navigation */
+        /* Bottom Navigation (from your first file) */
         .bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(145deg, rgba(10, 10, 10, 0.95), rgba(26, 26, 46, 0.95));
-            backdrop-filter: blur(20px);
+            width: 100%;
+            background-color: var(--card-color);
             display: flex;
             justify-content: space-around;
-            padding: 12px 0;
-            box-shadow: 
-                0 -5px 30px rgba(0, 0, 0, 0.8),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            border-top: 1px solid rgba(13, 110, 253, 0.3);
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
             z-index: 1000;
         }
-
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
             text-decoration: none;
-            color: #8899aa;
-            transition: all 0.3s;
-            padding: 8px 15px;
-            border-radius: 12px;
-            min-width: 70px;
+            font-size: 10px;
+            flex-grow: 1;
         }
-
         .nav-item i {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-            transition: all 0.3s;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
-
-        .nav-item span {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-item:hover {
-            color: #0d6efd;
-            transform: translateY(-3px);
-        }
-
-        .nav-item:hover i {
-            transform: scale(1.2);
-            filter: drop-shadow(0 0 10px rgba(13, 110, 253, 0.8));
-        }
-
         .nav-item.active {
-            color: #00d4ff;
-            background: linear-gradient(145deg, rgba(13, 110, 253, 0.2), rgba(0, 212, 255, 0.1));
-            box-shadow: 
-                0 5px 20px rgba(13, 110, 253, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        }
-
-        .nav-item.active i {
-            transform: scale(1.1);
-            filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.8));
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .miners-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 1.6rem;
-            }
-
-            .balance-display {
-                font-size: 1rem;
-                padding: 15px 25px;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-
-            .timer {
-                font-size: 1.5rem;
-            }
-
-            .nav-item span {
-                font-size: 0.7rem;
-            }
-
-            .nav-item i {
-                font-size: 1.3rem;
-            }
+            color: var(--primary-color);
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- Header -->
+
         <div class="header">
             <h1><i class="fas fa-server"></i> Mining Machines</h1>
             <div class="balance-display">
@@ -539,7 +336,6 @@
             </div>
         </div>
 
-        <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('available')">
                 <i class="fas fa-shopping-cart"></i> Available Miners
@@ -549,10 +345,8 @@
             </button>
         </div>
 
-        <!-- Message Display -->
         <div id="messageContainer"></div>
 
-        <!-- Available Miners Section -->
         <div id="availableMiners" class="miners-grid">
             <div class="loading">
                 <i class="fas fa-spinner"></i>
@@ -560,16 +354,15 @@
             </div>
         </div>
 
-        <!-- Active Miners Section -->
         <div id="activeMiners" style="display: none;">
             <div class="loading">
                 <i class="fas fa-spinner"></i>
                 <div>Loading active miners...</div>
             </div>
         </div>
+
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <i class="fas fa-home"></i>
@@ -611,24 +404,24 @@
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
+
         function formatCurrency(amount, decimals = 8) {
             return parseFloat(amount).toFixed(decimals);
         }
 
         function formatTime(ms) {
             if (ms <= 0) return 'Completed!';
-
-            const seconds = Math.floor((ms / 1000) % 60);
-            const minutes = Math.floor((ms / (1000 * 60)) % 60);
-            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+            const seconds = Math.floor((ms / 1000) % 60).toString().padStart(2, '0');
+            const minutes = Math.floor((ms / (1000 * 60)) % 60).toString().padStart(2, '0');
+            const hours = Math.floor((ms / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
             const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
             if (days > 0) {
-                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
-            } else if (hours > 0) {
-                return `$${hours}h$$ {minutes}m ${seconds}s`;
+                // FIXED: Removed extra $
+                return `${days}d ${hours}h ${minutes}m ${seconds}s`;
             } else {
-                return `$${minutes}m$$ {seconds}s`;
+                // FIXED: Removed extra $
+                return `${hours}h ${minutes}m ${seconds}s`;
             }
         }
 
@@ -714,7 +507,6 @@
                     .select('*')
                     .eq('telegram_id', user.id)
                     .single();
-
                 if (error) throw error;
                 currentUser = data;
                 updateBalanceDisplay();
@@ -744,6 +536,7 @@
                 document.getElementById('activeMiners').style.display = 'none';
                 if (activeMinersInterval) {
                     clearInterval(activeMinersInterval);
+                    activeMinersInterval = null;
                 }
             } else {
                 document.getElementById('availableMiners').style.display = 'none';
@@ -759,12 +552,10 @@
         function displayAvailableMiners() {
             const container = document.getElementById('availableMiners');
             container.innerHTML = '';
-
             AVAILABLE_MINERS.forEach(miner => {
                 const totalEarnings = miner.earnings_rate * miner.duration_hours;
                 const profit = totalEarnings - miner.cost;
                 const roi = ((profit / miner.cost) * 100).toFixed(2);
-
                 const card = document.createElement('div');
                 card.className = 'miner-card';
                 card.innerHTML = `
@@ -777,11 +568,11 @@
                     <div class="miner-stats">
                         <div class="stat-row">
                             <span class="stat-label">Cost:</span>
-                            <span class="stat-value highlight currency">$${formatCurrency(miner.cost, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">$${formatCurrency(miner.cost, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Earnings Rate:</span>
-                            <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
+                            <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Duration:</span>
@@ -789,18 +580,17 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Total Earnings:</span>
-                            <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Profit:</span>
-                            <span class="stat-value currency" style="color: #00d4ff;">$${formatCurrency(profit, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value currency" style="color: #00d4ff;">$${formatCurrency(profit, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">ROI:</span>
                             <span class="stat-value" style="color: #00d4ff;">${roi}%</span>
                         </div>
                     </div>
-
                     <button class="btn btn-primary" onclick='purchaseMiner(${JSON.stringify(miner)})'>
                         <i class="fas fa-shopping-cart"></i> Purchase Miner
                     </button>
@@ -823,13 +613,14 @@
                 return;
             }
 
-            const confirmed = confirm(`Purchase $${miner.name} for$$ {formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
+            // FIXED: Removed extra $
+            const confirmed = confirm(`Purchase ${miner.name} for ${formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
             if (!confirmed) return;
 
             try {
                 const startTime = new Date();
                 const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
-
+                
                 // Insert miner
                 const { data: minerData, error: minerError } = await supabase
                     .from('miners')
@@ -846,7 +637,6 @@
                     })
                     .select()
                     .single();
-
                 if (minerError) throw minerError;
 
                 // Update user balance
@@ -855,7 +645,6 @@
                     .from('users')
                     .update({ balance: newBalance })
                     .eq('telegram_id', currentUser.telegram_id);
-
                 if (balanceError) throw balanceError;
 
                 // Record transaction
@@ -869,20 +658,19 @@
 
                 currentUser.balance = newBalance;
                 updateBalanceDisplay();
-
                 showMessage(`${miner.name} purchased successfully! Mining started.`, 'success');
                 
                 // Send Telegram notification
+                // FIXED: Removed extra $ signs from earnings and total earnings
                 await sendTelegramMessage(
                     currentUser.telegram_id,
                     `🎉 <b>Miner Activated!</b>\n\n` +
                     `💎 ${miner.name}\n` +
-                    `⚡ Earnings: $${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour\n` +
+                    `⚡ Earnings: $${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
                     `⏱️ Duration: ${miner.duration_hours} hours\n` +
-                    `💰 Total Earnings: $${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)}$$ {miner.crypto}\n\n` +
+                    `💰 Total Earnings: $${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)} ${miner.crypto}\n\n` +
                     `Mining will complete at: ${endTime.toLocaleString()}`
                 );
-
             } catch (error) {
                 console.error('Purchase error:', error);
                 showMessage('Purchase failed: ' + error.message, 'error');
@@ -894,7 +682,6 @@
         // ============================================
         async function loadActiveMiners() {
             if (!currentUser) return;
-
             try {
                 const { data: miners, error } = await supabase
                     .from('miners')
@@ -902,14 +689,12 @@
                     .eq('user_id', currentUser.telegram_id)
                     .eq('active', true)
                     .order('created_at', { ascending: false });
-
                 if (error) throw error;
-
+                
                 displayActiveMiners(miners);
                 
                 // Check for expired miners
                 await checkExpiredMiners(miners);
-
             } catch (error) {
                 console.error('Error loading active miners:', error);
                 document.getElementById('activeMiners').innerHTML = 
@@ -932,7 +717,6 @@
             }
 
             container.innerHTML = '';
-
             miners.forEach(miner => {
                 const card = createActiveMinerCard(miner);
                 container.appendChild(card);
@@ -964,19 +748,19 @@
                 <div class="earnings-display">
                     <i class="fas fa-coins"></i> Current Earnings: <span class="currency">${formatCurrency(currentEarnings, 8)}</span> ${miner.crypto}
                 </div>
-
+                
                 <div class="timer" id="timer-${miner.id}">
                     ${formatTime(remaining)}
                 </div>
-
+                
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-${miner.id}" style="width: ${progress}%"></div>
                 </div>
-
+                
                 <div class="miner-stats">
                     <div class="stat-row">
                         <span class="stat-label">Earnings Rate:</span>
-                        <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
+                        <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Duration:</span>
@@ -984,19 +768,18 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Earnings:</span>
-                        <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}</span>
+                        <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 8)} ${miner.crypto}</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Started:</span>
                         <span class="stat-value">${new Date(miner.start_time).toLocaleString()}</span>
                     </div>
                 </div>
-
+                
                 <button class="btn btn-success" disabled>
                     <i class="fas fa-cog fa-spin"></i> Mining in Progress
                 </button>
             `;
-
             return card;
         }
 
@@ -1007,7 +790,6 @@
             if (activeMinersInterval) {
                 clearInterval(activeMinersInterval);
             }
-
             activeMinersInterval = setInterval(async () => {
                 const cards = document.querySelectorAll('.active-miner-card');
                 
@@ -1025,7 +807,6 @@
                     .select('*')
                     .eq('id', minerId)
                     .single();
-
                 if (error || !miner) return;
 
                 const now = new Date();
@@ -1058,7 +839,6 @@
                 if (remaining === 0 && miner.active) {
                     await completeMiner(miner);
                 }
-
             } catch (error) {
                 console.error('Error updating miner card:', error);
             }
@@ -1080,13 +860,11 @@
                         notified: true
                     })
                     .eq('id', miner.id);
-
                 if (minerError) throw minerError;
 
                 // Update user balance
                 const newBalance = parseFloat(currentUser.balance) + totalEarnings;
                 const newTotalEarned = parseFloat(currentUser.total_earned) + totalEarnings;
-
                 const { error: balanceError } = await supabase
                     .from('users')
                     .update({ 
@@ -1094,7 +872,6 @@
                         total_earned: newTotalEarned
                     })
                     .eq('telegram_id', currentUser.telegram_id);
-
                 if (balanceError) throw balanceError;
 
                 // Record transaction
@@ -1116,9 +893,10 @@
                 // Reload active miners
                 await loadActiveMiners();
 
-                showMessage(`${miner.miner_name} completed! Earned $${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}`, 'success');
-
-            } catch (error) {
+                // FIXED: Removed extra $
+                showMessage(`${miner.miner_name} completed! Earned $${formatCurrency(totalEarnings, 8)} ${miner.crypto}`, 'success');
+            } catch (error)
+            {
                 console.error('Error completing miner:', error);
             }
         }
@@ -1144,7 +922,6 @@
                     text: text,
                     parse_mode: 'HTML'
                 };
-
                 if (replyMarkup) {
                     payload.reply_markup = replyMarkup;
                 }
@@ -1156,7 +933,6 @@
                     },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await response.json();
                 return data.ok;
             } catch (error) {
@@ -1166,24 +942,25 @@
         }
 
         async function sendMinerCompletionMessage(miner, totalEarnings) {
+            // FIXED: Removed extra $ from earnings rate and total earned
             const message = `
 ✅ <b>Mining Completed!</b>
-
 💎 <b>Miner:</b> ${miner.miner_name}
-⚡ <b>Earnings Rate:</b> $${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour
+⚡ <b>Earnings Rate:</b> $${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour
 ⏱️ <b>Duration:</b> ${miner.duration_hours} hours
-💰 <b>Total Earned:</b> $${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}
+💰 <b>Total Earned:</b> $${formatCurrency(totalEarnings, 8)} ${miner.crypto}
 
 Your earnings have been added to your balance!
             `;
-
+            
             // Create inline keyboard with Renew button
+            // FIXED: Removed extra $ from callback_data
             const keyboard = {
                 inline_keyboard: [
                     [
                         {
                             text: '🔄 Renew Miner',
-                            callback_data: `renew_miner_$${miner.id}_$$ {miner.miner_name}_${miner.cost}`
+                            callback_data: `renew_miner_${miner.id}_${miner.miner_name}_${miner.cost}`
                         }
                     ],
                     [
@@ -1200,7 +977,6 @@ Your earnings have been added to your balance!
                     ]
                 ]
             };
-
             await sendTelegramMessage(currentUser.telegram_id, message, keyboard);
         }
 
@@ -1214,10 +990,8 @@ Your earnings have been added to your balance!
                 showMessage('Miner template not found', 'error');
                 return;
             }
-
             await purchaseMiner(minerTemplate);
         }
-
         // Make renewMiner globally accessible for callback handling
         window.renewMiner = renewMiner;
 
@@ -1245,18 +1019,7 @@ Your earnings have been added to your balance!
                 tg.showAlert(text);
             }
         }
-
-        // ============================================
-        // EARNINGS CALCULATOR
-        // ============================================
-        function calculateCurrentEarnings(miner) {
-            const now = new Date();
-            const startTime = new Date(miner.start_time);
-            const elapsed = now - startTime;
-            const hoursElapsed = elapsed / (1000 * 60 * 60);
-            return hoursElapsed * miner.earnings_rate;
-        }
-
+        
         // ============================================
         // AUTO-REFRESH BALANCE
         // ============================================
@@ -1268,7 +1031,6 @@ Your earnings have been added to your balance!
                         .select('balance, total_earned')
                         .eq('telegram_id', currentUser.telegram_id)
                         .single();
-
                     if (data && !error) {
                         currentUser.balance = data.balance;
                         currentUser.total_earned = data.total_earned;
@@ -1304,13 +1066,8 @@ Your earnings have been added to your balance!
                 }
             }
         });
-
-        // ============================================
-        // TELEGRAM WEB APP READY
-        // ============================================
+        
         tg.ready();
-
     </script>
 </body>
 </html>
-
