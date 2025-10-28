@@ -40,7 +40,7 @@ Our project is trusted by miners globally and offers the most <b>powerful mining
               {
                 text: "⛏️ Start Mining Now",
                 web_app: {
-                  url: "http://t.me/MineBitsCoreBot/MineCore" // ✅ Replace with your Mini App link
+                  url: "https://mine-bits-bot.vercel.app/" // ✅ Replace with your Mini App link
                 }
               }
             ]
