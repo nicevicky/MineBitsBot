@@ -23,6 +23,25 @@
             --border-color: rgba(255, 255, 255, 0.1);
         }
         
+        /* * FIX: Added Light Theme variables.
+         * The 'data-theme' attribute on the body will be changed by JavaScript.
+        */
+        body[data-theme="light"] {
+            --bg-color: #f0f2f5;
+            --card-color: #ffffff;
+            --text-color: #0a0e27;
+            --text-secondary: #5a6491;
+            --border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        body[data-theme="light"] .bottom-nav {
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        body[data-theme="light"] .setting-item:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -41,6 +60,7 @@
             overscroll-behavior-y: none;
             word-wrap: break-word;
             min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         .container {
@@ -216,7 +236,7 @@
             padding: 18px;
             border: 1px solid var(--border-color);
             text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
         }
         
         .stat-card:hover {
@@ -265,6 +285,7 @@
             border-radius: 16px;
             border: 1px solid var(--border-color);
             overflow: hidden;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         
         .setting-item {
@@ -273,7 +294,12 @@
             justify-content: space-between;
             padding: 18px 20px;
             border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s ease;
+            transition: background-color 0.2s ease, border-color 0.3s ease;
+        }
+
+        /* FIX: Added .clickable class for items that open modals */
+        .setting-item.clickable {
+            cursor: pointer;
         }
         
         .setting-item:last-child {
@@ -422,6 +448,7 @@
             box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
             border-top: 1px solid var(--border-color);
             z-index: 1000;
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
         
         .nav-item {
@@ -489,7 +516,106 @@
                 transform: translateX(-50%) translateY(0);
             }
         }
+
+        /* NEW: Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            padding: 15px;
+        }
         
+        .modal-content {
+            background-color: var(--card-color);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            animation: modalFadeIn 0.3s ease;
+            overflow: hidden;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .modal-header .fa-times {
+            font-size: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .modal-header .fa-times:hover {
+            color: var(--text-color);
+        }
+        
+        .modal-body {
+            padding: 15px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .modal-option,
+        .language-option {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-option:hover,
+        .language-option:hover {
+            background-color: var(--border-color);
+        }
+        
+        .modal-option i {
+            font-size: 18px;
+            color: var(--primary-color);
+            width: 25px;
+            text-align: center;
+        }
+
+        .language-option .lang-flag {
+            font-size: 22px;
+            width: 25px;
+            text-align: center;
+        }
+
+        .modal-option span,
+        .language-option span {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
         /* Responsive Design */
         @media (max-width: 380px) {
             .profile-photo {
@@ -509,22 +635,21 @@
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- Header -->
+
         <div class="header">
             <h1><i class="fas fa-user-cog"></i> Settings</h1>
             <p>Manage your profile and preferences</p>
         </div>
 
-        <!-- Loading State -->
         <div id="loadingState" class="loading">
             <i class="fas fa-spinner"></i>
             <p>Loading your settings...</p>
         </div>
 
-        <!-- Main Content (Hidden until loaded) -->
         <div id="mainContent" style="display: none;">
-            <!-- Profile Card -->
+
             <div class="profile-card">
                 <div class="profile-header">
                     <div class="profile-photo" id="profilePhoto">
@@ -551,7 +676,6 @@
                 </div>
             </div>
 
-            <!-- Statistics Section -->
             <div class="section">
                 <div class="section-title">
                     <i class="fas fa-chart-line"></i>
@@ -592,7 +716,6 @@
                 </div>
             </div>
 
-            <!-- Preferences Section -->
             <div class="section">
                 <div class="section-title">
                     <i class="fas fa-sliders-h"></i>
@@ -614,27 +737,27 @@
                         </div>
                     </div>
                     
-                    <div class="setting-item">
+                    <div class="setting-item clickable" id="languageSetting">
                         <div class="setting-left">
                             <div class="setting-icon language">
                                 <i class="fas fa-language"></i>
                             </div>
                             <div class="setting-info">
                                 <h4>Language</h4>
-                                <p>English</p>
+                                <p id="currentLanguage">English</p>
                             </div>
                         </div>
                         <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
                     
-                    <div class="setting-item">
+                    <div class="setting-item clickable" id="themeSetting">
                         <div class="setting-left">
-                            <div class="setting-icon theme">
+                            <div class="setting-icon theme" id="themeIconContainer">
                                 <i class="fas fa-moon"></i>
                             </div>
                             <div class="setting-info">
                                 <h4>Theme</h4>
-                                <p>Dark Mode</p>
+                                <p id="currentTheme">Dark Mode</p>
                             </div>
                         </div>
                         <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
@@ -642,7 +765,6 @@
                 </div>
             </div>
 
-            <!-- Logout Button -->
             <button class="logout-btn" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i>
                 Logout
@@ -650,13 +772,11 @@
         </div>
     </div>
 
-    <!-- Toast Message -->
     <div class="toast" id="toast">
         <i class="fas fa-check-circle"></i>
         <span id="toastMessage">Success!</span>
     </div>
 
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <i class="fas fa-home"></i>
@@ -680,14 +800,78 @@
         </a>
     </nav>
 
+    <div id="languageModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Language</h3>
+                <i class="fas fa-times" id="closeLanguageModal"></i>
+            </div>
+            <div class="modal-body" id="languageList">
+                </div>
+        </div>
+    </div>
+
+    <div id="themeModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Theme</h3>
+                <i class="fas fa-times" id="closeThemeModal"></i>
+            </div>
+            <div class="modal-body">
+                <div class="modal-option" data-theme="light">
+                    <i class="fas fa-sun"></i>
+                    <span>Light</span>
+                </div>
+                <div class="modal-option" data-theme="dark">
+                    <i class="fas fa-moon"></i>
+                    <span>Dark</span>
+                </div>
+                <div class="modal-option" data-theme="system">
+                    <i class="fas fa-desktop"></i>
+                    <span>System</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // Supabase Configuration
         const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
 
+        // --- NEW: Modal and Setting Elements ---
+        const languageModal = document.getElementById('languageModal');
+        const themeModal = document.getElementById('themeModal');
+        const closeLanguageModal = document.getElementById('closeLanguageModal');
+        const closeThemeModal = document.getElementById('closeThemeModal');
+        const languageSetting = document.getElementById('languageSetting');
+        const themeSetting = document.getElementById('themeSetting');
+
+        // --- NEW: Language Definitions ---
+        const languages = {
+            'en': '🇺🇸 English',
+            'ru': '🇷🇺 Русский',
+            'uk': '🇺🇦 Українська',
+            'es': '🇪🇸 Español',
+            'de': '🇩🇪 Deutsch',
+            'fr': '🇫🇷 Français',
+            'pt': '🇵🇹 Português',
+            'zh': '🇨🇳 中文 (简体)',
+            'hi': '🇮🇳 हिन्दी',
+            'ar': '🇸🇦 العربية',
+        };
+
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
             await loadUserSettings();
+
+            // --- NEW: Load preferences and set up modals ---
+            populateLanguageModal();
+            loadLanguage();
+            loadTheme();
+            setupModalListeners();
         });
 
         // Load User Settings and Data
@@ -713,21 +897,19 @@
                 });
 
                 if (!response.ok) throw new Error('Failed to fetch user data');
-
                 const users = await response.json();
                 if (users.length === 0) throw new Error('User not found');
-
                 const user = users[0];
 
                 // Update Profile Card
                 updateProfileCard(user);
-
+                
                 // Fetch and display statistics
                 await loadStatistics(user.telegram_id);
-
+                
                 // Load preferences
-                loadPreferences();
-
+                loadPreferences(); // This handles notification toggle
+                
                 // Hide loading, show content
                 document.getElementById('loadingState').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
@@ -751,19 +933,19 @@
             } else {
                 photoElement.innerHTML = `<i class="fas fa-user"></i>`;
             }
-
+            
             // Name
             const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
             document.getElementById('profileName').textContent = fullName;
-
+            
             // Username
             document.getElementById('profileUsername').textContent = user.username ? `@${user.username}` : 'No username';
-
+            
             // Verified Badge
             if (user.verified) {
                 document.getElementById('verifiedBadge').style.display = 'inline-block';
             }
-
+            
             // Deposit & Withdrawal
             document.getElementById('totalDeposit').textContent = parseFloat(user.balance || 0).toFixed(2);
             document.getElementById('totalWithdrawal').textContent = parseFloat(user.total_withdrawn || 0).toFixed(2);
@@ -779,16 +961,15 @@
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
-
                 const users = await userResponse.json();
                 const user = users[0];
 
                 // Total Earnings
                 document.getElementById('totalEarnings').textContent = parseFloat(user.total_earned || 0).toFixed(2);
-
+                
                 // Referral Count
                 document.getElementById('referralCount').textContent = user.referral_count || 0;
-
+                
                 // Current Balance
                 document.getElementById('currentBalance').textContent = parseFloat(user.balance || 0).toFixed(2);
 
@@ -799,7 +980,6 @@
                         'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     }
                 });
-
                 const miners = await minersResponse.json();
                 const totalHours = miners.reduce((sum, miner) => sum + (miner.duration_hours || 0), 0);
                 document.getElementById('miningTime').textContent = `${totalHours}h`;
@@ -811,9 +991,9 @@
 
         // Load Preferences from localStorage
         function loadPreferences() {
+            // Notification Toggle
             const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
             const toggle = document.getElementById('notificationToggle');
-            
             if (notificationsEnabled) {
                 toggle.classList.add('active');
             }
@@ -835,6 +1015,135 @@
             }
         }
 
+        // --- NEW: Function to set up modal click listeners ---
+        function setupModalListeners() {
+            // Open Modals
+            languageSetting.addEventListener('click', () => languageModal.style.display = 'flex');
+            themeSetting.addEventListener('click', () => themeModal.style.display = 'flex');
+
+            // Close Modals
+            closeLanguageModal.addEventListener('click', () => languageModal.style.display = 'none');
+            closeThemeModal.addEventListener('click', () => themeModal.style.display = 'none');
+
+            // Close on overlay click
+            window.addEventListener('click', (event) => {
+                if (event.target == languageModal) {
+                    languageModal.style.display = 'none';
+                }
+                if (event.target == themeModal) {
+                    themeModal.style.display = 'none';
+                }
+            });
+
+            // Theme Modal Options
+            document.querySelectorAll('.modal-option[data-theme]').forEach(option => {
+                option.addEventListener('click', () => {
+                    const theme = option.getAttribute('data-theme');
+                    applyTheme(theme);
+                    themeModal.style.display = 'none';
+                });
+            });
+        }
+
+        // --- NEW: Theme Functions ---
+        let systemThemeListener = null;
+
+        function applyTheme(theme) {
+            const themeIconContainer = document.getElementById('themeIconContainer');
+            const currentTheme = document.getElementById('currentTheme');
+            
+            // Remove previous system listener if it exists
+            if (systemThemeListener) {
+                systemThemeListener.removeEventListener('change', handleSystemThemeChange);
+                systemThemeListener = null;
+            }
+
+            if (theme === 'system') {
+                // Listen for system theme changes
+                systemThemeListener = window.matchMedia('(prefers-color-scheme: dark)');
+                handleSystemThemeChange(systemThemeListener); // Apply initial system theme
+                systemThemeListener.addEventListener('change', handleSystemThemeChange);
+                currentTheme.textContent = 'System';
+            } else if (theme === 'light') {
+                document.body.setAttribute('data-theme', 'light');
+                themeIconContainer.innerHTML = '<i class="fas fa-sun"></i>';
+                currentTheme.textContent = 'Light Mode';
+            } else { // default to dark
+                document.body.setAttribute('data-theme', 'dark');
+                themeIconContainer.innerHTML = '<i class="fas fa-moon"></i>';
+                currentTheme.textContent = 'Dark Mode';
+            }
+            
+            localStorage.setItem('theme', theme);
+        }
+
+        function handleSystemThemeChange(e) {
+            const themeIconContainer = document.getElementById('themeIconContainer');
+            if (e.matches) {
+                // System is dark
+                document.body.setAttribute('data-theme', 'dark');
+                themeIconContainer.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                // System is light
+                document.body.setAttribute('data-theme', 'light');
+                themeIconContainer.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
+            applyTheme(savedTheme);
+        }
+
+        // --- NEW: Language Functions ---
+        function populateLanguageModal() {
+            const languageList = document.getElementById('languageList');
+            languageList.innerHTML = ''; // Clear existing
+            
+            for (const [code, name] of Object.entries(languages)) {
+                const flag = name.split(' ')[0];
+                const langName = name.split(' ').slice(1).join(' ');
+                
+                const option = document.createElement('div');
+                option.className = 'language-option';
+                option.setAttribute('data-lang', code);
+                option.innerHTML = `
+                    <span class="lang-flag">${flag}</span>
+                    <span>${langName}</span>
+                `;
+                
+                option.addEventListener('click', () => {
+                    applyLanguage(code);
+                    languageModal.style.display = 'none';
+                });
+                
+                languageList.appendChild(option);
+            }
+        }
+
+        function applyLanguage(langCode) {
+            if (!languages[langCode]) langCode = 'en'; // Default to English
+            
+            const langName = languages[langCode].split(' ').slice(1).join(' ');
+            document.getElementById('currentLanguage').textContent = langName;
+            localStorage.setItem('language', langCode);
+            
+            // NOTE: This only changes the *selected* language text.
+            // A full translation requires a translation library and JSON files for all text.
+            // For now, we just show a toast message.
+            showToast(`Language set to ${langName}`, 'success');
+            
+            // !! IMPORTANT !!
+            // To actually translate the page, you would need to call a function here like:
+            // translatePage(langCode);
+            // This function would look up all text elements and replace their content.
+        }
+
+        function loadLanguage() {
+            const savedLang = localStorage.getItem('language') || 'en';
+            applyLanguage(savedLang);
+        }
+
         // Logout Function
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
@@ -844,6 +1153,8 @@
                 localStorage.removeItem('activeMiners');
                 localStorage.removeItem('completedTasks');
                 localStorage.removeItem('notificationsEnabled');
+                localStorage.removeItem('theme'); // Clear theme preference
+                localStorage.removeItem('language'); // Clear language preference
                 
                 showToast('Logged out successfully', 'success');
                 
