@@ -10,11 +10,49 @@ export default async function handler(req, res) {
     const TELEGRAM_TOKEN = process.env.BOT_TOKEN;
     const API_URL = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
+    // If no message, ignore
     if (!body.message) return res.status(200).end();
 
     const chatId = body.message.chat.id;
-    const text = body.message.text;
+    const text = body.message.text || "";
 
+    // ✅ Extract start parameter (if exists)
+    const isStartWithParam = text.startsWith("/start ");
+
+    let startParam = null;
+    if (isStartWithParam) {
+      startParam = text.replace("/start ", "").trim();
+    }
+
+    // ✅ If user comes from ?startapp=xxxxx
+    if (startParam && startParam.startsWith("startapp=")) {
+      const userIdFromLink = startParam.split("=")[1];
+
+      await axios.post(`${API_URL}/sendMessage`, {
+        chat_id: chatId,
+        text: `🎉 Welcome Miner!\n\nYou joined using a referral / WebApp link.\n🆔 Ref ID: <b>${userIdFromLink}</b>`,
+        parse_mode: "HTML"
+      });
+
+      await axios.post(`${API_URL}/sendMessage`, {
+        chat_id: chatId,
+        text: "✅ Mining Automatically Activated! ⛏️🔥\nTap below to view your dashboard 👇",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "📊 Open Mining Dashboard",
+                web_app: { url: "https://mine-bits-bot.vercel.app/" }
+              }
+            ]
+          ]
+        }
+      });
+
+      return res.status(200).end();
+    }
+
+    // ✅ Normal /start (no parameters)
     if (text === "/start") {
       const message = `
 <b>🚀 Welcome to the Future of Crypto Mining!</b>
@@ -25,12 +63,10 @@ export default async function handler(req, res) {
 💠 Available Worldwide 🌍  
 💠 Real-Time Mining | Fast Payouts 💸
 
-Our project is trusted by miners globally and offers the most <b>powerful mining rewards</b> in the market!  
-
-🔥 Tap below to begin your mining journey and watch your crypto grow!
+🔥 Tap below to begin your mining journey 👇
       `;
 
-      const button = {
+      await axios.post(`${API_URL}/sendMessage`, {
         chat_id: chatId,
         text: message,
         parse_mode: "HTML",
@@ -39,21 +75,17 @@ Our project is trusted by miners globally and offers the most <b>powerful mining
             [
               {
                 text: "⛏️ Start Mining Now",
-                web_app: {
-                  url: "https://mine-bits-bot.vercel.app/" // ✅ Replace with your Mini App link
-                }
+                web_app: { url: "https://mine-bits-bot.vercel.app/" }
               }
             ]
           ]
         }
-      };
-
-      await axios.post(`${API_URL}/sendMessage`, button);
+      });
     }
 
     res.status(200).end();
   } catch (err) {
-    console.error("Bot Error:", err);
+    console.error("Bot Error:", err.response?.data || err.message);
     res.status(500).send("Server Error");
   }
 }
