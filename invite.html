@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Invite Friends - Crypto Miner Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header & Balance */
+        .header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(74, 105, 255, 0.3);
+        }
+        .header h1 i {
+            color: var(--primary-color);
+            margin-right: 12px;
+            filter: drop-shadow(0 2px 8px rgba(74, 105, 255, 0.5));
+            -webkit-text-fill-color: var(--primary-color);
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        /* 3D Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, #1c1f3a, #161935);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transform: translateZ(0);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 105, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:active {
+            transform: translateY(2px);
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card:active::before {
+            opacity: 1;
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 8px rgba(74, 105, 255, 0.5));
+        }
+
+        .stat-icon.users {
+            color: var(--primary-color);
+        }
+
+        .stat-icon.coins {
+            color: var(--yellow);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* 3D Invite Card */
+        .invite-card {
+            background: linear-gradient(145deg, #1c1f3a, #161935);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .invite-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+            box-shadow: 0 2px 10px rgba(74, 105, 255, 0.5);
+        }
+
+        .invite-card h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .invite-card h2 i {
+            color: var(--primary-color);
+            filter: drop-shadow(0 2px 6px rgba(74, 105, 255, 0.5));
+        }
+
+        .invite-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .invite-link-container {
+            background: linear-gradient(145deg, #0a0e27, #0d1129);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                inset 0 2px 8px rgba(0, 0, 0, 0.3),
+                0 1px 0 rgba(255, 255, 255, 0.05);
+            word-break: break-all;
+        }
+
+        .invite-link {
+            color: var(--primary-light);
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            display: block;
+            text-align: center;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            box-shadow: 
+                0 6px 20px rgba(74, 105, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:active {
+            transform: translateY(2px);
+            box-shadow: 
+                0 3px 10px rgba(74, 105, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #1c1f3a, #161935);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(2px);
+        }
+
+        /* Referred Users Section */
+        .referred-section {
+            background: linear-gradient(145deg, #1c1f3a, #161935);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .referred-section h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .referred-section h2 i {
+            color: var(--green);
+            filter: drop-shadow(0 2px 6px rgba(40, 167, 69, 0.5));
+        }
+
+        .user-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .user-item {
+            background: linear-gradient(145deg, #0a0e27, #0d1129);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .user-item:active {
+            transform: scale(0.98);
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 
+                0 4px 12px rgba(74, 105, 255, 0.4),
+                inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .user-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .user-bonus {
+            font-weight: 600;
+            color: var(--yellow);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Loading & Empty States */
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(145deg, #1c1f3a, #161935);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .loading i, .empty-state i {
+            font-size: 40px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            filter: drop-shadow(0 2px 8px rgba(74, 105, 255, 0.5));
+        }
+
+        .loading i {
+            animation: spin 1.5s linear infinite;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .message.success {
+            background: linear-gradient(145deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+
+        .message.error {
+            background: linear-gradient(145deg, rgba(255, 100, 100, 0.2), rgba(255, 100, 100, 0.1));
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(28, 31, 58, 0.95), rgba(28, 31, 58, 1));
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 
+                0 -5px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            flex-grow: 1;
+            transition: all 0.2s ease;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .nav-item i {
+            font-size: 22px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .nav-item.active i {
+            filter: drop-shadow(0 2px 8px rgba(74, 105, 255, 0.6));
+            transform: translateY(-2px);
+        }
+
+        .nav-item:active {
+            transform: scale(0.95);
+        }
+
+        /* Bonus Badge */
+        .bonus-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--yellow), #ffaa00);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-user-plus"></i> Invite Friends</h1>
+            <p>Earn rewards by inviting your friends!</p>
+        </div>
+
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value" id="referralCount">0</div>
+                <div class="stat-label">Friends Invited</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon coins">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-value" id="totalBonus">0</div>
+                <div class="stat-label">Total Earned</div>
+            </div>
+        </div>
+
+        <!-- Invite Card -->
+        <div class="invite-card">
+            <h2><i class="fas fa-gift"></i> Your Invite Link</h2>
+            <p class="invite-description">
+                Share your unique link with friends. When they join, you both earn rewards!
+            </p>
+            <div class="invite-link-container">
+                <span class="invite-link" id="inviteLink">Loading...</span>
+            </div>
+            <button class="btn btn-primary" onclick="copyInviteLink()">
+                <i class="fas fa-copy"></i> Copy Invite Link
+            </button>
+            <button class="btn btn-secondary" onclick="shareInviteLink()">
+                <i class="fas fa-share"></i> Share via Telegram
+            </button>
+            <div class="bonus-badge" id="bonusBadge">
+                <i class="fas fa-star"></i> Earn bonus per referral!
+            </div>
+        </div>
+
+        <!-- Referred Users Section -->
+        <div class="referred-section">
+            <h2><i class="fas fa-user-check"></i> Your Referrals</h2>
+            <div id="referredUsersContainer">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading referrals...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="miners.html" class="nav-item">
+            <i class="fas fa-server"></i>
+            <span>Miners</span>
+        </a>
+        <a href="tasks.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="invite.html" class="nav-item active">
+            <i class="fas fa-user-plus"></i>
+            <span>Invite</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION - REPLACE WITH YOUR VALUES
+        // ==========================================
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const TELEGRAM_BOT_USERNAME = 'YOUR_BOT_USERNAME'; // e.g., 'MyCryptoMinerBot'
+
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        let currentUser = null;
+        let referralBonus = 0;
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeUser();
+            await loadReferralSettings();
+            generateInviteLink();
+            await loadReferredUsers();
+            await checkForReferrer();
+        });
+
+        // ==========================================
+        // USER INITIALIZATION
+        // ==========================================
+        async function initializeUser() {
+            try {
+                const user = tg.initDataUnsafe?.user;
+                
+                if (!user) {
+                    showMessage('Please open this app from Telegram', 'error');
+                    return;
+                }
+
+                currentUser = user;
+
+                // Check if user exists in database
+                const { data: existingUser, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', user.id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error fetching user:', error);
+                    return;
+                }
+
+                if (!existingUser) {
+                    // Create new user
+                    await createUser(user);
+                } else {
+                    // Update stats display
+                    updateStatsDisplay(existingUser);
+                }
+
+            } catch (error) {
+                console.error('Error initializing user:', error);
+                showMessage('Failed to initialize user', 'error');
+            }
+        }
+
+        // ==========================================
+        // CREATE NEW USER
+        // ==========================================
+        async function createUser(user) {
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([{
+                        telegram_id: user.id,
+                        username: user.username || null,
+                        first_name: user.first_name || 'User',
+                        last_name: user.last_name || null,
+                        photo_url: user.photo_url || null,
+                        balance: 0,
+                        referral_count: 0
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                updateStatsDisplay(data);
+            } catch (error) {
+                console.error('Error creating user:', error);
+            }
+        }
+
+        // ==========================================
+        // LOAD REFERRAL SETTINGS
+        // ==========================================
+        async function loadReferralSettings() {
+            try {
+                const { data, error } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'referral_bonus')
+                    .single();
+
+                if (error) throw error;
+
+                referralBonus = parseFloat(data.value) || 5;
+                document.getElementById('bonusBadge').innerHTML = 
+                    `<i class="fas fa-star"></i> Earn ${referralBonus} coins per referral!`;
+
+            } catch (error) {
+                console.error('Error loading referral settings:', error);
+                referralBonus = 5; // Default value
+            }
+        }
+
+        // ==========================================
+        // GENERATE INVITE LINK
+        // ==========================================
+        function generateInviteLink() {
+            if (!currentUser) return;
+
+            const inviteLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${currentUser.id}`;
+            document.getElementById('inviteLink').textContent = inviteLink;
+        }
+
+        // ==========================================
+        // COPY INVITE LINK
+        // ==========================================
+        async function copyInviteLink() {
+            const inviteLink = document.getElementById('inviteLink').textContent;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(inviteLink);
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = inviteLink;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+
+                showMessage('Invite link copied to clipboard!', 'success');
+
+                // Haptic feedback
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+            } catch (error) {
+                console.error('Error copying to clipboard:', error);
+                showMessage('Failed to copy link', 'error');
+            }
+        }
+
+        // ==========================================
+        // SHARE INVITE LINK
+        // ==========================================
+        function shareInviteLink() {
+            const inviteLink = document.getElementById('inviteLink').textContent;
+            const shareText = `🚀 Join me on this amazing Crypto Mining Bot and start earning!\n\n💰 Get bonus coins when you sign up!\n\n${inviteLink}`;
+
+            if (tg.openTelegramLink) {
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`);
+            } else {
+                window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`, '_blank');
+            }
+
+            // Haptic feedback
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+        }
+
+        // ==========================================
+        // CHECK FOR REFERRER (when new user joins)
+        // ==========================================
+        async function checkForReferrer() {
+            try {
+                const startParam = tg.initDataUnsafe?.start_param;
+                
+                if (!startParam || !currentUser) return;
+
+                const referrerId = parseInt(startParam);
+
+                if (referrerId === currentUser.id) {
+                    // User tried to refer themselves
+                    return;
+                }
+
+                // Check if user already has a referrer
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('referrer_id')
+                    .eq('telegram_id', currentUser.id)
+                    .single();
+
+                if (userError) throw userError;
+
+                if (userData.referrer_id) {
+                    // User already has a referrer
+                    return;
+                }
+
+                // Check if referral bonus is enabled
+                const { data: settings, error: settingsError } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'referral_enabled')
+                    .single();
+
+                if (settingsError) throw settingsError;
+
+                if (settings.value !== 'true') {
+                    return;
+                }
+
+                // Process referral
+                await processReferral(referrerId);
+
+            } catch (error) {
+                console.error('Error checking referrer:', error);
+            }
+        }
+
+        // ==========================================
+        // PROCESS REFERRAL
+        // ==========================================
+        async function processReferral(referrerId) {
+            try {
+                // Update new user with referrer
+                await supabase
+                    .from('users')
+                    .update({ referrer_id: referrerId })
+                    .eq('telegram_id', currentUser.id);
+
+                // Update referrer's count and balance
+                const { data: referrer, error: referrerError } = await supabase
+                    .from('users')
+                    .select('balance, referral_count')
+                    .eq('telegram_id', referrerId)
+                    .single();
+
+                if (referrerError) throw referrerError;
+
+                await supabase
+                    .from('users')
+                    .update({
+                        balance: parseFloat(referrer.balance) + referralBonus,
+                        referral_count: referrer.referral_count + 1,
+                        total_earned: supabase.raw(`total_earned + ${referralBonus}`)
+                    })
+                    .eq('telegram_id', referrerId);
+
+                // Log transaction
+                await supabase
+                    .from('transactions')
+                    .insert([{
+                        user_id: referrerId,
+                        type: 'referral',
+                        amount: referralBonus,
+                        description: `Referral bonus from user ${currentUser.id}`
+                    }]);
+
+                // Award bonus to new user too
+                await supabase
+                    .from('users')
+                    .update({
+                        balance: supabase.raw(`balance + ${referralBonus}`)
+                    })
+                    .eq('telegram_id', currentUser.id);
+
+                await supabase
+                    .from('transactions')
+                    .insert([{
+                        user_id: currentUser.id,
+                        type: 'referral',
+                        amount: referralBonus,
+                        description: `Welcome bonus for joining via referral`
+                    }]);
+
+                showMessage(`Welcome! You earned ${referralBonus} coins!`, 'success');
+
+            } catch (error) {
+                console.error('Error processing referral:', error);
+            }
+        }
+
+        // ==========================================
+        // LOAD REFERRED USERS
+        // ==========================================
+        async function loadReferredUsers() {
+            try {
+                if (!currentUser) return;
+
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('telegram_id, username, first_name, last_name, photo_url, created_at')
+                    .eq('referrer_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                displayReferredUsers(data);
+
+            } catch (error) {
+                console.error('Error loading referred users:', error);
+                document.getElementById('referredUsersContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Referrals</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ==========================================
+        // DISPLAY REFERRED USERS
+        // ==========================================
+        function displayReferredUsers(users) {
+            const container = document.getElementById('referredUsersContainer');
+
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <h3>No Referrals Yet</h3>
+                        <p>Share your invite link to start earning!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '<div class="user-list">';
+
+            users.forEach(user => {
+                const displayName = user.first_name || user.username || 'User';
+                const initial = displayName.charAt(0).toUpperCase();
+                const joinDate = formatDate(user.created_at);
+
+                html += `
+                    <div class="user-item">
+                        <div class="user-avatar">
+                            ${user.photo_url ? 
+                                `<img src="${user.photo_url}" alt="${displayName}">` : 
+                                initial
+                            }
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">${escapeHtml(displayName)}</div>
+                            <div class="user-date">Joined ${joinDate}</div>
+                        </div>
+                        <div class="user-bonus">
+                            <i class="fas fa-coins"></i>
+                            +${referralBonus}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ==========================================
+        // UPDATE STATS DISPLAY
+        // ==========================================
+        function updateStatsDisplay(userData) {
+            document.getElementById('referralCount').textContent = userData.referral_count || 0;
+            
+            const totalBonus = (userData.referral_count || 0) * referralBonus;
+            document.getElementById('totalBonus').textContent = totalBonus.toFixed(2);
+        }
+
+        // ==========================================
+        // SHOW MESSAGE
+        // ==========================================
+        function showMessage(text, type = 'success') {
+            const container = document.getElementById('messageContainer');
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            container.innerHTML = `
+                <div class="message ${type}">
+                    <i class="fas ${icon}"></i>
+                    <span>${text}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // ==========================================
+        // FORMAT DATE
+        // ==========================================
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) {
+                const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                if (diffHours === 0) {
+                    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                    return `$${diffMinutes} min$$ {diffMinutes !== 1 ? 's' : ''} ago`;
+                }
+                return `$${diffHours} hour$$ {diffHours !== 1 ? 's' : ''} ago`;
+            } else if (diffDays === 1) {
+                return 'Yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} days ago`;
+            } else if (diffDays < 30) {
+                const weeks = Math.floor(diffDays / 7);
+                return `$${weeks} week$$ {weeks !== 1 ? 's' : ''} ago`;
+            } else if (diffDays < 365) {
+                const months = Math.floor(diffDays / 30);
+                return `$${months} month$$ {months !== 1 ? 's' : ''} ago`;
+            } else {
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            }
+        }
+
+        // ==========================================
+        // ESCAPE HTML (prevent XSS)
+        // ==========================================
+        function escapeHtml(text) {
+            const map = {
+                '&': '&',
+                '<': '<',
+                '>': '>',
+                '"': '"',
+                "'": '''
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // ==========================================
+        // REFRESH DATA PERIODICALLY
+        // ==========================================
+        setInterval(async () => {
+            if (currentUser) {
+                // Refresh user stats
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('referral_count, balance')
+                    .eq('telegram_id', currentUser.id)
+                    .single();
+
+                if (!error && data) {
+                    updateStatsDisplay(data);
+                }
+
+                // Refresh referred users list
+                await loadReferredUsers();
+            }
+        }, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>
+
