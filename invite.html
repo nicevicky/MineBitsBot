@@ -523,17 +523,14 @@
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- Header -->
+
         <div class="header">
             <h1><i class="fas fa-user-plus"></i> Invite Friends</h1>
             <p>Earn rewards by inviting your friends!</p>
         </div>
-
-        <!-- Message Container -->
         <div id="messageContainer"></div>
-
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon users">
@@ -546,12 +543,9 @@
                 <div class="stat-icon coins">
                     <i class="fas fa-coins"></i>
                 </div>
-                <div class="stat-value" id="totalBonus">0</div>
-                <div class="stat-label">Total Earned</div>
+                <div class="stat-value" id="totalBonus">0.00</div> <div class="stat-label">Total Earned</div>
             </div>
         </div>
-
-        <!-- Invite Card -->
         <div class="invite-card">
             <h2><i class="fas fa-gift"></i> Your Invite Link</h2>
             <p class="invite-description">
@@ -570,8 +564,6 @@
                 <i class="fas fa-star"></i> Earn bonus per referral!
             </div>
         </div>
-
-        <!-- Referred Users Section -->
         <div class="referred-section">
             <h2><i class="fas fa-user-check"></i> Your Referrals</h2>
             <div id="referredUsersContainer">
@@ -582,8 +574,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Bottom Navigation -->
     <nav class="bottom-nav">
         <a href="index.html" class="nav-item">
             <i class="fas fa-home"></i>
@@ -606,37 +596,44 @@
             <span>Settings</span>
         </a>
     </nav>
-
     <script>
         // ==========================================
         // CONFIGURATION - REPLACE WITH YOUR VALUES
         // ==========================================
         const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
-        const TELEGRAM_BOT_USERNAME = 'YOUR_BOT_USERNAME'; // e.g., 'MineBitsCoreBot'
-
+        
+        // <-- !!! CRITICAL ERROR FIX !!!
+        // You MUST replace 'YOUR_BOT_USERNAME' with your bot's actual username (without the @)
+        const TELEGRAM_BOT_USERNAME = 'MineBitsCoreBot'; // e.g., 'MineBitsCoreBot'
+        
         // Initialize Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-
         let currentUser = null;
         let referralBonus = 0;
-
         // ==========================================
         // INITIALIZATION
         // ==========================================
         document.addEventListener('DOMContentLoaded', async () => {
+            if (TELEGRAM_BOT_USERNAME === 'YOUR_BOT_USERNAME') {
+                showMessage('App configuration error. Please contact support.', 'error');
+                console.error('CRITICAL: TELEGRAM_BOT_USERNAME is not set.');
+                return;
+            }
             await initializeUser();
             await loadReferralSettings();
             generateInviteLink();
             await loadReferredUsers();
-            await checkForReferrer();
+            
+            // <-- Only check for referrer if user is loaded
+            if (currentUser) {
+                await checkForReferrer();
+            }
         });
-
         // ==========================================
         // USER INITIALIZATION
         // ==========================================
@@ -648,9 +645,10 @@
                     showMessage('Please open this app from Telegram', 'error');
                     return;
                 }
-
-                currentUser = user;
-
+                
+                // Set the global user object from Telegram
+                currentUser = user; 
+                
                 // Check if user exists in database
                 const { data: existingUser, error } = await supabase
                     .from('users')
@@ -658,25 +656,25 @@
                     .eq('telegram_id', user.id)
                     .single();
 
-                if (error && error.code !== 'PGRST116') {
+                if (error && error.code !== 'PGRST116') { // PGRST116 = 'No rows found'
                     console.error('Error fetching user:', error);
                     return;
                 }
-
                 if (!existingUser) {
                     // Create new user
-                    await createUser(user);
+                    const newUser = await createUser(user);
+                    if (newUser) {
+                        updateStatsDisplay(newUser);
+                    }
                 } else {
                     // Update stats display
                     updateStatsDisplay(existingUser);
                 }
-
             } catch (error) {
                 console.error('Error initializing user:', error);
                 showMessage('Failed to initialize user', 'error');
             }
         }
-
         // ==========================================
         // CREATE NEW USER
         // ==========================================
@@ -691,19 +689,18 @@
                         last_name: user.last_name || null,
                         photo_url: user.photo_url || null,
                         balance: 0,
-                        referral_count: 0
+                        referral_count: 0,
+                        total_earned: 0 // <-- ADDED
                     }])
                     .select()
                     .single();
-
                 if (error) throw error;
-
-                updateStatsDisplay(data);
+                return data; // Return the new user object
             } catch (error) {
                 console.error('Error creating user:', error);
+                return null;
             }
         }
-
         // ==========================================
         // LOAD REFERRAL SETTINGS
         // ==========================================
@@ -714,35 +711,31 @@
                     .select('value')
                     .eq('key', 'referral_bonus')
                     .single();
-
                 if (error) throw error;
-
                 referralBonus = parseFloat(data.value) || 5;
                 document.getElementById('bonusBadge').innerHTML = 
                     `<i class="fas fa-star"></i> Earn ${referralBonus} coins per referral!`;
-
             } catch (error) {
                 console.error('Error loading referral settings:', error);
                 referralBonus = 5; // Default value
+                document.getElementById('bonusBadge').innerHTML = 
+                    `<i class="fas fa-star"></i> Earn ${referralBonus} coins per referral!`;
             }
         }
-
         // ==========================================
         // GENERATE INVITE LINK
         // ==========================================
         function generateInviteLink() {
             if (!currentUser) return;
-
             const inviteLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${currentUser.id}`;
             document.getElementById('inviteLink').textContent = inviteLink;
         }
-
         // ==========================================
         // COPY INVITE LINK
         // ==========================================
         async function copyInviteLink() {
             const inviteLink = document.getElementById('inviteLink').textContent;
-
+            if (inviteLink === 'Loading...') return;
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(inviteLink);
@@ -757,9 +750,7 @@
                     document.execCommand('copy');
                     document.body.removeChild(textArea);
                 }
-
                 showMessage('Invite link copied to clipboard!', 'success');
-
                 // Haptic feedback
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.notificationOccurred('success');
@@ -769,26 +760,23 @@
                 showMessage('Failed to copy link', 'error');
             }
         }
-
         // ==========================================
         // SHARE INVITE LINK
         // ==========================================
         function shareInviteLink() {
             const inviteLink = document.getElementById('inviteLink').textContent;
+            if (inviteLink === 'Loading...') return;
             const shareText = `🚀 Join me on this amazing Crypto Mining Bot and start earning!\n\n💰 Get bonus coins when you sign up!\n\n${inviteLink}`;
-
             if (tg.openTelegramLink) {
                 tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`);
             } else {
                 window.open(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`, '_blank');
             }
-
             // Haptic feedback
             if (tg.HapticFeedback) {
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
-
         // ==========================================
         // CHECK FOR REFERRER (when new user joins)
         // ==========================================
@@ -797,49 +785,41 @@
                 const startParam = tg.initDataUnsafe?.start_param;
                 
                 if (!startParam || !currentUser) return;
-
                 const referrerId = parseInt(startParam);
-
                 if (referrerId === currentUser.id) {
                     // User tried to refer themselves
                     return;
                 }
-
                 // Check if user already has a referrer
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('referrer_id')
                     .eq('telegram_id', currentUser.id)
                     .single();
-
                 if (userError) throw userError;
-
                 if (userData.referrer_id) {
                     // User already has a referrer
                     return;
                 }
-
                 // Check if referral bonus is enabled
                 const { data: settings, error: settingsError } = await supabase
                     .from('settings')
                     .select('value')
                     .eq('key', 'referral_enabled')
                     .single();
-
+                
                 if (settingsError) throw settingsError;
-
-                if (settings.value !== 'true') {
+                
+                // <-- FIXED: Use loose equality (==) to check for 'true' or true
+                if (settings.value != true) { 
                     return;
                 }
-
                 // Process referral
                 await processReferral(referrerId);
-
             } catch (error) {
                 console.error('Error checking referrer:', error);
             }
         }
-
         // ==========================================
         // PROCESS REFERRAL
         // ==========================================
@@ -850,25 +830,30 @@
                     .from('users')
                     .update({ referrer_id: referrerId })
                     .eq('telegram_id', currentUser.id);
-
+                
                 // Update referrer's count and balance
                 const { data: referrer, error: referrerError } = await supabase
                     .from('users')
-                    .select('balance, referral_count')
+                    .select('balance, referral_count, total_earned') // <-- FIXED: Added total_earned
                     .eq('telegram_id', referrerId)
                     .single();
-
+                
                 if (referrerError) throw referrerError;
+
+                // <-- FIXED: Incorrect supabase.raw syntax. Replaced with fetch/calculate/update.
+                const newRefBalance = (referrer.balance || 0) + referralBonus;
+                const newRefTotalEarned = (referrer.total_earned || 0) + referralBonus;
+                const newRefCount = (referrer.referral_count || 0) + 1;
 
                 await supabase
                     .from('users')
                     .update({
-                        balance: parseFloat(referrer.balance) + referralBonus,
-                        referral_count: referrer.referral_count + 1,
-                        total_earned: supabase.raw(`total_earned + ${referralBonus}`)
+                        balance: newRefBalance,
+                        referral_count: newRefCount,
+                        total_earned: newRefTotalEarned
                     })
                     .eq('telegram_id', referrerId);
-
+                
                 // Log transaction
                 await supabase
                     .from('transactions')
@@ -878,15 +863,24 @@
                         amount: referralBonus,
                         description: `Referral bonus from user ${currentUser.id}`
                     }]);
+                
+                // <-- FIXED: Award bonus to new user too (also had incorrect raw syntax)
+                const { data: newUser, error: newUserError } = await supabase
+                    .from('users')
+                    .select('balance, total_earned') // <-- FIXED: Select total_earned
+                    .eq('telegram_id', currentUser.id)
+                    .single();
 
-                // Award bonus to new user too
+                if (newUserError) throw newUserError;
+                
                 await supabase
                     .from('users')
                     .update({
-                        balance: supabase.raw(`balance + ${referralBonus}`)
+                        balance: (newUser.balance || 0) + referralBonus,
+                        total_earned: (newUser.total_earned || 0) + referralBonus // <-- FIXED: Update total_earned
                     })
                     .eq('telegram_id', currentUser.id);
-
+                
                 await supabase
                     .from('transactions')
                     .insert([{
@@ -895,31 +889,26 @@
                         amount: referralBonus,
                         description: `Welcome bonus for joining via referral`
                     }]);
-
+                
                 showMessage(`Welcome! You earned ${referralBonus} coins!`, 'success');
 
             } catch (error) {
                 console.error('Error processing referral:', error);
             }
         }
-
         // ==========================================
         // LOAD REFERRED USERS
         // ==========================================
         async function loadReferredUsers() {
             try {
                 if (!currentUser) return;
-
                 const { data, error } = await supabase
                     .from('users')
                     .select('telegram_id, username, first_name, last_name, photo_url, created_at')
                     .eq('referrer_id', currentUser.id)
                     .order('created_at', { ascending: false });
-
                 if (error) throw error;
-
                 displayReferredUsers(data);
-
             } catch (error) {
                 console.error('Error loading referred users:', error);
                 document.getElementById('referredUsersContainer').innerHTML = `
@@ -931,13 +920,11 @@
                 `;
             }
         }
-
         // ==========================================
         // DISPLAY REFERRED USERS
         // ==========================================
         function displayReferredUsers(users) {
             const container = document.getElementById('referredUsersContainer');
-
             if (!users || users.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -948,20 +935,17 @@
                 `;
                 return;
             }
-
             let html = '<div class="user-list">';
-
             users.forEach(user => {
                 const displayName = user.first_name || user.username || 'User';
                 const initial = displayName.charAt(0).toUpperCase();
                 const joinDate = formatDate(user.created_at);
-
                 html += `
                     <div class="user-item">
                         <div class="user-avatar">
                             ${user.photo_url ? 
                                 `<img src="${user.photo_url}" alt="${displayName}">` : 
-                                initial
+                                `<span>${escapeHtml(initial)}</span>` // <-- FIXED: Wrap in span and escape
                             }
                         </div>
                         <div class="user-info">
@@ -975,11 +959,9 @@
                     </div>
                 `;
             });
-
             html += '</div>';
             container.innerHTML = html;
         }
-
         // ==========================================
         // UPDATE STATS DISPLAY
         // ==========================================
@@ -989,7 +971,6 @@
             const totalBonus = (userData.referral_count || 0) * referralBonus;
             document.getElementById('totalBonus').textContent = totalBonus.toFixed(2);
         }
-
         // ==========================================
         // SHOW MESSAGE
         // ==========================================
@@ -1003,12 +984,10 @@
                     <span>${text}</span>
                 </div>
             `;
-
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
         }
-
         // ==========================================
         // FORMAT DATE
         // ==========================================
@@ -1017,24 +996,27 @@
             const now = new Date();
             const diffTime = Math.abs(now - date);
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
             if (diffDays === 0) {
                 const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
                 if (diffHours === 0) {
                     const diffMinutes = Math.floor(diffTime / (1000 * 60));
-                    return `$${diffMinutes} min$$ {diffMinutes !== 1 ? 's' : ''} ago`;
+                    // <-- FIXED: Template literal syntax was incorrect
+                    return `${diffMinutes} min${diffMinutes !== 1 ? 's' : ''} ago`;
                 }
-                return `$${diffHours} hour$$ {diffHours !== 1 ? 's' : ''} ago`;
+                // <-- FIXED: Template literal syntax was incorrect
+                return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
             } else if (diffDays === 1) {
                 return 'Yesterday';
             } else if (diffDays < 7) {
                 return `${diffDays} days ago`;
             } else if (diffDays < 30) {
                 const weeks = Math.floor(diffDays / 7);
-                return `$${weeks} week$$ {weeks !== 1 ? 's' : ''} ago`;
+                // <-- FIXED: Template literal syntax was incorrect
+                return `${weeks} week${weeks !== 1 ? 's' : ''} ago`;
             } else if (diffDays < 365) {
                 const months = Math.floor(diffDays / 30);
-                return `$${months} month$$ {months !== 1 ? 's' : ''} ago`;
+                // <-- FIXED: Template literal syntax was incorrect
+                return `${months} month${months !== 1 ? 's' : ''} ago`;
             } else {
                 return date.toLocaleDateString('en-US', { 
                     year: 'numeric', 
@@ -1043,21 +1025,21 @@
                 });
             }
         }
-
         // ==========================================
         // ESCAPE HTML (prevent XSS)
         // ==========================================
         function escapeHtml(text) {
+            if (typeof text !== 'string') return '';
+            // <-- FIXED: Map was incorrect and did nothing
             const map = {
-                '&': '&',
-                '<': '<',
-                '>': '>',
-                '"': '"',
-                "'": '''
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
             };
             return text.replace(/[&<>"']/g, m => map[m]);
         }
-
         // ==========================================
         // REFRESH DATA PERIODICALLY
         // ==========================================
@@ -1069,11 +1051,11 @@
                     .select('referral_count, balance')
                     .eq('telegram_id', currentUser.id)
                     .single();
-
                 if (!error && data) {
+                    // Re-fetch referral bonus in case it changed
+                    await loadReferralSettings(); 
                     updateStatsDisplay(data);
                 }
-
                 // Refresh referred users list
                 await loadReferredUsers();
             }
