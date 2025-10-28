@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Settings - Crypto Miner Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+            word-wrap: break-word;
+            min-height: 100vh;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 26px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .header h1 i {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Profile Card */
+        .profile-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 24px rgba(74, 105, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+        }
+        
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .profile-info {
+            flex: 1;
+        }
+        
+        .profile-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .verified-badge {
+            color: var(--yellow);
+            font-size: 18px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+        
+        .profile-username {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            font-weight: 400;
+        }
+        
+        .profile-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-box {
+            background-color: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Statistics Section */
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title i {
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card-icon.earnings {
+            color: var(--green);
+        }
+        
+        .stat-card-icon.referrals {
+            color: var(--primary-color);
+        }
+        
+        .stat-card-icon.mining {
+            color: var(--yellow);
+        }
+        
+        .stat-card-icon.withdrawals {
+            color: var(--red);
+        }
+        
+        .stat-card-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Settings List */
+        .settings-list {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-item:hover {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+        
+        .setting-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        
+        .setting-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        
+        .setting-icon.notifications {
+            background-color: rgba(74, 105, 255, 0.2);
+            color: var(--primary-color);
+        }
+        
+        .setting-icon.language {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+        }
+        
+        .setting-icon.theme {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--yellow);
+        }
+        
+        .setting-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 3px;
+        }
+        
+        .setting-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background-color: var(--border-color);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background-color: var(--green);
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(22px);
+        }
+        
+        /* Logout Button */
+        .logout-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            background-color: var(--red);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(255, 100, 100, 0.3);
+        }
+        
+        .logout-btn:hover {
+            background-color: #ff4444;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 100, 100, 0.4);
+        }
+        
+        .logout-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .loading i {
+            font-size: 40px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            background-color: var(--card-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            flex-grow: 1;
+            transition: color 0.2s ease;
+        }
+        
+        .nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-item.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        /* Message/Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--card-color);
+            color: var(--text-color);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        
+        .toast.success {
+            border-color: var(--green);
+            background-color: rgba(40, 167, 69, 0.2);
+        }
+        
+        .toast.error {
+            border-color: var(--red);
+            background-color: rgba(255, 100, 100, 0.2);
+        }
+        
+        .toast.show {
+            display: flex;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 380px) {
+            .profile-photo {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+            }
+            
+            .profile-name {
+                font-size: 20px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-user-cog"></i> Settings</h1>
+            <p>Manage your profile and preferences</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading your settings...</p>
+        </div>
+
+        <!-- Main Content (Hidden until loaded) -->
+        <div id="mainContent" style="display: none;">
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-photo" id="profilePhoto">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <div class="profile-name">
+                            <span id="profileName">User</span>
+                            <i class="fas fa-certificate verified-badge" id="verifiedBadge" style="display: none;"></i>
+                        </div>
+                        <div class="profile-username" id="profileUsername">@username</div>
+                    </div>
+                </div>
+                
+                <div class="profile-stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalDeposit">0.00</div>
+                        <div class="stat-label">Total Deposit</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalWithdrawal">0.00</div>
+                        <div class="stat-label">Withdrawn</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Your Statistics
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-icon earnings">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        <div class="stat-card-value" id="totalEarnings">0.00</div>
+                        <div class="stat-card-label">Total Earned</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-icon referrals">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-card-value" id="referralCount">0</div>
+                        <div class="stat-card-label">Referrals</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-icon mining">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-card-value" id="miningTime">0h</div>
+                        <div class="stat-card-label">Mining Time</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-icon withdrawals">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-card-value" id="currentBalance">0.00</div>
+                        <div class="stat-card-label">Balance</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preferences Section -->
+            <div class="section">
+                <div class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    Preferences
+                </div>
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="setting-left">
+                            <div class="setting-icon notifications">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="setting-info">
+                                <h4>Notifications</h4>
+                                <p>Enable push notifications</p>
+                            </div>
+                        </div>
+                        <div class="toggle-switch" id="notificationToggle" onclick="toggleNotifications()">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-left">
+                            <div class="setting-icon language">
+                                <i class="fas fa-language"></i>
+                            </div>
+                            <div class="setting-info">
+                                <h4>Language</h4>
+                                <p>English</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-left">
+                            <div class="setting-icon theme">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                            <div class="setting-info">
+                                <h4>Theme</h4>
+                                <p>Dark Mode</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logout Button -->
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="miners.html" class="nav-item">
+            <i class="fas fa-server"></i>
+            <span>Miners</span>
+        </a>
+        <a href="tasks.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="invite.html" class="nav-item">
+            <i class="fas fa-user-plus"></i>
+            <span>Invite</span>
+        </a>
+        <a href="settings.html" class="nav-item active">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadUserSettings();
+        });
+
+        // Load User Settings and Data
+        async function loadUserSettings() {
+            try {
+                // Get user from localStorage
+                const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+                
+                if (!userData.telegram_id) {
+                    showToast('Please login first', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                    return;
+                }
+
+                // Fetch user data from Supabase
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${userData.telegram_id}`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch user data');
+
+                const users = await response.json();
+                if (users.length === 0) throw new Error('User not found');
+
+                const user = users[0];
+
+                // Update Profile Card
+                updateProfileCard(user);
+
+                // Fetch and display statistics
+                await loadStatistics(user.telegram_id);
+
+                // Load preferences
+                loadPreferences();
+
+                // Hide loading, show content
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showToast('Failed to load settings', 'error');
+                document.getElementById('loadingState').innerHTML = `
+                    <i class="fas fa-exclamation-triangle" style="color: var(--red);"></i>
+                    <p>Failed to load settings. Please try again.</p>
+                `;
+            }
+        }
+
+        // Update Profile Card
+        function updateProfileCard(user) {
+            // Profile Photo
+            const photoElement = document.getElementById('profilePhoto');
+            if (user.photo_url) {
+                photoElement.innerHTML = `<img src="${user.photo_url}" alt="Profile" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+            } else {
+                photoElement.innerHTML = `<i class="fas fa-user"></i>`;
+            }
+
+            // Name
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+            document.getElementById('profileName').textContent = fullName;
+
+            // Username
+            document.getElementById('profileUsername').textContent = user.username ? `@${user.username}` : 'No username';
+
+            // Verified Badge
+            if (user.verified) {
+                document.getElementById('verifiedBadge').style.display = 'inline-block';
+            }
+
+            // Deposit & Withdrawal
+            document.getElementById('totalDeposit').textContent = parseFloat(user.balance || 0).toFixed(2);
+            document.getElementById('totalWithdrawal').textContent = parseFloat(user.total_withdrawn || 0).toFixed(2);
+        }
+
+        // Load Statistics
+        async function loadStatistics(telegramId) {
+            try {
+                // Fetch user data again for latest stats
+                const userResponse = await fetch(`${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${telegramId}`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                const users = await userResponse.json();
+                const user = users[0];
+
+                // Total Earnings
+                document.getElementById('totalEarnings').textContent = parseFloat(user.total_earned || 0).toFixed(2);
+
+                // Referral Count
+                document.getElementById('referralCount').textContent = user.referral_count || 0;
+
+                // Current Balance
+                document.getElementById('currentBalance').textContent = parseFloat(user.balance || 0).toFixed(2);
+
+                // Calculate Total Mining Time
+                const minersResponse = await fetch(`${SUPABASE_URL}/rest/v1/miners?user_id=eq.${telegramId}`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                const miners = await minersResponse.json();
+                const totalHours = miners.reduce((sum, miner) => sum + (miner.duration_hours || 0), 0);
+                document.getElementById('miningTime').textContent = `${totalHours}h`;
+
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Load Preferences from localStorage
+        function loadPreferences() {
+            const notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+            const toggle = document.getElementById('notificationToggle');
+            
+            if (notificationsEnabled) {
+                toggle.classList.add('active');
+            }
+        }
+
+        // Toggle Notifications
+        function toggleNotifications() {
+            const toggle = document.getElementById('notificationToggle');
+            const isActive = toggle.classList.contains('active');
+            
+            if (isActive) {
+                toggle.classList.remove('active');
+                localStorage.setItem('notificationsEnabled', 'false');
+                showToast('Notifications disabled', 'success');
+            } else {
+                toggle.classList.add('active');
+                localStorage.setItem('notificationsEnabled', 'true');
+                showToast('Notifications enabled', 'success');
+            }
+        }
+
+        // Logout Function
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Clear localStorage
+                localStorage.removeItem('userData');
+                localStorage.removeItem('userBalance');
+                localStorage.removeItem('activeMiners');
+                localStorage.removeItem('completedTasks');
+                localStorage.removeItem('notificationsEnabled');
+                
+                showToast('Logged out successfully', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            }
+        }
+
+        // Show Toast Message
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const icon = toast.querySelector('i');
+            
+            // Set message
+            toastMessage.textContent = message;
+            
+            // Set icon and style based on type
+            toast.className = `toast ${type}`;
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+            }
+            
+            // Show toast
+            toast.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Format number with commas
+        function formatNumber(num) {
+            return parseFloat(num).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 8
+            });
+        }
+
+        // Format time ago
+        function timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " years ago";
+            
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " months ago";
+            
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " days ago";
+            
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " hours ago";
+            
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            
+            return "Just now";
+        }
+    </script>
+</body>
+</html>
