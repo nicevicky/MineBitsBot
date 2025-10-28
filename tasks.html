@@ -2,241 +2,293 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Complete Tasks - Crypto Miner</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tasks - Crypto Miner Bot</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff;
-            overflow-x: hidden;
-            padding-bottom: 80px;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 90px;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+            word-wrap: break-word;
         }
-
-        #three-container {
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* 3D Canvas Background */
+        #canvas3d {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: -1;
             opacity: 0.3;
         }
-
-        .container {
-            position: relative;
-            z-index: 1;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
+        
+        /* Header & Balance */
         .header {
-            text-align: center;
-            padding: 30px 0;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
-
         .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
         }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
+        .header h1 i {
+            color: var(--primary-color);
+            margin-right: 10px;
         }
-
         .balance-display {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        }
-
-        .balance-display h3 {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }
-
-        .balance-display .balance {
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .tasks-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .task-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 20px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 15px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .task-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-        }
-
-        .task-card.completed {
-            opacity: 0.6;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .task-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            flex-shrink: 0;
-        }
-
-        .task-info {
-            flex: 1;
-        }
-
-        .task-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .task-description {
-            font-size: 14px;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .task-reward {
             font-size: 16px;
-            color: #ffd700;
-            font-weight: bold;
         }
-
-        .task-button {
-            padding: 12px 24px;
-            border: none;
+        .balance-display i {
+            color: var(--yellow);
+            margin-right: 10px;
+        }
+        .balance-display span {
+            color: var(--text-secondary);
+        }
+        .balance-display .currency {
+            color: var(--text-color);
+            font-weight: 600;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+        
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        .message {
+            padding: 15px;
             border-radius: 12px;
             font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
         }
-
-        .task-button.start {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: #fff;
-        }
-
-        .task-button.start:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
-        }
-
-        .task-button.check {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-            color: #fff;
-        }
-
-        .task-button.check:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(67, 233, 123, 0.4);
-        }
-
-        .task-button.completed {
-            background: rgba(255, 255, 255, 0.3);
-            color: #fff;
-            cursor: not-allowed;
-        }
-
-        .task-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 18px;
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 15px 30px;
-            border-radius: 10px;
-            display: none;
-            z-index: 1000;
-            animation: slideDown 0.3s ease;
-        }
-
-        .notification.success {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-        }
-
-        .notification.error {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        }
-
-        @keyframes slideDown {
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateX(-50%) translateY(-20px);
+                transform: translateY(-10px);
             }
             to {
                 opacity: 1;
-                transform: translateX(-50%) translateY(0);
+                transform: translateY(0);
             }
+        }
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        /* Loading & Empty States */
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        .loading i, .empty-state i {
+            font-size: 30px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: block;
+        }
+        .loading i {
+            animation: spin 1.5s linear infinite;
+        }
+        .empty-state h3 {
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Tasks Grid */
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        /* Task Card */
+        .task-card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 105, 255, 0.2);
+        }
+        .task-card.completed {
+            opacity: 0.7;
+            border-color: var(--green);
+        }
+        .task-icon {
+            font-size: 36px;
+            color: var(--primary-color);
+            min-width: 50px;
+            text-align: center;
+        }
+        .task-card.completed .task-icon {
+            color: var(--green);
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+        }
+        .task-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 8px 0;
+        }
+        .task-reward {
+            font-size: 14px;
+            color: var(--yellow);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .task-reward i {
+            font-size: 12px;
+        }
+        .task-action {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 100px;
+        }
+        .btn-task {
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn-start {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-start:hover {
+            background-color: var(--primary-light);
+        }
+        .btn-verify {
+            background-color: var(--yellow);
+            color: var(--bg-color);
+        }
+        .btn-verify:hover {
+            background-color: #ffcd39;
+        }
+        .btn-completed {
+            background-color: var(--green);
+            color: white;
+            cursor: default;
+        }
+        .btn-task:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-task.loading {
+            position: relative;
+        }
+        .btn-task.loading:after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        /* Completed Badge */
+        .completed-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--green);
+            color: white;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* Bottom Navigation */
@@ -245,100 +297,61 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
+            width: 100%;
+            background-color: var(--card-color);
             display: flex;
             justify-content: space-around;
             padding: 10px 0;
-            z-index: 100;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
         }
-
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: rgba(255, 255, 255, 0.6);
+            justify-content: center;
+            color: var(--text-secondary);
             text-decoration: none;
-            font-size: 12px;
-            transition: all 0.3s;
-            padding: 5px 15px;
+            font-size: 10px;
+            flex-grow: 1;
         }
-
         .nav-item i {
-            font-size: 24px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 4px;
         }
-
         .nav-item.active {
-            color: #fff;
-            transform: scale(1.1);
-        }
-
-        .nav-item:hover {
-            color: #fff;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            margin-top: 20px;
-        }
-
-        .empty-state i {
-            font-size: 64px;
-            opacity: 0.5;
-            margin-bottom: 20px;
-        }
-
-        .empty-state h3 {
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-
-        .empty-state p {
-            font-size: 16px;
-            opacity: 0.8;
+            color: var(--primary-color);
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
-    <!-- Three.js 3D Background -->
-    <div id="three-container"></div>
+    <!-- 3D Background Canvas -->
+    <canvas id="canvas3d"></canvas>
 
-    <!-- Notification -->
-    <div id="notification" class="notification"></div>
-
-    <!-- Main Container -->
     <div class="container">
         <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-tasks"></i> Tasks</h1>
-            <p>Complete tasks and earn rewards!</p>
+            <div class="balance-display">
+                <i class="fas fa-coins"></i>
+                <span>Balance:</span>
+                <span class="currency" id="userBalance">0.00</span>
+                <span>coins</span>
+            </div>
         </div>
 
-        <!-- Balance Display -->
-        <div class="balance-display">
-            <h3>Your Balance</h3>
-            <div class="balance" id="userBalance">0.00</div>
-        </div>
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
 
-        <!-- Loading State -->
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Loading tasks...</p>
-        </div>
-
-        <!-- Tasks List -->
-        <div id="tasksList" class="tasks-list" style="display: none;"></div>
-
-        <!-- Empty State -->
-        <div id="emptyState" class="empty-state" style="display: none;">
-            <i class="fas fa-clipboard-check"></i>
-            <h3>No Tasks Available</h3>
-            <p>Check back later for new tasks!</p>
+        <!-- Tasks Container -->
+        <div id="tasksContainer">
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading tasks...</p>
+            </div>
         </div>
     </div>
 
@@ -370,555 +383,455 @@
         // =====================================================
         // CONFIGURATION - REPLACE WITH YOUR ACTUAL VALUES
         // =====================================================
-        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co'; // e.g., 'https://xxxxx.supabase.co'
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
-        const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg'; // e.g., '123456789:ABCdefGHIjklMNOpqrsTUVwxyz'
+        const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
 
-        // =========================8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg============================
-        // THREE.JS 3D BACKGROUND ANIMATION
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        // Global variables
+        let currentUser = null;
+        let allTasks = [];
+        let completedTaskIds = new Set();
+
         // =====================================================
-        let scene, camera, renderer, particles;
-
-        function initThreeJS() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // 3D BACKGROUND ANIMATION WITH THREE.JS
+        // =====================================================
+        function init3DBackground() {
+            const canvas = document.getElementById('canvas3d');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
             camera.position.z = 5;
 
-            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('three-container').appendChild(renderer.domElement);
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = 100;
+            const posArray = new Float32Array(particlesCount * 3);
 
-            // Create particle system
-            const geometry = new THREE.BufferGeometry();
-            const particleCount = 1000;
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                positions[i] = (Math.random() - 0.5) * 20;
-                positions[i + 1] = (Math.random() - 0.5) * 20;
-                positions[i + 2] = (Math.random() - 0.5) * 20;
-
-                colors[i] = Math.random();
-                colors[i + 1] = Math.random();
-                colors[i + 2] = Math.random();
+            for(let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 10;
             }
 
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            const material = new THREE.PointsMaterial({
-                size: 0.1,
-                vertexColors: true,
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0x4a69ff,
                 transparent: true,
                 opacity: 0.8
             });
 
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
 
-            // Add rotating cubes
-            const cubeGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            const cubeMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0x667eea, 
+            // Create rotating cube
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: 0x4a69ff, 
                 wireframe: true,
                 transparent: true,
                 opacity: 0.3
             });
+            const cube = new THREE.Mesh(geometry, material);
+            scene.add(cube);
 
-            for (let i = 0; i < 10; i++) {
-                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-                cube.position.set(
-                    (Math.random() - 0.5) * 10,
-                    (Math.random() - 0.5) * 10,
-                    (Math.random() - 0.5) * 10
-                );
-                scene.add(cube);
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                cube.rotation.x += 0.005;
+                cube.rotation.y += 0.005;
+                
+                particlesMesh.rotation.y += 0.001;
+                
+                renderer.render(scene, camera);
             }
 
             animate();
-        }
 
-        function animate() {
-            requestAnimationFrame(animate);
-
-            particles.rotation.x += 0.0005;
-            particles.rotation.y += 0.001;
-
-            scene.children.forEach(child => {
-                if (child instanceof THREE.Mesh) {
-                    child.rotation.x += 0.01;
-                    child.rotation.y += 0.01;
-                }
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
             });
-
-            renderer.render(scene, camera);
         }
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
         // =====================================================
-        // TELEGRAM WEB APP INITIALIZATION
+        // UTILITY FUNCTIONS
         // =====================================================
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
-
-        const userId = tg.initDataUnsafe?.user?.id || null;
-        const username = tg.initDataUnsafe?.user?.username || 'User';
-        const firstName = tg.initDataUnsafe?.user?.first_name || '';
-
-        // =====================================================
-        // SUPABASE CLIENT SETUP
-        // =====================================================
-        class SupabaseClient {
-            constructor(url, key) {
-                this.url = url;
-                this.key = key;
-                this.headers = {
-                    'apikey': key,
-                    'Authorization': `Bearer ${key}`,
-                    'Content-Type': 'application/json',
-                    'Prefer': 'return=representation'
-                };
-            }
-
-            async query(table, options = {}) {
-                let url = `$${this.url}/rest/v1/$$ {table}`;
-                const params = new URLSearchParams();
-
-                if (options.select) params.append('select', options.select);
-                if (options.eq) {
-                    Object.keys(options.eq).forEach(key => {
-                        params.append(key, `eq.${options.eq[key]}`);
-                    });
-                }
-                if (options.order) params.append('order', options.order);
-                if (options.limit) params.append('limit', options.limit);
-
-                if (params.toString()) url += `?${params.toString()}`;
-
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: this.headers
-                });
-
-                return await response.json();
-            }
-
-            async insert(table, data) {
-                const url = `$${this.url}/rest/v1/$$ {table}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: this.headers,
-                    body: JSON.stringify(data)
-                });
-
-                return await response.json();
-            }
-
-            async update(table, data, match) {
-                let url = `$${this.url}/rest/v1/$$ {table}?`;
-                Object.keys(match).forEach(key => {
-                    url += `$${key}=eq.$$ {match[key]}&`;
-                });
-
-                const response = await fetch(url, {
-                    method: 'PATCH',
-                    headers: this.headers,
-                    body: JSON.stringify(data)
-                });
-
-                return await response.json();
-            }
-        }
-
-        const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // =====================================================
-        // NOTIFICATION SYSTEM
-        // =====================================================
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-
+        function showMessage(message, type = 'success') {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                <span>${message}</span>
+            `;
+            container.innerHTML = '';
+            container.appendChild(messageDiv);
+            
             setTimeout(() => {
-                notification.style.display = 'none';
+                messageDiv.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => container.innerHTML = '', 300);
             }, 3000);
         }
 
+        function getUserId() {
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                return tg.initDataUnsafe.user.id;
+            }
+            // Fallback for testing
+            return localStorage.getItem('testUserId') || 123456789;
+        }
+
         // =====================================================
-        // TELEGRAM BOT API - CHECK MEMBERSHIP
+        // DATABASE OPERATIONS
         // =====================================================
-        async function checkTelegramMembership(chatId, userId) {
+        async function fetchUser() {
             try {
-                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${chatId}&user_id=${userId}`);
+                const telegramId = getUserId();
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', telegramId)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching user:', error);
+                    return null;
+                }
+
+                currentUser = data;
+                updateBalanceDisplay();
+                return data;
+            } catch (err) {
+                console.error('Exception fetching user:', err);
+                return null;
+            }
+        }
+
+        async function fetchTasks() {
+            try {
+                const { data, error } = await supabase
+                    .from('tasks')
+                    .select('*')
+                    .eq('active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Error fetching tasks:', error);
+                    return [];
+                }
+
+                return data || [];
+            } catch (err) {
+                console.error('Exception fetching tasks:', err);
+                return [];
+            }
+        }
+
+        async function fetchCompletedTasks() {
+            try {
+                const telegramId = getUserId();
+                const { data, error } = await supabase
+                    .from('user_tasks')
+                    .select('task_id')
+                    .eq('user_id', telegramId)
+                    .eq('completed', true);
+
+                if (error) {
+                    console.error('Error fetching completed tasks:', error);
+                    return [];
+                }
+
+                return data.map(item => item.task_id);
+            } catch (err) {
+                console.error('Exception fetching completed tasks:', err);
+                return [];
+            }
+        }
+
+        async function markTaskCompleted(taskId, reward) {
+            try {
+                const telegramId = getUserId();
+
+                // Insert into user_tasks
+                const { error: taskError } = await supabase
+                    .from('user_tasks')
+                    .insert({
+                        user_id: telegramId,
+                        task_id: taskId,
+                        completed: true,
+                        completed_at: new Date().toISOString()
+                    });
+
+                if (taskError) {
+                    console.error('Error marking task completed:', taskError);
+                    return false;
+                }
+
+                // Update user balance
+                const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
+                const { error: balanceError } = await supabase
+                    .from('users')
+                    .update({ 
+                        balance: newBalance,
+                        total_earned: parseFloat(currentUser.total_earned) + parseFloat(reward)
+                    })
+                    .eq('telegram_id', telegramId);
+
+                if (balanceError) {
+                    console.error('Error updating balance:', balanceError);
+                    return false;
+                }
+
+                // Insert transaction record
+                await supabase
+                    .from('transactions')
+                    .insert({
+                        user_id: telegramId,
+                        type: 'task',
+                        amount: reward,
+                        description: `Completed task #${taskId}`,
+                        reference_id: taskId
+                    });
+
+                currentUser.balance = newBalance;
+                currentUser.total_earned = parseFloat(currentUser.total_earned) + parseFloat(reward);
+                updateBalanceDisplay();
+
+                return true;
+            } catch (err) {
+                console.error('Exception marking task completed:', err);
+                return false;
+            }
+        }
+
+        // =====================================================
+        // TELEGRAM BOT API - MEMBERSHIP VERIFICATION
+        // =====================================================
+        async function verifyTelegramMembership(chatId, userId) {
+            try {
+                // Extract chat username or ID from the link
+                const chatUsername = extractChatUsername(chatId);
+                if (!chatUsername) {
+                    console.error('Invalid chat link');
+                    return false;
+                }
+
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${chatUsername}&user_id=${userId}`;
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.ok) {
                     const status = data.result.status;
-                    // Valid member statuses: 'creator', 'administrator', 'member'
+                    // Valid statuses: creator, administrator, member
                     return ['creator', 'administrator', 'member'].includes(status);
+                } else {
+                    console.error('Telegram API error:', data.description);
+                    return false;
                 }
-                return false;
-            } catch (error) {
-                console.error('Error checking membership:', error);
+            } catch (err) {
+                console.error('Error verifying membership:', err);
                 return false;
             }
         }
 
-        // Extract chat ID from Telegram link
-        function extractChatId(link) {
-            // For public groups/channels: @username or t.me/username
+        function extractChatUsername(link) {
+            // Extract username from t.me/username or t.me/joinchat/hash
             const match = link.match(/t\.me\/([^/?]+)/);
-            if (match) {
-                return '@' + match[1];
+            if (match && match[1]) {
+                // If it's a username, add @ prefix
+                if (!match[1].startsWith('joinchat')) {
+                    return '@' + match[1];
+                }
             }
             return null;
         }
 
         // =====================================================
-        // LOAD USER BALANCE
+        // UI RENDERING
         // =====================================================
-        async function loadUserBalance() {
-            try {
-                const users = await supabase.query('users', {
-                    select: 'balance',
-                    eq: { telegram_id: userId }
-                });
-
-                if (users && users.length > 0) {
-                    const balance = parseFloat(users[0].balance) || 0;
-                    document.getElementById('userBalance').textContent = balance.toFixed(2);
-                    return balance;
-                }
-                return 0;
-            } catch (error) {
-                console.error('Error loading balance:', error);
-                return 0;
+        function updateBalanceDisplay() {
+            if (currentUser) {
+                document.getElementById('userBalance').textContent = parseFloat(currentUser.balance).toFixed(2);
             }
         }
 
-        // =====================================================
-        // LOAD TASKS
-        // =====================================================
-        async function loadTasks() {
-            try {
-                // Get all active tasks
-                const tasks = await supabase.query('tasks', {
-                    select: '*',
-                    eq: { active: true },
-                    order: 'created_at.desc'
-                });
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
 
-                // Get user's completed tasks
-                const completedTasks = await supabase.query('user_tasks', {
-                    select: 'task_id',
-                    eq: { user_id: userId }
-                });
-
-                const completedTaskIds = completedTasks.map(ct => ct.task_id);
-
-                document.getElementById('loading').style.display = 'none';
-
-                if (!tasks || tasks.length === 0) {
-                    document.getElementById('emptyState').style.display = 'block';
-                    return;
-                }
-
-                document.getElementById('tasksList').style.display = 'flex';
-                renderTasks(tasks, completedTaskIds);
-            } catch (error) {
-                console.error('Error loading tasks:', error);
-                document.getElementById('loading').style.display = 'none';
-                showNotification('Failed to load tasks', 'error');
-            }
-        }
-
-        // =====================================================
-        // RENDER TASKS
-        // =====================================================
-        function renderTasks(tasks, completedTaskIds) {
-            const tasksList = document.getElementById('tasksList');
-            tasksList.innerHTML = '';
-
-            tasks.forEach(task => {
-                const isCompleted = completedTaskIds.includes(task.id);
-                const taskCard = createTaskCard(task, isCompleted);
-                tasksList.appendChild(taskCard);
-            });
-        }
-
-        // =====================================================
-        // CREATE TASK CARD
-        // =====================================================
-        function createTaskCard(task, isCompleted) {
-            const card = document.createElement('div');
-            card.className = `task-card ${isCompleted ? 'completed' : ''}`;
-            card.setAttribute('data-task-id', task.id);
-
-            const icon = document.createElement('div');
-            icon.className = 'task-icon';
-            icon.innerHTML = `<i class="fas ${task.icon || 'fa-tasks'}"></i>`;
-
-            const info = document.createElement('div');
-            info.className = 'task-info';
-            info.innerHTML = `
-                <div class="task-title">${task.title}</div>
-                <div class="task-description">${task.description || ''}</div>
-                <div class="task-reward">+${parseFloat(task.reward).toFixed(2)} coins</div>
-            `;
-
-            const button = document.createElement('button');
-            button.className = 'task-button';
-
-            if (isCompleted) {
-                button.className += ' completed';
-                button.innerHTML = '<i class="fas fa-check"></i> Done';
-                button.disabled = true;
-            } else {
-                button.className += ' start';
-                button.innerHTML = 'Start';
-                button.onclick = () => startTask(task);
-            }
-
-            card.appendChild(icon);
-            card.appendChild(info);
-            card.appendChild(button);
-
-            return card;
-        }
-
-        // =====================================================
-        // START TASK
-        // =====================================================
-        function startTask(task) {
-            // Open task link
-            if (task.link) {
-                window.open(task.link, '_blank');
-            }
-
-            // Change button to "Check"
-            const button = document.querySelector(`[data-task-id="${task.id}"] .task-button`);
-            button.className = 'task-button check';
-            button.innerHTML = '<i class="fas fa-check-circle"></i> Check';
-            button.onclick = () => verifyTask(task);
-
-            showNotification('Complete the task and click Check', 'success');
-        }
-
-        // =====================================================
-        // VERIFY TASK
-        // =====================================================
-        async function verifyTask(task) {
-            const button = document.querySelector(`[data-task-id="${task.id}"] .task-button`);
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
-
-            try {
-                let verified = true;
-
-                // If verification is required, check Telegram membership
-                if (task.require_verification && (task.task_type === 'join_channel' || task.task_type === 'join_group')) {
-                    const chatId = extractChatId(task.link);
-                    if (chatId) {
-                        verified = await checkTelegramMembership(chatId, userId);
-                        if (!verified) {
-                            showNotification('Please join the group/channel first!', 'error');
-                            button.disabled = false;
-                            button.innerHTML = '<i class="fas fa-check-circle"></i> Check';
-                            return;
-                        }
-                    }
-                }
-
-                // Mark task as completed
-                await supabase.insert('user_tasks', {
-                    user_id: userId,
-                    task_id: task.id,
-                    completed: true
-                });
-
-                // Get current balance
-                const users = await supabase.query('users', {
-                    select: 'balance,total_earned',
-                    eq: { telegram_id: userId }
-                });
-
-                if (users && users.length > 0) {
-                    const currentBalance = parseFloat(users[0].balance) || 0;
-                    const currentEarned = parseFloat(users[0].total_earned) || 0;
-                    const newBalance = currentBalance + parseFloat(task.reward);
-                    const newEarned = currentEarned + parseFloat(task.reward);
-
-                    // Update user balance
-                    await supabase.update('users', {
-                        balance: newBalance,
-                        total_earned: newEarned,
-                        last_active: new Date().toISOString()
-                    }, { telegram_id: userId });
-
-                    // Create transaction record
-                    await supabase.insert('transactions', {
-                        user_id: userId,
-                        type: 'task',
-                        amount: parseFloat(task.reward),
-                        description: `Completed task: ${task.title}`,
-                        reference_id: task.id
-                    });
-
-                    // Update UI
-                    document.getElementById('userBalance').textContent = newBalance.toFixed(2);
-                    button.className = 'task-button completed';
-                    button.innerHTML = '<i class="fas fa-check"></i> Done';
-                    
-                    const card = document.querySelector(`[data-task-id="${task.id}"]`);
-                    card.classList.add('completed');
-
-                    showNotification(`+${parseFloat(task.reward).toFixed(2)} coins earned!`, 'success');
-
-                    // Haptic feedback
-                    if (tg.HapticFeedback) {
-                        tg.HapticFeedback.notificationOccurred('success');
-                    }
-                } else {
-                    throw new Error('User not found');
-                }
-            } catch (error) {
-                console.error('Error verifying task:', error);
-                
-                // Check if task was already completed
-                if (error.message && error.message.includes('duplicate')) {
-                    showNotification('Task already completed!', 'error');
-                    button.className = 'task-button completed';
-                    button.innerHTML = '<i class="fas fa-check"></i> Done';
-                    
-                    const card = document.querySelector(`[data-task-id="${task.id}"]`);
-                    card.classList.add('completed');
-                } else {
-                    showNotification('Failed to verify task. Please try again.', 'error');
-                    button.disabled = false;
-                    button.innerHTML = '<i class="fas fa-check-circle"></i> Check';
-                }
-
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.notificationOccurred('error');
-                }
-            }
-        }
-
-        // =====================================================
-        // INITIALIZE USER
-        // =====================================================
-        async function initializeUser() {
-            if (!userId) {
-                showNotification('Please open this app from Telegram', 'error');
+            if (allTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Tasks Available</h3>
+                        <p>Check back later for new tasks!</p>
+                    </div>
+                `;
                 return;
             }
 
-            try {
-                // Check if user exists
-                const existingUsers = await supabase.query('users', {
-                    select: '*',
-                    eq: { telegram_id: userId }
-                });
+            const tasksHTML = allTasks.map(task => {
+                const isCompleted = completedTaskIds.has(task.id);
+                const cardClass = isCompleted ? 'task-card completed' : 'task-card';
+                
+                return `
+                    <div class="${cardClass}" data-task-id="${task.id}">
+                        ${isCompleted ? '<div class="completed-badge"><i class="fas fa-check"></i> Completed</div>' : ''}
+                        <div class="task-icon">
+                            <i class="fas ${task.icon || 'fa-tasks'}"></i>
+                        </div>
+                        <div class="task-info">
+                            <h3 class="task-title">${task.title}</h3>
+                            <p class="task-description">${task.description || 'Complete this task to earn rewards'}</p>
+                            <div class="task-reward">
+                                <i class="fas fa-coins"></i>
+                                <span>+${parseFloat(task.reward).toFixed(2)} coins</span>
+                            </div>
+                        </div>
+                        <div class="task-action">
+                            ${isCompleted ? 
+                                '<button class="btn-task btn-completed" disabled><i class="fas fa-check"></i> Done</button>' :
+                                `<button class="btn-task btn-start" onclick="startTask($${task.id}, '$$ {task.link}', '${task.task_type}')">
+                                    <i class="fas fa-external-link-alt"></i> Start
+                                </button>
+                                <button class="btn-task btn-verify" onclick="verifyTask($${task.id}, '$$ {task.link}', '$${task.task_type}',$$ {task.reward}, ${task.require_verification})" style="display: none;">
+                                    <i class="fas fa-check-circle"></i> Verify
+                                </button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
 
-                if (!existingUsers || existingUsers.length === 0) {
-                    // Create new user
-                    const photoUrl = tg.initDataUnsafe?.user?.photo_url || null;
-                    const lastName = tg.initDataUnsafe?.user?.last_name || '';
-                    
-                    await supabase.insert('users', {
-                        telegram_id: userId,
-                        username: username,
-                        first_name: firstName,
-                        last_name: lastName,
-                        photo_url: photoUrl,
-                        balance: 0,
-                        role: 'user',
-                        verified: true,
-                        banned: false,
-                        total_earned: 0,
-                        total_withdrawn: 0,
-                        referral_count: 0
-                    });
-
-                    showNotification('Welcome! Complete tasks to earn rewards!', 'success');
-                } else {
-                    // Update last active
-                    await supabase.update('users', {
-                        last_active: new Date().toISOString()
-                    }, { telegram_id: userId });
-                }
-            } catch (error) {
-                console.error('Error initializing user:', error);
-            }
+            container.innerHTML = `<div class="tasks-grid">${tasksHTML}</div>`;
         }
 
         // =====================================================
-        // MAIN INITIALIZATION
+        // TASK ACTIONS
+        // =====================================================
+        window.startTask = function(taskId, link, taskType) {
+            const card = document.querySelector(`[data-task-id="${taskId}"]`);
+            const startBtn = card.querySelector('.btn-start');
+            const verifyBtn = card.querySelector('.btn-verify');
+
+            // Open the task link
+            if (taskType === 'join_channel' || taskType === 'join_group') {
+                tg.openTelegramLink(link);
+            } else {
+                tg.openLink(link);
+            }
+
+            // Show verify button after a delay
+            setTimeout(() => {
+                startBtn.style.display = 'none';
+                verifyBtn.style.display = 'flex';
+            }, 2000);
+        };
+
+        window.verifyTask = async function(taskId, link, taskType, reward, requireVerification) {
+            const card = document.querySelector(`[data-task-id="${taskId}"]`);
+            const verifyBtn = card.querySelector('.btn-verify');
+            
+            verifyBtn.classList.add('loading');
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span style="opacity: 0;">Verifying...</span>';
+
+            try {
+                let verified = false;
+
+                // If verification is required and it's a Telegram task
+                if (requireVerification && (taskType === 'join_channel' || taskType === 'join_group')) {
+                    const userId = getUserId();
+                    verified = await verifyTelegramMembership(link, userId);
+
+                    if (!verified) {
+                        showMessage('Please join the channel/group first!', 'error');
+                        verifyBtn.classList.remove('loading');
+                        verifyBtn.disabled = false;
+                        verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
+                        return;
+                    }
+                } else {
+                    // Auto-verify for external tasks or when verification is not required
+                    verified = true;
+                }
+
+                // Mark task as completed
+                const success = await markTaskCompleted(taskId, reward);
+
+                if (success) {
+                    completedTaskIds.add(taskId);
+                    showMessage(`Congratulations! You earned ${parseFloat(reward).toFixed(2)} coins!`, 'success');
+                    
+                    // Re-render tasks to show updated state
+                    renderTasks();
+                } else {
+                    showMessage('Failed to complete task. Please try again.', 'error');
+                    verifyBtn.classList.remove('loading');
+                    verifyBtn.disabled = false;
+                    verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
+                }
+            } catch (err) {
+                console.error('Error verifying task:', err);
+                showMessage('An error occurred. Please try again.', 'error');
+                verifyBtn.classList.remove('loading');
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
+            }
+        };
+
+        // =====================================================
+        // INITIALIZATION
         // =====================================================
         async function init() {
-            // Initialize Three.js background
-            initThreeJS();
+            // Initialize 3D background
+            init3DBackground();
 
-            // Initialize user
-            await initializeUser();
+            // Fetch user data
+            await fetchUser();
 
-            // Load user balance
-            await loadUserBalance();
-
-            // Load tasks
-            await loadTasks();
-
-            // Set Telegram main button
-            tg.MainButton.text = "Refresh Tasks";
-            tg.MainButton.onClick(() => {
-                location.reload();
-            });
-            tg.MainButton.show();
-        }
-
-        // Start the app when DOM is loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-
-        // =====================================================
-        // ERROR HANDLING
-        // =====================================================
-        window.addEventListener('error', (event) => {
-            console.error('Global error:', event.error);
-            showNotification('An error occurred. Please refresh the page.', 'error');
-        });
-
-        // =====================================================
-        // PULL TO REFRESH (Optional Enhancement)
-        // =====================================================
-        let touchStartY = 0;
-        let touchEndY = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-        });
-
-        document.addEventListener('touchend', (e) => {
-            touchEndY = e.changedTouches[0].clientY;
-            
-            // Pull down gesture
-            if (touchEndY - touchStartY > 100 && window.scrollY === 0) {
-                location.reload();
+            if (!currentUser) {
+                showMessage('Unable to load user data. Please try again.', 'error');
+                return;
             }
-        });
+
+            // Fetch all tasks
+            allTasks = await fetchTasks();
+
+            // Fetch completed tasks
+            const completedIds = await fetchCompletedTasks();
+            completedTaskIds = new Set(completedIds);
+
+            // Render tasks
+            renderTasks();
+        }
+
+        // Start the app
+        init();
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                to {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
-
