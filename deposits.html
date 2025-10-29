@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Deposits - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --orange: #ff9800;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 25px;
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+        }
+        .header h1 i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background-color: var(--card-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            border-color: var(--primary-color);
+        }
+        .tab-btn:hover {
+            background-color: var(--primary-light);
+            color: var(--text-color);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Message */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        .loading i {
+            font-size: 30px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Wallet Configuration */
+        .wallet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .wallet-card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .wallet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .wallet-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .wallet-icon {
+            font-size: 32px;
+            color: var(--yellow);
+        }
+        .wallet-details h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 3px 0;
+        }
+        .wallet-details p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .wallet-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .wallet-status.active {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+        }
+        .wallet-status.inactive {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+        }
+        .wallet-address {
+            margin-bottom: 15px;
+        }
+        .wallet-address label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+        .wallet-address input {
+            flex: 1;
+            padding: 12px 15px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        .wallet-address input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .btn {
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+        }
+        .btn-success {
+            background-color: var(--green);
+            color: white;
+        }
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
+        
+        /* Deposit Requests */
+        .deposits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .deposit-card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .deposit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .user-details h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 3px 0;
+        }
+        .user-details p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .deposit-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .deposit-status.pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: var(--yellow);
+        }
+        .deposit-status.approved {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+        }
+        .deposit-status.rejected {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+        }
+        .deposit-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .info-value {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        .info-value.highlight {
+            color: var(--yellow);
+            font-size: 16px;
+        }
+        .wallet-display {
+            background-color: var(--bg-color);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .wallet-display label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        .wallet-display p {
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            color: var(--text-color);
+            margin: 0;
+            word-break: break-all;
+        }
+        .deposit-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .btn-approve {
+            background-color: var(--green);
+            color: white;
+        }
+        .btn-approve:hover {
+            opacity: 0.9;
+        }
+        .btn-reject {
+            background-color: var(--red);
+            color: white;
+        }
+        .btn-reject:hover {
+            opacity: 0.9;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+        }
+        .empty-state i {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        .empty-state h3 {
+            font-size: 18px;
+            margin: 0 0 8px 0;
+        }
+        .empty-state p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            flex-grow: 1;
+            transition: all 0.2s ease;
+        }
+        nav a i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        nav a.active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        nav a:hover {
+            color: var(--primary-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-download"></i> Manage Deposits</h1>
+            <p>Configure wallets and approve deposits</p>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('wallets')">
+                <i class="fas fa-wallet"></i> Wallets
+            </button>
+            <button class="tab-btn" onclick="switchTab('deposits')">
+                <i class="fas fa-clock"></i> Pending <span id="pendingCount"></span>
+            </button>
+        </div>
+
+        <div id="walletsTab" class="tab-content active">
+            <div class="loading" id="walletsLoading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading wallets...</p>
+            </div>
+            <div class="wallet-list" id="walletsList"></div>
+        </div>
+
+        <div id="depositsTab" class="tab-content">
+            <div class="loading" id="depositsLoading">
+                <i class="fas fa-spinner"></i>
+                <p>Loading deposits...</p>
+            </div>
+            <div class="deposits-list" id="depositsList"></div>
+        </div>
+    </div>
+
+    <nav>
+        <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="deposits.html" class="active"><i class="fas fa-download"></i><span>Deposit</span></a>
+        <a href="withdrawals.html"><i class="fas fa-upload"></i><span>Withdrawal</span></a>
+        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
+        <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const ADMIN_TELEGRAM_ID = '5727413041'; // ADDED
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Check Admin Access
+        async function checkAdminAccess() {
+            // Ensure Telegram WebApp is ready
+            await new Promise(resolve => {
+                if (window.Telegram?.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    resolve();
+                } else {
+                    // Fallback in case SDK loads slowly
+                    document.addEventListener('DOMContentLoaded', () => {
+                         window.Telegram.WebApp.ready();
+                         resolve();
+                    });
+                }
+            });
+            
+            const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            if (!telegramId) {
+                showMessage('Unauthorized access. Please open via Telegram.', 'error');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+                return false;
+            }
+            
+            // Note: The logic below checks for a user role, not the hardcoded ADMIN_TELEGRAM_ID.
+            // You can change this if you prefer to check against the constant.
+            const { data: user, error } = await supabase
+                .from('users')
+                .select('role')
+                .eq('telegram_id', telegramId)
+                .single();
+
+            if (error || user?.role !== 'admin') {
+                showMessage('Access denied. Admin only.', 'error');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+                return false;
+            }
+
+            return true;
+        }
+
+        // Show Message
+        function showMessage(text, type) {
+            const container = document.getElementById('messageContainer');
+            container.innerHTML = `
+                <div class="message ${type}">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                    ${text}
+                </div>
+            `;
+            setTimeout(() => container.innerHTML = '', 5000);
+        }
+
+        // Switch Tab
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'wallets') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('walletsTab').classList.add('active');
+                loadWallets();
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('depositsTab').classList.add('active');
+                loadDeposits();
+            }
+        }
+
+        // Load Wallets
+        async function loadWallets() {
+            const loading = document.getElementById('walletsLoading');
+            const list = document.getElementById('walletsList');
+            
+            loading.style.display = 'block';
+            list.innerHTML = '';
+
+            try {
+                const { data: cryptos, error } = await supabase
+                    .from('cryptocurrencies')
+                    .select('*')
+                    .order('symbol', { ascending: true });
+
+                if (error) throw error;
+
+                loading.style.display = 'none';
+
+                if (cryptos.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-wallet"></i>
+                            <h3>No Cryptocurrencies</h3>
+                            <p>Add cryptocurrencies to configure wallets</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                cryptos.forEach(crypto => {
+                    list.innerHTML += `
+                        <div class="wallet-card">
+                            <div class="wallet-header">
+                                <div class="wallet-info">
+                                    <div class="wallet-icon">
+                                        <i class="fab fa-${crypto.icon}"></i>
+                                    </div>
+                                    <div class="wallet-details">
+                                        <h3>${crypto.name}</h3>
+                                        <p>${crypto.symbol}</p>
+                                    </div>
+                                </div>
+                                <div class="wallet-status ${crypto.active ? 'active' : 'inactive'}">
+                                    <i class="fas fa-circle"></i>
+                                    ${crypto.active ? 'Active' : 'Inactive'}
+                                </div>
+                            </div>
+                            <div class="wallet-address">
+                                <label>Wallet Address</label>
+                                <div class="input-group">
+                                    <input 
+                                        type="text" 
+                                        id="wallet_${crypto.id}" 
+                                        value="${crypto.wallet_address || ''}" 
+                                        placeholder="Enter ${crypto.symbol} wallet address"
+                                    >
+                                    <button class="btn btn-primary btn-small" onclick="updateWallet(${crypto.id})">
+                                        <i class="fas fa-save"></i> Save
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Error loading wallets: ' + error.message, 'error');
+            }
+        }
+
+        // Update Wallet Address
+        async function updateWallet(cryptoId) {
+            const input = document.getElementById(`wallet_${cryptoId}`);
+            const address = input.value.trim();
+
+            if (!address) {
+                showMessage('Please enter a wallet address', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('cryptocurrencies')
+                    .update({ wallet_address: address })
+                    .eq('id', cryptoId);
+
+                if (error) throw error;
+
+                showMessage('Wallet address updated successfully!', 'success');
+            } catch (error) {
+                showMessage('Error updating wallet: ' + error.message, 'error');
+            }
+        }
+
+        // Load Deposits
+        async function loadDeposits() {
+            const loading = document.getElementById('depositsLoading');
+            const list = document.getElementById('depositsList');
+            
+            loading.style.display = 'block';
+            list.innerHTML = '';
+
+            try {
+                const { data: deposits, error } = await supabase
+                    .from('deposits')
+                    .select(`
+                        *,
+                        users!deposits_user_id_fkey(telegram_id, username, first_name)
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                loading.style.display = 'none';
+
+                // Update pending count
+                const pendingCount = deposits.filter(d => d.status === 'pending').length;
+                document.getElementById('pendingCount').textContent = pendingCount > 0 ? `(${pendingCount})` : '';
+
+                if (deposits.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No Deposits</h3>
+                            <p>No deposit requests found</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                deposits.forEach(deposit => {
+                    const user = deposit.users;
+                    const userName = user?.username || user?.first_name || 'Unknown User';
+                    const initial = userName.charAt(0).toUpperCase();
+                    const statusClass = deposit.status;
+
+                    list.innerHTML += `
+                        <div class="deposit-card">
+                            <div class="deposit-header">
+                                <div class="user-info">
+                                    <div class="user-avatar">${initial}</div>
+                                    <div class="user-details">
+                                        <h4>${userName}</h4>
+                                        <p>ID: ${user?.telegram_id || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="deposit-status ${statusClass}">
+                                    <i class="fas fa-${statusClass === 'pending' ? 'clock' : statusClass === 'approved' ? 'check' : 'times'}"></i>
+                                    ${deposit.status.toUpperCase()}
+                                </div>
+                            </div>
+                            <div class="deposit-info">
+                                <div class="info-item">
+                                    <span class="info-label">Cryptocurrency</span>
+                                    <span class="info-value">${deposit.crypto}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Amount</span>
+                                    <span class="info-value highlight">$${deposit.amount} ${deposit.crypto}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date</span>
+                                    <span class="info-value">${new Date(deposit.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Time</span>
+                                    <span class="info-value">${new Date(deposit.created_at).toLocaleTimeString()}</span>
+                                </div>
+                            </div>
+                            <div class="wallet-display">
+                                <label>User's Wallet Address</label>
+                                <p>${deposit.wallet_address}</p>
+                            </div>
+                            ${deposit.transaction_id ? `
+                                <div class="wallet-display">
+                                    <label>Transaction ID</label>
+                                    <p>${deposit.transaction_id}</p>
+                                </div>
+                            ` : ''}
+                            ${deposit.admin_note ? `
+                                <div class="wallet-display">
+                                    <label>Admin Note</label>
+                                    <p>${deposit.admin_note}</p>
+                                </div>
+                            ` : ''}
+                            ${deposit.status === 'pending' ? `
+                                <div class="deposit-actions">
+                                    <button class="btn btn-approve" onclick="approveDeposit(${deposit.id}, ${deposit.user_id}, ${deposit.amount}, '${deposit.crypto}')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-reject" onclick="rejectDeposit(${deposit.id}, ${deposit.user_id})">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Error loading deposits: ' + error.message, 'error');
+            }
+        }
+
+        // Approve Deposit
+        async function approveDeposit(depositId, userId, amount, crypto) {
+            if (!confirm(`Approve deposit of $${amount} ${crypto}?`)) return;
+
+            try {
+                // Update deposit status
+                const { error: depositError } = await supabase
+                    .from('deposits')
+                    .update({
+                        status: 'approved',
+                        processed_at: new Date().toISOString(),
+                        admin_note: 'Deposit approved by admin'
+                    })
+                    .eq('id', depositId);
+
+                if (depositError) throw depositError;
+
+                // Update user balance
+                const { data: user, error: userError } = await supabase
+                    .from('users')
+                    .select('balance')
+                    .eq('telegram_id', userId)
+                    .single();
+
+                if (userError) throw userError;
+
+                const newBalance = parseFloat(user.balance) + parseFloat(amount);
+
+                const { error: updateError } = await supabase
+                    .from('users')
+                    .update({ balance: newBalance })
+                    .eq('telegram_id', userId);
+
+                if (updateError) throw updateError;
+
+                // Add transaction record
+                await supabase.from('transactions').insert({
+                    user_id: userId,
+                    type: 'deposit',
+                    amount: amount,
+                    description: `Deposit approved: $${amount} ${crypto}`,
+                    reference_id: depositId
+                });
+
+                showMessage('Deposit approved successfully!', 'success');
+                loadDeposits();
+            } catch (error) {
+                showMessage('Error approving deposit: ' + error.message, 'error');
+            }
+        }
+
+        // Reject Deposit
+        async function rejectDeposit(depositId, userId) {
+            const reason = prompt('Enter rejection reason (optional):');
+
+            try {
+                const { error } = await supabase
+                    .from('deposits')
+                    .update({
+                        status: 'rejected',
+                        processed_at: new Date().toISOString(),
+                        admin_note: reason || 'Deposit rejected by admin'
+                    })
+                    .eq('id', depositId);
+
+                if (error) throw error;
+
+                showMessage('Deposit rejected', 'success');
+                loadDeposits();
+            } catch (error) {
+                showMessage('Error rejecting deposit: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize
+        window.onload = async () => {
+            const isAdmin = await checkAdminAccess();
+            if (isAdmin) {
+                loadWallets();
+                loadDeposits();
+            }
+        };
+    </script>
+</body>
+</html>
