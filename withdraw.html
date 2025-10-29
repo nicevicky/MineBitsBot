@@ -685,20 +685,20 @@
          // GET TELEGRAM USER DATA
          // ========================================
          function getTelegramUser() {
-             const tg = window.Telegram?.WebApp;
-             if (tg?.initDataUnsafe?.user) {
-                 return tg.initDataUnsafe.user;
-             }
-             // Fallback for testing
-             console.warn("Telegram user data not found. Using test user.");
-             return {
-                 id: 123456789,
-                 first_name: 'Test',
-                 username: 'testuser'
-             };
-         }
+    const tg = window.Telegram?.WebApp;
+
+    if (tg?.initDataUnsafe?.user) {
+        return tg.initDataUnsafe.user;
+    }
+
+    alert("❗Telegram WebApp data missing. Please open inside Telegram.");
+    return null;
+}
          const telegramUser = getTelegramUser();
-         const userId = telegramUser.id;
+if (!telegramUser) {
+    throw new Error("User not authenticated by Telegram");
+}
+const userId = telegramUser.id;
          
          // ========================================
          // SHOW MESSAGE
