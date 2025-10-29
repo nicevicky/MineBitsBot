@@ -612,7 +612,7 @@
                 console.error('Error during app initialization:', error);
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('mainContent').style.display = 'none';
-                                document.getElementById('loading').innerHTML = `
+                document.getElementById('loading').innerHTML = `
                     <p style="color: #ff6464;">
                         <i class="fas fa-exclamation-triangle"></i><br><br>
                         An error occurred.<br>
@@ -653,16 +653,16 @@
                         const fileResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
                         const fileData = await fileResponse.json();
                         if (fileData.ok) {
-                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot$${BOT_TOKEN}/$$ {fileData.result.file_path}`;
                         } else {
                             document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
                         }
                     }
                 } catch (e) {
-                    document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+                     document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
                 }
             } else {
-                document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+                 document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
             }
 
             if (currentUser.verified) {
@@ -723,11 +723,11 @@
                     <div class="miner-stats">
                         <div class="miner-stat">
                             <span class="miner-stat-label">Earnings/Hour</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)}${miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)}$$ {miner.crypto}</span>
                         </div>
                         <div class="miner-stat">
                             <span class="miner-stat-label">Total Earned</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)}${miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)}$$ {miner.crypto}</span>
                         </div>
                         ${isActive ? `
                             <div class="miner-stat">
@@ -830,29 +830,158 @@
                     .from('users')
                     .update({ balance: newBalance, total_earned: newTotalEarned })
                     .eq('telegram_id', currentUser.telegram_id);
-
-                if (balanceError) throw new Error(`Balance update failed: ${balanceError.message}`);
                 
-                // 5. Expire the miner
+                if (balanceError) throw new Error(`Balance update failed: ${balanceError.message}`);
+
+                // 5. Update miner status to inactive and log total earned
                 await supabase_client
                     .from('miners')
-                    .update({ active: false })
+                    .update({ active: false, total_earned: earnings })
                     .eq('id', miner.id);
 
-                // Notify user
-                Bot.sendMessage(currentUser.telegram_id, `🔔 Miner expired! You earned $${earnings.toFixed(4)}!`);
+                // 6. Log the transaction
+                await supabase_client
+                    .from('transactions')
+                    .insert({
+                        user_id: currentUser.telegram_id,
+                        type: 'mining',
+                        amount: earnings,
+                        description: `Earnings from ${miner.miner_name}`,
+                        reference_id: miner.id
+                    });
+                
+                // 7. Send Telegram notification
+                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)}$$ {miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
+                
+                // Fix: Use window.location.origin to build the full URL
+                const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+                const minersUrl = baseUrl + 'miners.html';
 
-                // Reload user data to reflect balance changes
-                loadUserData();
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: currentUser.telegram_id,
+                        text: message,
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                // Fix: Use a proper web_app button
+                                { text: '🔄 Renew Miner', web_app: { url: minersUrl } }
+                            ]]
+                        }
+                    })
+                });
+                
+                // 8. Reload UI
+                await loadUserData();
+
             } catch (error) {
-                console.error('Error handling miner expiration:', error);
+                console.error(`Error handling expiration for miner ${miner.id}:`, error);
+                // Optionally send a failure message to user
             }
         }
 
+        // Handle referral bonus
+        async function handleReferralBonus(referrerId, newUserId) {
+            try {
+                const { data: settings } = await supabase_client
+                    .from('settings')
+                    .select('*')
+                    .in('key', ['referral_enabled', 'referral_bonus']);
+                
+                const referralEnabled = settings?.find(s => s.key === 'referral_enabled')?.value === 'true';
+                const bonusAmount = parseFloat(settings?.find(s => s.key === 'referral_bonus')?.value || 0);
+                
+                if (referralEnabled && bonusAmount > 0 && referrerId !== newUserId) {
+                    
+                    // Get referrer data
+                    const { data: referrer, error: referrerError } = await supabase_client
+                        .from('users')
+                        .select('balance, referral_count')
+                        .eq('telegram_id', referrerId)
+                        .single();
+
+                    if (referrerError || !referrer) {
+                        console.error('Referrer not found:', referrerId);
+                        return;
+                    }
+
+                    // Update referrer's balance and count
+                    const newBalance = (parseFloat(referrer.balance) || 0) + bonusAmount;
+                    const newRefCount = (referrer.referral_count || 0) + 1;
+
+                    await supabase_client
+                        .from('users')
+                        .update({ balance: newBalance, referral_count: newRefCount })
+                        .eq('telegram_id', referrerId);
+                    
+                    // Log transaction
+                    await supabase_client
+                        .from('transactions')
+                        .insert([{
+                            user_id: referrerId,
+                            type: 'referral',
+                            amount: bonusAmount,
+                            description: `Referral bonus for inviting user ${newUserId}`
+                        }]);
+                }
+            } catch (error) {
+                console.error('Error handling referral bonus:', error);
+            }
+        }
+        
+        // Give registration bonus
+        async function giveRegistrationBonus(userId) {
+             try {
+                const { data: settings } = await supabase_client
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'registration_bonus')
+                    .single();
+                
+                const bonus = parseFloat(settings?.value || 0);
+                if (bonus > 0) {
+                    await supabase_client
+                        .from('users')
+                        .update({ balance: bonus, total_earned: bonus })
+                        .eq('telegram_id', userId);
+                    
+                    await supabase_client
+                        .from('transactions')
+                        .insert([{
+                            user_id: userId,
+                            type: 'registration',
+                            amount: bonus,
+                            description: 'Registration bonus'
+                        }]);
+                }
+            } catch (error) {
+                console.error('Error giving registration bonus:', error);
+            }
+        }
+        
+        // Update last active
+        async function updateLastActive(userId) {
+            try {
+                await supabase_client
+                    .from('users')
+                    .update({ last_active: new Date().toISOString() })
+                    .eq('telegram_id', userId);
+            } catch (error) {
+                console.error('Error updating last active:', error);
+            }
+        }
+        
+        // Cleanup intervals on page unload
+        window.addEventListener('beforeunload', () => {
+            Object.values(minerIntervals).forEach(interval => clearInterval(interval));
+        });
+        
+        // --- Start App ---
         initApp();
+
     </script>
 </body>
 </html>
-
-
 
