@@ -162,8 +162,16 @@
             opacity: 0.8;
         }
 
-        /* Withdraw Button */
-        .withdraw-button {
+        /* Action Buttons Container */
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        /* Withdraw & Deposit Buttons */
+        .action-button {
             width: 100%;
             background-color: var(--card-color);
             color: var(--text-color);
@@ -173,15 +181,17 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-bottom: 25px;
             transition: background-color 0.2s;
         }
-        .withdraw-button:hover {
+        .action-button:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-        .withdraw-button i {
+        .action-button i {
             margin-right: 8px;
             color: var(--primary-color);
+        }
+        .action-button.deposit i {
+            color: var(--green);
         }
 
         /* Section Title */
@@ -421,9 +431,14 @@
                 </div>
             </div>
             
-            <button class="withdraw-button" onclick="window.location.href='withdraw.html'">
-                <i class="fas fa-arrow-circle-up"></i> Withdraw
-            </button>
+            <div class="action-buttons">
+                <button class="action-button deposit" onclick="window.location.href='deposit.html'">
+                    <i class="fas fa-arrow-circle-down"></i> Deposit
+                </button>
+                <button class="action-button" onclick="window.location.href='withdraw.html'">
+                    <i class="fas fa-arrow-circle-up"></i> Withdraw
+                </button>
+            </div>
             
             <div class="miners-section">
                 <h3 class="section-title">
@@ -638,7 +653,7 @@
                         const fileResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
                         const fileData = await fileResponse.json();
                         if (fileData.ok) {
-                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot$${BOT_TOKEN}/$$ {fileData.result.file_path}`;
                         } else {
                             document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
                         }
@@ -697,8 +712,6 @@
                 const minerCard = document.createElement('div');
                 minerCard.className = `miner-card ${isActive ? 'active' : ''}`;
                 
-                // *** FIXED ERROR HERE ***
-                // Removed extra '$' from '$${miner.crypto}' to fix the template literal
                 minerCard.innerHTML = `
                     <div class="miner-header">
                         <div class="crypto-icon">${cryptoIcon}</div>
@@ -710,11 +723,11 @@
                     <div class="miner-stats">
                         <div class="miner-stat">
                             <span class="miner-stat-label">Earnings/Hour</span>
-                            <span class="miner-stat-value">${parseFloat(miner.earnings_rate).toFixed(6)} ${miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)}$$ {miner.crypto}</span>
                         </div>
                         <div class="miner-stat">
                             <span class="miner-stat-label">Total Earned</span>
-                            <span class="miner-stat-value">${parseFloat(miner.total_earned).toFixed(6)} ${miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)}$$ {miner.crypto}</span>
                         </div>
                         ${isActive ? `
                             <div class="miner-stat">
@@ -838,7 +851,7 @@
                     });
                 
                 // 7. Send Telegram notification
-                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *${earnings.toFixed(6)} ${miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
+                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)}$$ {miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
                 
                 // Fix: Use window.location.origin to build the full URL
                 const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
@@ -971,3 +984,4 @@
     </script>
 </body>
 </html>
+
