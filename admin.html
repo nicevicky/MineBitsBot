@@ -423,13 +423,11 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <h1><i class="fas fa-shield-halved"></i> Admin Dashboard</h1>
             <p>Manage your Crypto Mining Bot</p>
         </div>
         
-        <!-- Main Content (Will be replaced based on auth) -->
         <div id="mainContent">
             <div class="loading">
                 <i class="fas fa-spinner"></i>
@@ -438,12 +436,13 @@
         </div>
     </div>
     
-    <!-- Bottom Navigation -->
     <nav>
         <a href="admin.html" class="active"><i class="fas fa-home"></i><span>Home</span></a>
-        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
-        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
         <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="deposits.html"><i class="fas fa-download"></i><span>Deposit</span></a>
+        <a href="withdrawals.html"><i class="fas fa-upload"></i><span>Withdrawal</span></a>
+        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
         <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
     </nav>
     
@@ -537,7 +536,6 @@
                 
                 // Build dashboard HTML
                 const dashboardHTML = `
-                    <!-- Stats Grid -->
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon users"><i class="fas fa-users"></i></div>
@@ -570,7 +568,6 @@
                         </div>
                     </div>
                     
-                    <!-- Quick Actions -->
                     <div class="quick-actions">
                         <div class="section-title">
                             <i class="fas fa-bolt"></i>
@@ -600,7 +597,6 @@
                         </div>
                     </div>
                     
-                    <!-- Recent Users -->
                     <div class="activity-section">
                         <div class="section-title">
                             <i class="fas fa-user-plus"></i>
@@ -638,7 +634,6 @@
                         </div>
                     </div>
                     
-                    <!-- Active Miners -->
                     <div class="activity-section">
                         <div class="section-title">
                             <i class="fas fa-server"></i>
@@ -672,7 +667,6 @@
                         </div>
                     </div>
                     
-                    <!-- Pending Deposits -->
                     <div class="activity-section">
                         <div class="section-title">
                             <i class="fas fa-clock"></i>
