@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Admin Dashboard - Crypto Miner Bot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --orange: #ff9800;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-color);
+            padding: 20px;
+            padding-bottom: 100px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Stats Grid - 3D Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(145deg, #1e2342, #171a33);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                5px 5px 15px rgba(0, 0, 0, 0.5),
+                -5px -5px 15px rgba(255, 255, 255, 0.03);
+            transform: perspective(1000px) rotateX(2deg);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 105, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        
+        .stat-card:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-5px);
+            box-shadow: 
+                8px 8px 20px rgba(0, 0, 0, 0.6),
+                -8px -8px 20px rgba(255, 255, 255, 0.05);
+        }
+        
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+        
+        .stat-icon.users { color: var(--primary-color); }
+        .stat-icon.miners { color: var(--green); }
+        .stat-icon.deposits { color: var(--yellow); }
+        .stat-icon.withdrawals { color: var(--orange); }
+        .stat-icon.tasks { color: var(--red); }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Quick Actions - 3D Buttons */
+        .quick-actions {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            color: var(--primary-color);
+        }
+        
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        
+        .action-btn {
+            background: linear-gradient(145deg, #1e2342, #171a33);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 
+                4px 4px 12px rgba(0, 0, 0, 0.5),
+                -4px -4px 12px rgba(255, 255, 255, 0.03);
+            transform: perspective(1000px) translateZ(0);
+        }
+        
+        .action-btn:hover {
+            transform: perspective(1000px) translateZ(10px) translateY(-3px);
+            box-shadow: 
+                6px 6px 18px rgba(0, 0, 0, 0.6),
+                -6px -6px 18px rgba(255, 255, 255, 0.05);
+            border-color: var(--primary-color);
+        }
+        
+        .action-btn i {
+            font-size: 28px;
+            color: var(--primary-color);
+        }
+        
+        .action-btn span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Recent Activity Table */
+        .activity-section {
+            background: linear-gradient(145deg, #1e2342, #171a33);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 
+                5px 5px 15px rgba(0, 0, 0, 0.5),
+                -5px -5px 15px rgba(255, 255, 255, 0.03);
+            margin-bottom: 30px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th {
+            background: rgba(74, 105, 255, 0.1);
+            color: var(--primary-light);
+            padding: 12px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        
+        table tr:hover {
+            background: rgba(74, 105, 255, 0.05);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: var(--yellow);
+        }
+        
+        .status-badge.active {
+            background: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+        }
+        
+        .status-badge.completed {
+            background: rgba(74, 105, 255, 0.2);
+            color: var(--primary-light);
+        }
+        
+        .verified-badge {
+            color: var(--green);
+            margin-left: 5px;
+        }
+        
+        .banned-badge {
+            color: var(--red);
+            margin-left: 5px;
+        }
+        
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .loading i {
+            font-size: 40px;
+            color: var(--primary-color);
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(145deg, #1e2342, #171a33);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom));
+            box-shadow: 
+                0 -5px 20px rgba(0, 0, 0, 0.5),
+                0 -1px 0 var(--border-color);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 12px;
+            min-width: 60px;
+        }
+        
+        nav a i {
+            font-size: 20px;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        nav a.active {
+            color: var(--primary-color);
+            background: rgba(74, 105, 255, 0.1);
+        }
+        
+        nav a.active i {
+            transform: scale(1.1);
+        }
+        
+        nav a:hover {
+            color: var(--primary-light);
+        }
+        
+        /* Error Message */
+        .error-message {
+            background: linear-gradient(145deg, rgba(255, 100, 100, 0.2), rgba(255, 100, 100, 0.1));
+            border: 1px solid var(--red);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--red);
+        }
+        
+        .error-message i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .table-container {
+                font-size: 12px;
+            }
+            
+            table th, table td {
+                padding: 8px 6px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+                padding-bottom: 90px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-icon {
+                font-size: 24px;
+            }
+            
+            .stat-value {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-shield-halved"></i> Admin Dashboard</h1>
+            <p>Manage your Crypto Mining Bot</p>
+        </div>
+        
+        <!-- Main Content (Will be replaced based on auth) -->
+        <div id="mainContent">
+            <div class="loading">
+                <i class="fas fa-spinner"></i>
+                <p>Verifying admin access...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav>
+        <a href="admin.html" class="active"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
+        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ============================================
+        // CONFIGURATION - REPLACE WITH YOUR VALUES
+        // ============================================
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const TELEGRAM_ADMIN_ID = 5727413041; // Replace with your Telegram User ID
+        
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.enableClosingConfirmation();
+        
+        // Global variables
+        let currentUser = null;
+        
+        // ============================================
+        // AUTHENTICATION & INITIALIZATION
+        // ============================================
+        
+        async function initApp() {
+            try {
+                // Get user from Telegram WebApp
+                const telegramUser = tg.initDataUnsafe?.user;
+                
+                if (!telegramUser) {
+                    showError('Unable to get Telegram user data. Please open this app from Telegram.');
+                    return;
+                }
+                
+                // Check if user is admin
+                if (telegramUser.id !== TELEGRAM_ADMIN_ID) {
+                    showError('Access Denied! This page is only accessible to administrators.');
+                    return;
+                }
+                
+                // Fetch user from database
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', telegramUser.id)
+                    .single();
+                
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Database error:', error);
+                    showError('Database connection error. Please try again.');
+                    return;
+                }
+                
+                // If user doesn't exist or not admin, deny access
+                if (!user || user.role !== 'admin') {
+                    showError('Access Denied! You do not have admin privileges.');
+                    return;
+                }
+                
+                currentUser = user;
+                
+                // Load dashboard
+                await loadDashboard();
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('An error occurred while loading the dashboard.');
+            }
+        }
+        
+        // ============================================
+        // DASHBOARD LOADING
+        // ============================================
+        
+        async function loadDashboard() {
+            try {
+                // Fetch all statistics
+                const [usersCount, minersCount, depositsCount, withdrawalsCount, tasksCount, recentUsers, activeMiners, pendingDeposits] = await Promise.all([
+                    getUsersCount(),
+                    getActiveMinersCount(),
+                    getPendingDepositsCount(),
+                    getPendingWithdrawalsCount(),
+                    getTasksCount(),
+                    getRecentUsers(),
+                    getActiveMiners(),
+                    getPendingDeposits()
+                ]);
+                
+                // Build dashboard HTML
+                const dashboardHTML = `
+                    <!-- Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon users"><i class="fas fa-users"></i></div>
+                            <div class="stat-value">${usersCount}</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon miners"><i class="fas fa-server"></i></div>
+                            <div class="stat-value">${minersCount}</div>
+                            <div class="stat-label">Active Miners</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon deposits"><i class="fas fa-download"></i></div>
+                            <div class="stat-value">${depositsCount}</div>
+                            <div class="stat-label">Pending Deposits</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon withdrawals"><i class="fas fa-upload"></i></div>
+                            <div class="stat-value">${withdrawalsCount}</div>
+                            <div class="stat-label">Pending Withdrawals</div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon tasks"><i class="fas fa-tasks"></i></div>
+                            <div class="stat-value">${tasksCount}</div>
+                            <div class="stat-label">Active Tasks</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <div class="section-title">
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </div>
+                        <div class="actions-grid">
+                            <a href="users.html" class="action-btn">
+                                <i class="fas fa-user-shield"></i>
+                                <span>Manage Users</span>
+                            </a>
+                            <a href="broadcast.html" class="action-btn">
+                                <i class="fas fa-bullhorn"></i>
+                                <span>Broadcast</span>
+                            </a>
+                            <a href="machineminers.html" class="action-btn">
+                                <i class="fas fa-coins"></i>
+                                <span>Manage Miners</span>
+                            </a>
+                            <a href="task.html" class="action-btn">
+                                <i class="fas fa-tasks"></i>
+                                <span>Manage Tasks</span>
+                            </a>
+                            <a href="SystemSettings.html" class="action-btn">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Users -->
+                    <div class="activity-section">
+                        <div class="section-title">
+                            <i class="fas fa-user-plus"></i>
+                            Recent Users
+                        </div>
+                        <div class="table-container">
+                            ${recentUsers.length > 0 ? `
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                            <th>Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${recentUsers.map(user => `
+                                            <tr>
+                                                <td>
+                                                    @${user.username || 'Anonymous'}
+                                                    ${user.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}
+                                                    ${user.banned ? '<i class="fas fa-ban banned-badge"></i>' : ''}
+                                                </td>
+                                                <td>${parseFloat(user.balance).toFixed(4)}</td>
+                                                <td>
+                                                    ${user.banned ? '<span class="status-badge pending">Banned</span>' : '<span class="status-badge active">Active</span>'}
+                                                </td>
+                                                <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            ` : '<div class="empty-state"><i class="fas fa-users-slash"></i><p>No users yet</p></div>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Active Miners -->
+                    <div class="activity-section">
+                        <div class="section-title">
+                            <i class="fas fa-server"></i>
+                            Active Miners
+                        </div>
+                        <div class="table-container">
+                            ${activeMiners.length > 0 ? `
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Miner</th>
+                                            <th>Crypto</th>
+                                            <th>Earnings</th>
+                                            <th>Ends</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${activeMiners.map(miner => `
+                                            <tr>
+                                                <td>@${miner.users?.username || 'Unknown'}</td>
+                                                <td>${miner.miner_name}</td>
+                                                <td>${miner.crypto}</td>
+                                                <td>${parseFloat(miner.total_earned).toFixed(4)}</td>
+                                                <td>${new Date(miner.end_time).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            ` : '<div class="empty-state"><i class="fas fa-server"></i><p>No active miners</p></div>'}
+                        </div>
+                    </div>
+                    
+                    <!-- Pending Deposits -->
+                    <div class="activity-section">
+                        <div class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Pending Deposits
+                        </div>
+                        <div class="table-container">
+                            ${pendingDeposits.length > 0 ? `
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Crypto</th>
+                                            <th>Amount</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${pendingDeposits.map(deposit => `
+                                            <tr>
+                                                <td>@${deposit.users?.username || 'Unknown'}</td>
+                                                <td>${deposit.crypto}</td>
+                                                <td>${parseFloat(deposit.amount).toFixed(4)}</td>
+                                                <td>${new Date(deposit.created_at).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            ` : '<div class="empty-state"><i class="fas fa-check-circle"></i><p>No pending deposits</p></div>'}
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('mainContent').innerHTML = dashboardHTML;
+                
+            } catch (error) {
+                console.error('Dashboard loading error:', error);
+                showError('Failed to load dashboard data.');
+            }
+        }
+        
+        // ============================================
+        // DATA FETCHING FUNCTIONS
+        // ============================================
+        
+        async function getUsersCount() {
+            const { count, error } = await supabase
+                .from('users')
+                .select('*', { count: 'exact', head: true });
+            return error ? 0 : count;
+        }
+        
+        async function getActiveMinersCount() {
+            const { count, error } = await supabase
+                .from('miners')
+                .select('*', { count: 'exact', head: true })
+                .eq('active', true);
+            return error ? 0 : count;
+        }
+        
+        async function getPendingDepositsCount() {
+            const { count, error } = await supabase
+                .from('deposits')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+            return error ? 0 : count;
+        }
+        
+        async function getPendingWithdrawalsCount() {
+            const { count, error } = await supabase
+                .from('withdrawals')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending');
+            return error ? 0 : count;
+        }
+        
+        async function getTasksCount() {
+            const { count, error } = await supabase
+                .from('tasks')
+                .select('*', { count: 'exact', head: true })
+                .eq('active', true);
+            return error ? 0 : count;
+        }
+        
+        async function getRecentUsers() {
+            const { data, error } = await supabase
+                .from('users')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(5);
+            return error ? [] : data;
+        }
+        
+        async function getActiveMiners() {
+            const { data, error } = await supabase
+                .from('miners')
+                .select('*, users(username)')
+                .eq('active', true)
+                .order('created_at', { ascending: false })
+                .limit(5);
+            return error ? [] : data;
+        }
+        
+        async function getPendingDeposits() {
+            const { data, error } = await supabase
+                .from('deposits')
+                .select('*, users(username)')
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false })
+                .limit(5);
+            return error ? [] : data;
+        }
+        
+        // ============================================
+        // ERROR HANDLING
+        // ============================================
+        
+        function showError(message) {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        // Start app when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
