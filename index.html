@@ -391,15 +391,16 @@
             font-weight: 500;
         }
     </style>
+ </style>
 </head>
 <body>
-
     <div class="container">
+
         <div class="loading" id="loading">
             <div class="spinner"></div>
             <p>Initializing...</p>
         </div>
-
+        
         <div id="mainContent" style="display: none;">
             
             <button class="admin-button" id="adminBtn" onclick="window.location.href='admin.html'">
@@ -501,7 +502,7 @@
         let currentUser = null;
         let botUsername = '';
         const minerIntervals = {};
-
+        
         // --- App Initialization ---
         
         // Function to get bot username
@@ -516,12 +517,13 @@
                 console.error('Error getting bot username:', error);
             }
         }
-
+        
         // Initialize app
         async function initApp() {
             try {
                 tg.ready();
                 tg.expand();
+                // Set theme colors to match CSS
                 tg.setHeaderColor('#0a0e27');
                 tg.setBackgroundColor('#0a0e27');
                 
@@ -529,7 +531,7 @@
                 
                 const user = tg.initDataUnsafe?.user;
                 const startParam = tg.initDataUnsafe?.start_param;
-
+                
                 if (!user) {
                     // For testing in browser
                     // user = { id: 12345, first_name: 'Test', username: 'testuser', photo_url: null };
@@ -574,7 +576,7 @@
                         document.getElementById('loading').innerHTML = `<p style="color: #ff6464;">Error creating your account: ${createError.message}</p>`;
                         return;
                     }
-
+                    
                     if (createdUser) {
                         currentUser = createdUser;
                         localStorage.setItem('userData', JSON.stringify(createdUser));
@@ -600,17 +602,17 @@
                     document.getElementById('loading').innerHTML = '<p style="color: #ff6464;"><i class="fas fa-ban"></i><br><br>Your account has been banned</p>';
                     return;
                 }
-
+                
                 // Load all user data into the UI
                 await loadUserData();
                 
                 // Show the main content
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
-
+                
             } catch (error) {
                 console.error('Error during app initialization:', error);
-                document.getElementById('loading').style.display = 'block';
+                document.getElementById('loading').style.display = 'flex'; // Keep loading visible
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('loading').innerHTML = `
                     <p style="color: #ff6464;">
@@ -624,9 +626,9 @@
                 `;
             }
         }
-
+        
         // --- Data Loading Functions ---
-
+        
         // Load user data into UI
         async function loadUserData() {
             if (!currentUser) return;
@@ -639,8 +641,8 @@
             // Load profile
             document.getElementById('userName').textContent = currentUser.first_name || 'User';
             document.getElementById('userUsername').textContent = currentUser.username ? '@' + currentUser.username : '';
-            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(2);
-            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(2);
+            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(6); // Show more precision
+            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(6); // Show more precision
             document.getElementById('referralCount').textContent = currentUser.referral_count || 0;
             
             if (currentUser.photo_url) {
@@ -653,7 +655,7 @@
             // Load active miners
             await loadActiveMiners();
         }
-
+        
         // Load active miners
         async function loadActiveMiners() {
             const { data: miners, error } = await supabase_client
@@ -664,6 +666,9 @@
             
             const minersContainer = document.getElementById('minersContainer');
             
+            // Clear any existing intervals before reloading
+            Object.values(minerIntervals).forEach(interval => clearInterval(interval));
+
             if (!miners || miners.length === 0) {
                 minersContainer.innerHTML = `
                     <div class="no-miners">
@@ -674,7 +679,7 @@
                 return;
             }
             
-            minersContainer.innerHTML = '';
+            minersContainer.innerHTML = ''; // Clear existing miners
             
             miners.forEach(miner => {
                 const endTime = new Date(miner.end_time).getTime();
@@ -693,6 +698,8 @@
                 const minerCard = document.createElement('div');
                 minerCard.className = `miner-card ${isActive ? 'active' : ''}`;
                 
+                // *** MAJOR FIX WAS HERE ***
+                // Changed `$$ {miner.crypto}` to `${miner.crypto}` in the template literal.
                 minerCard.innerHTML = `
                     <div class="miner-header">
                         <div class="crypto-icon">${cryptoIcon}</div>
@@ -704,11 +711,11 @@
                     <div class="miner-stats">
                         <div class="miner-stat">
                             <span class="miner-stat-label">Earnings/Hour</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)}$$ {miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)} ${miner.crypto}</span>
                         </div>
                         <div class="miner-stat">
                             <span class="miner-stat-label">Total Earned</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)}$$ {miner.crypto}</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)} ${miner.crypto}</span>
                         </div>
                         ${isActive ? `
                             <div class="miner-stat">
@@ -737,15 +744,20 @@
                 }
             });
         }
-
+        
         // --- Core Logic Functions ---
-
+        
         // Countdown timer for miners
         function startMinerCountdown(miner) {
             const timerElement = document.querySelector(`[data-timer="${miner.id}"]`);
             const progressBar = document.getElementById(`progress-${miner.id}`);
             if (!timerElement) return;
 
+            // Clear existing interval for this miner, if any
+            if (minerIntervals[miner.id]) {
+                clearInterval(minerIntervals[miner.id]);
+            }
+            
             const endTime = new Date(miner.end_time).getTime();
             const totalDuration = miner.duration_hours * 3600000;
             
@@ -755,9 +767,11 @@
                 
                 if (diff <= 0) {
                     clearInterval(minerIntervals[miner.id]);
+                    delete minerIntervals[miner.id]; // Remove from tracking
                     timerElement.textContent = 'EXPIRED';
                     timerElement.style.color = '#ff6464';
                     if (progressBar) progressBar.style.width = '0%';
+                    
                     // Pass the full miner object to the expiration handler
                     handleMinerExpired(miner);
                     return;
@@ -776,23 +790,23 @@
                 }
             };
             
-            updateTimer();
+            updateTimer(); // Run once immediately
             const interval = setInterval(updateTimer, 1000);
             minerIntervals[miner.id] = interval;
         }
-
-        // *** CRITICAL FIX: Handle miner expiration ***
+        
+        // Handle miner expiration
         async function handleMinerExpired(miner) {
-            // Clear interval
+            // Clear interval just in case
             if (minerIntervals && minerIntervals[miner.id]) {
                 clearInterval(minerIntervals[miner.id]);
                 delete minerIntervals[miner.id];
             }
-
+            
             try {
                 // 1. Calculate final earnings
                 const earnings = parseFloat(miner.earnings_rate) * parseFloat(miner.duration_hours);
-
+                
                 // 2. Get current user balance to prevent race conditions
                 const { data: user, error: userError } = await supabase_client
                     .from('users')
@@ -801,7 +815,7 @@
                     .single();
                 
                 if (userError) throw new Error(`User fetch failed: ${userError.message}`);
-
+                
                 // 3. Calculate new totals
                 const newBalance = (parseFloat(user.balance) || 0) + earnings;
                 const newTotalEarned = (parseFloat(user.total_earned) || 0) + earnings;
@@ -819,7 +833,7 @@
                     .from('miners')
                     .update({ active: false, total_earned: earnings })
                     .eq('id', miner.id);
-
+                
                 // 6. Log the transaction
                 await supabase_client
                     .from('transactions')
@@ -832,12 +846,16 @@
                     });
                 
                 // 7. Send Telegram notification
-                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)}$$ {miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
+                
+                // *** MAJOR FIX WAS HERE ***
+                // Changed `$$ {miner.crypto}` to `${miner.crypto}`
+                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)} ${miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
                 
                 // Fix: Use window.location.origin to build the full URL
+                // This assumes 'miners.html' is in the same directory as 'index.html'
                 const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
                 const minersUrl = baseUrl + 'miners.html';
-
+                
                 await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -854,15 +872,19 @@
                     })
                 });
                 
-                // 8. Reload UI
+                // 8. Reload UI to reflect changes
+                // First, update local currentUser object for immediate UI refresh
+                currentUser.balance = newBalance;
+                currentUser.total_earned = newTotalEarned;
+                // Then reload all data
                 await loadUserData();
-
+                
             } catch (error) {
                 console.error(`Error handling expiration for miner ${miner.id}:`, error);
                 // Optionally send a failure message to user
             }
         }
-
+        
         // Handle referral bonus
         async function handleReferralBonus(referrerId, newUserId) {
             try {
@@ -882,16 +904,16 @@
                         .select('balance, referral_count')
                         .eq('telegram_id', referrerId)
                         .single();
-
+                    
                     if (referrerError || !referrer) {
                         console.error('Referrer not found:', referrerId);
                         return;
                     }
-
+                    
                     // Update referrer's balance and count
                     const newBalance = (parseFloat(referrer.balance) || 0) + bonusAmount;
                     const newRefCount = (referrer.referral_count || 0) + 1;
-
+                    
                     await supabase_client
                         .from('users')
                         .update({ balance: newBalance, referral_count: newRefCount })
@@ -961,7 +983,6 @@
         
         // --- Start App ---
         initApp();
-
     </script>
 </body>
 </html>
