@@ -394,592 +394,596 @@
 </head>
 <body>
 
-    <div class="container">
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Initializing...</p>
-        </div>
+    <div class="container">
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Initializing...</p>
+        </div>
 
-        <div id="mainContent" style="display: none;">
-            
-            <button class="admin-button" id="adminBtn" onclick="window.location.href='admin.html'">
-                <i class="fas fa-shield-alt"></i> Admin Panel
-            </button>
-            
-            <div class="header">
-                <div class="profile">
-                    <img class="profile-img" id="userPhoto" src="https://via.placeholder.com/60" alt="Profile">
-                    <div class="profile-info">
-                        <h2>
-                            <span id="userName">User</span>
-                            <span class="verified-badge" id="verifiedBadge" style="display: none;">
-                                <i class="fas fa-check-circle"></i>
-                            </span>
-                        </h2>
-                        <p id="userUsername">@username</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="balance-card">
-                <div class="balance-label">
-                    <i class="fas fa-wallet"></i> Total Balance
-                </div>
-                <div class="balance-amount">
-                    <span id="userBalance">0.00</span>
-                    <i class="fas fa-coins"></i>
-                </div>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="action-button deposit" onclick="window.location.href='deposit.html'">
-                    <i class="fas fa-arrow-circle-down"></i> Deposit
-                </button>
-                <button class="action-button" onclick="window.location.href='withdraw.html'">
-                    <i class="fas fa-arrow-circle-up"></i> Withdraw
-                </button>
-            </div>
-            
-            <div class="miners-section">
-                <h3 class="section-title">
-                    <i class="fas fa-server"></i> Active Miners
-                </h3>
-                <div class="miners-scroll" id="minersContainer">
-                    </div>
-            </div>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="stat-value" id="totalEarned">0.00</div>
-                    <div class="stat-label">Total Earned</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="stat-value" id="referralCount">0</div>
-                    <div class="stat-label">Referrals</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item active">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="miners.html" class="nav-item">
-            <i class="fas fa-server"></i>
-            <span>Miners</span>
-        </a>
-        <a href="tasks.html" class="nav-item">
-            <i class="fas fa-tasks"></i>
-            <span>Tasks</span>
-        </a>
-        <a href="invite.html" class="nav-item">
-            <i class="fas fa-user-plus"></i>
-            <span>Invite</span>
-        </a>
-        <a href="settings.html" class="nav-item">
-            <i class="fas fa-cog"></i>
-            <span>Settings</span>
-        </a>
-    </nav>
-    
-    <script>
-        // --- Configuration ---
-        // !! IMPORTANT: REPLACE WITH YOUR VALUES !!
-        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
-        const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
-        const ADMIN_TELEGRAM_ID = 5727413041; // Replace with your admin Telegram ID
-        
-        // --- Globals ---
-        const supabase_client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const tg = window.Telegram.WebApp;
-        
-        let currentUser = null;
-        let botUsername = '';
-        const minerIntervals = {};
+        <div id="mainContent" style="display: none;">
+            
+            <button class="admin-button" id="adminBtn" onclick="window.location.href='admin.html'">
+                <i class="fas fa-shield-alt"></i> Admin Panel
+            </button>
+            
+            <div class="header">
+                <div class="profile">
+                    <img class="profile-img" id="userPhoto" src="https://via.placeholder.com/60" alt="Profile">
+                    <div class="profile-info">
+                        <h2>
+                            <span id="userName">User</span>
+                            <span class="verified-badge" id="verifiedBadge" style="display: none;">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                        </h2>
+                        <p id="userUsername">@username</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="balance-card">
+                <div class="balance-label">
+                    <i class="fas fa-wallet"></i> Total Balance
+                </div>
+                <div class="balance-amount">
+                    <span id="userBalance">0.00</span>
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="action-button deposit" onclick="window.location.href='deposit.html'">
+                    <i class="fas fa-arrow-circle-down"></i> Deposit
+                </button>
+                <button class="action-button" onclick="window.location.href='withdraw.html'">
+                    <i class="fas fa-arrow-circle-up"></i> Withdraw
+                </button>
+            </div>
+            
+            <div class="miners-section">
+                <h3 class="section-title">
+                    <i class="fas fa-server"></i> Active Miners
+                </h3>
+                <div class="miners-scroll" id="minersContainer">
+                    </div>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-value" id="totalEarned">0.00</div>
+                    <div class="stat-label">Total Earned</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-value" id="referralCount">0</div>
+                    <div class="stat-label">Referrals</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="miners.html" class="nav-item">
+            <i class="fas fa-server"></i>
+            <span>Miners</span>
+        </a>
+        <a href="tasks.html" class="nav-item">
+            <i class="fas fa-tasks"></i>
+            <span>Tasks</span>
+        </a>
+        <a href="invite.html" class="nav-item">
+            <i class="fas fa-user-plus"></i>
+            <span>Invite</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </a>
+    </nav>
+    
+    <script>
+        // --- Configuration ---
+        // !! IMPORTANT: REPLACE WITH YOUR VALUES !!
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
+        const ADMIN_TELEGRAM_ID = 5727413041; // Replace with your admin Telegram ID
+        
+        // --- Globals ---
+        const supabase_client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const tg = window.Telegram.WebApp;
+        
+        let currentUser = null;
+        let botUsername = '';
+        const minerIntervals = {};
 
-        // --- App Initialization ---
-        
-        // Function to get bot username
-        async function getBotUsername() {
-            try {
-                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMe`);
-                const data = await response.json();
-                if (data.ok) {
-                    botUsername = data.result.username;
-                }
-            } catch (error) {
-                console.error('Error getting bot username:', error);
-            }
-        }
+        // --- App Initialization ---
+        
+        // Function to get bot username
+        async function getBotUsername() {
+            try {
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getMe`);
+                const data = await response.json();
+                if (data.ok) {
+                    botUsername = data.result.username;
+                }
+            } catch (error) {
+                console.error('Error getting bot username:', error);
+            }
+        }
 
-        // Initialize app
-        async function initApp() {
-            try {
-                tg.ready();
-                tg.expand();
-                tg.setHeaderColor('#0a0e27');
-                tg.setBackgroundColor('#0a0e27');
-                
-                await getBotUsername();
-                
-                const user = tg.initDataUnsafe?.user;
-                const startParam = tg.initDataUnsafe?.start_param;
+        // Initialize app
+        async function initApp() {
+            try {
+                tg.ready();
+                tg.expand();
+                tg.setHeaderColor('#0a0e27');
+                tg.setBackgroundColor('#0a0e27');
+                
+                await getBotUsername();
+                
+                const user = tg.initDataUnsafe?.user;
+                const startParam = tg.initDataUnsafe?.start_param;
 
-                if (!user) {
-                    // For testing in browser
-                    // user = { id: 12345, first_name: 'Test', username: 'testuser', photo_url: null };
-                    document.getElementById('loading').innerHTML = '<p style="color: #ff6464;">Please open this app from Telegram.</p>';
-                    return;
-                }
+                if (!user) {
+                    // For testing in browser
+                    // user = { id: 12345, first_name: 'Test', username: 'testuser', photo_url: null };
+                    document.getElementById('loading').innerHTML = '<p style="color: #ff6464;">Please open this app from Telegram.</p>';
+                    return;
+                }
 
-                // Check/create user in database
-                const { data: existingUser, error } = await supabase_client
-                    .from('users')
-                    .select('*')
-                    .eq('telegram_id', user.id)
-                    .single();
-                
-                if (existingUser) {
-                    currentUser = existingUser;
-                    localStorage.setItem('userData', JSON.stringify(existingUser));
-                    await updateLastActive(user.id);
-                } else {
-                    // New user - create account
-                    const newUser = {
-                        telegram_id: user.id,
-                        username: user.username || '',
-                        first_name: user.first_name || '',
-                        last_name: user.last_name || '',
-                        photo_url: user.photo_url || '',
-                        balance: 0,
-                        role: user.id === ADMIN_TELEGRAM_ID ? 'admin' : 'user',
-                        verified: false,
-                        banned: false,
-                        referrer_id: startParam ? parseInt(startParam) : null
-                    };
+                // Check/create user in database
+                const { data: existingUser, error } = await supabase_client
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', user.id)
+                    .single();
+                
+                if (existingUser) {
+                    currentUser = existingUser;
+                    localStorage.setItem('userData', JSON.stringify(existingUser));
+                    await updateLastActive(user.id);
+                } else {
+                    // New user - create account
+                    const newUser = {
+                        telegram_id: user.id,
+                        username: user.username || '',
+                        first_name: user.first_name || '',
+                        last_name: user.last_name || '',
+                        photo_url: user.photo_url || '',
+                        balance: 0,
+                        role: user.id === ADMIN_TELEGRAM_ID ? 'admin' : 'user',
+                        verified: false,
+                        banned: false,
+                        referrer_id: startParam ? parseInt(startParam) : null
+                    };
 
-                    const { data: createdUser, error: createError } = await supabase_client
-                        .from('users')
-                        .insert([newUser])
-                        .select()
-                        .single();
-                    
-                    if (createError) {
-                        console.error('Error creating user:', createError);
-                        document.getElementById('loading').innerHTML = `<p style="color: #ff6464;">Error creating your account: ${createError.message}</p>`;
-                        return;
-                    }
+                    const { data: createdUser, error: createError } = await supabase_client
+                        .from('users')
+                        .insert([newUser])
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.error('Error creating user:', createError);
+                        document.getElementById('loading').innerHTML = `<p style="color: #ff6464;">Error creating your account: ${createError.message}</p>`;
+                        return;
+                    }
 
-                    if (createdUser) {
-                        currentUser = createdUser;
-                        localStorage.setItem('userData', JSON.stringify(createdUser));
-                        
-                        // Handle referral bonus
-                        if (startParam) {
-                            await handleReferralBonus(parseInt(startParam), user.id);
-                        }
-                        // Give registration bonus
-                        await giveRegistrationBonus(user.id);
-                        
-                        // Re-fetch user data to get updated balance from bonuses
-                        const { data: finalUser } = await supabase_client.from('users').select('*').eq('telegram_id', user.id).single();
-                        currentUser = finalUser || createdUser;
-                    } else {
-                        document.getElementById('loading').innerHTML = `<p style="color: #ff6464;">Failed to create user account. Please restart the app.</p>`;
-                        return;
-                    }
-                }
-                
-                // Check if banned
-                if (currentUser.banned) {
-                    document.getElementById('loading').innerHTML = '<p style="color: #ff6464;"><i class="fas fa-ban"></i><br><br>Your account has been banned</p>';
-                    return;
-                }
+                    if (createdUser) {
+                        currentUser = createdUser;
+                        localStorage.setItem('userData', JSON.stringify(createdUser));
+                        
+                        // Handle referral bonus
+                        if (startParam) {
+                            await handleReferralBonus(parseInt(startParam), user.id);
+                        }
+                        // Give registration bonus
+                        await giveRegistrationBonus(user.id);
+                        
+                        // Re-fetch user data to get updated balance from bonuses
+                        const { data: finalUser } = await supabase_client.from('users').select('*').eq('telegram_id', user.id).single();
+                        currentUser = finalUser || createdUser;
+                    } else {
+                        document.getElementById('loading').innerHTML = `<p style="color: #ff6464;">Failed to create user account. Please restart the app.</p>`;
+                        return;
+                    }
+                }
+                
+                // Check if banned
+                if (currentUser.banned) {
+                    document.getElementById('loading').innerHTML = '<p style="color: #ff6464;"><i class="fas fa-ban"></i><br><br>Your account has been banned</p>';
+                    return;
+                }
 
-                // Load all user data into the UI
-                await loadUserData();
-                
-                // Show the main content
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('mainContent').style.display = 'block';
+                // Load all user data into the UI
+                await loadUserData();
+                
+                // Show the main content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
 
-            } catch (error) {
-                console.error('Error during app initialization:', error);
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('loading').innerHTML = `
-                    <p style="color: #ff6464;">
-                        <i class="fas fa-exclamation-triangle"></i><br><br>
-                        An error occurred.<br>
-                        Please try restarting the app.
-                    </p>
-                    <p style="font-size: 10px; opacity: 0.5; margin-top: 10px;">
-                        Error: ${error.message}
-                    </p>
-                `;
-            }
-        }
+            } catch (error) {
+                console.error('Error during app initialization:', error);
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: #ff6464;">
+                        <i class="fas fa-exclamation-triangle"></i><br><br>
+                        An error occurred.<br>
+                        Please try restarting the app.
+                  _ </p>
+                    <p style="font-size: 10px; opacity: 0.5; margin-top: 10px;">
+                        Error: ${error.message}
+                    </p>
+                `;
+            }
+        }
 
-        // --- Data Loading Functions ---
+        // --- Data Loading Functions ---
 
-        // Load user data into UI
-        async function loadUserData() {
-            if (!currentUser) return;
-            
-            // Show admin button if admin
-            if (currentUser.role === 'admin') {
-                document.getElementById('adminBtn').style.display = 'block';
-            }
-            
-            // Load profile
-            document.getElementById('userName').textContent = currentUser.first_name || 'User';
-            document.getElementById('userUsername').textContent = currentUser.username ? '@' + currentUser.username : '';
-            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(4); // Show more precision
-            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(4);
-            document.getElementById('referralCount').textContent = currentUser.referral_count || 0;
-            
-            if (currentUser.photo_url) {
-                // We'll try to get the photo via the bot
-                try {
-                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${currentUser.telegram_id}&limit=1`);
-                    const data = await response.json();
-                    if (data.ok && data.result.photos.length > 0) {
-                        const fileId = data.result.photos[0][0].file_id;
-                        const fileResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-                        const fileData = await fileResponse.json();
-                        if (fileData.ok) {
-                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot$${BOT_TOKEN}/$$ {fileData.result.file_path}`;
-                        } else {
-                            document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
-                        }
-                    }
-                } catch (e) {
-                     document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
-                }
-            } else {
-                 document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
-            }
+        // Load user data into UI
+        async function loadUserData() {
+            if (!currentUser) return;
+            
+            // Show admin button if admin
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminBtn').style.display = 'block';
+            }
+            
+            // Load profile
+            document.getElementById('userName').textContent = currentUser.first_name || 'User';
+            document.getElementById('userUsername').textContent = currentUser.username ? '@' + currentUser.username : '';
+            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(4); // Show more precision
+            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(4);
+            document.getElementById('referralCount').textContent = currentUser.referral_count || 0;
+            
+            if (currentUser.photo_url) {
+                // We'll try to get the photo via the bot
+                try {
+                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${currentUser.telegram_id}&limit=1`);
+                    const data = await response.json();
+                    if (data.ok && data.result.photos.length > 0) {
+                        const fileId = data.result.photos[0][0].file_id;
+                        const fileResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+                        const fileData = await fileResponse.json();
+                        if (fileData.ok) {
+                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+                        } else {
+                            document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+                        }
+                    }
+                } catch (e) {
+                     document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+                }
+            } else {
+                 document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+            }
 
-            if (currentUser.verified) {
-                document.getElementById('verifiedBadge').style.display = 'inline-block';
-            }
-            
-                    // Load active miners
-        async function loadActiveMiners() {
-            const { data: miners, error } = await supabase_client
-                .from('miners')
-                .select('*')
-                .eq('user_id', currentUser.telegram_id)
-                .order('created_at', { ascending: false });
-            
-            const minersContainer = document.getElementById('minersContainer');
-            
-            if (!miners || miners.length === 0) {
-                minersContainer.innerHTML = `
-                    <div class="no-miners">
-                        <i class="fas fa-server"></i>
-                        <p>No miners found. Visit the Miners page to get started!</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            minersContainer.innerHTML = '';
-            
-            miners.forEach(miner => {
-                const endTime = new Date(miner.end_time).getTime();
-                const now = Date.now();
-                const isActive = miner.active && endTime > now;
-                const timeRemaining = endTime - now;
-                const totalDuration = miner.duration_hours * 3600000; // hours to ms
-                const progress = Math.max(0, Math.min(100, ((totalDuration - timeRemaining) / totalDuration) * 100));
-                
-                // Get crypto icon
-                const cryptoIcons = {
-                    'BTC': '₿', 'ETH': 'Ξ', 'BNB': 'B', 'SOL': '◎', 'TON': '💎', 'USDT': '$'
-                };
-                const cryptoIcon = cryptoIcons[miner.crypto] || '₿';
-                
-                const minerCard = document.createElement('div');
-                minerCard.className = `miner-card ${isActive ? 'active' : ''}`;
-                
-                minerCard.innerHTML = `
-                    <div class="miner-header">
-                        <div class="crypto-icon">${cryptoIcon}</div>
-                        <span class="miner-status ${isActive ? 'active' : 'inactive'}">
-                            ${isActive ? '● Active' : '○ Expired'}
-                        </span>
-                    </div>
-                    <div class="miner-name">${miner.miner_name}</div>
-                    <div class="miner-stats">
-                        <div class="miner-stat">
-                            <span class="miner-stat-label">Earnings/Hour</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)} ${miner.crypto}</span>
-                        </div>
-                        <div class="miner-stat">
-                            <span class="miner-stat-label">Total Earned</span>
-                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)} ${miner.crypto}</span>
-                        </div>
-                        ${isActive ? `
-                            <div class="miner-stat">
-                                <span class="miner-stat-label">Time Remaining</span>
-                                <span class="miner-stat-value" data-timer="${miner.id}">Calculating...</span>
-                            </div>
-                        ` : `
-                            <div class="miner-stat">
-                                <span class="miner-stat-label">Status</span>
-                                <span class="miner-stat-value" style="color: #ff6464;">Expired</span>
-                            </div>
-                        `}
-                    </div>
-                    ${isActive ? `
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" id="progress-${miner.id}" style="width: ${progress}%"></div>
-                        </div>
-                    ` : ''}
-                `;
-                
-                minersContainer.appendChild(minerCard);
-                
-                if (isActive) {
-                    // Pass the whole miner object to the countdown function
-                    startMinerCountdown(miner);
-                }
-            });
-        }
+            if (currentUser.verified) {
+                document.getElementById('verifiedBadge').style.display = 'inline-block';
+            }
+            
+            // Load active miners
+            await loadActiveMiners();
+        }
 
-        // --- Core Logic Functions ---
+        // Load active miners
+        async function loadActiveMiners() {
+            const { data: miners, error } = await supabase_client
+                .from('miners')
+                .select('*')
+                .eq('user_id', currentUser.telegram_id)
+                .order('created_at', { ascending: false });
+            
+            const minersContainer = document.getElementById('minersContainer');
+            
+            if (!miners || miners.length === 0) {
+                minersContainer.innerHTML = `
+                    <div class="no-miners">
+                        <i class="fas fa-server"></i>
+                        <p>No miners found. Visit the Miners page to get started!</p>
+                    </div>
+                `;
+      _           return;
+            }
+            
+            minersContainer.innerHTML = '';
+            
+            miners.forEach(miner => {
+                const endTime = new Date(miner.end_time).getTime();
+                const now = Date.now();
+                const isActive = miner.active && endTime > now;
+                const timeRemaining = endTime - now;
+                const totalDuration = miner.duration_hours * 3600000; // hours to ms
+                const progress = Math.max(0, Math.min(100, ((totalDuration - timeRemaining) / totalDuration) * 100));
+                
+                // Get crypto icon
+                const cryptoIcons = {
+                    'BTC': '₿', 'ETH': 'Ξ', 'BNB': 'B', 'SOL': '◎', 'TON': '💎', 'USDT': '$'
+                };
+                const cryptoIcon = cryptoIcons[miner.crypto] || '₿';
+                
+                const minerCard = document.createElement('div');
+                minerCard.className = `miner-card ${isActive ? 'active' : ''}`;
+                
+                minerCard.innerHTML = `
+                    <div class="miner-header">
+                        <div class="crypto-icon">${cryptoIcon}</div>
+                        <span class="miner-status ${isActive ? 'active' : 'inactive'}">
+                            ${isActive ? '● Active' : '○ Expired'}
+                        </span>
+                    </div>
+                    <div class="miner-name">${miner.miner_name}</div>
+                    <div class="miner-stats">
+                        <div class="miner-stat">
+                            <span class="miner-stat-label">Earnings/Hour</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.earnings_rate).toFixed(6)} ${miner.crypto}</span>
+                        </div>
+                        <div class="miner-stat">
+                            <span class="miner-stat-label">Total Earned</span>
+                            <span class="miner-stat-value">$${parseFloat(miner.total_earned).toFixed(6)} ${miner.crypto}</span>
+                        </div>
+                        ${isActive ? `
+                            <div class="miner-stat">
+                                <span class="miner-stat-label">Time Remaining</span>
+                                <span class="miner-stat-value" data-timer="${miner.id}">Calculating...</span>
+                            </div>
+                        ` : `
+                            <div class="miner-stat">
+                                <span class="miner-stat-label">Status</span>
+                                <span class="miner-stat-value" style="color: #ff6464;">Expired</span>
+                            </div>
+                        `}
+                    </div>
+                    ${isActive ? `
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="progress-${miner.id}" style="width: ${progress}%"></div>
+                        </div>
+                    ` : ''}
+                `;
+                
+                minersContainer.appendChild(minerCard);
+                
+                if (isActive) {
+                    // Pass the whole miner object to the countdown function
+                    startMinerCountdown(miner);
+                }
+            });
+        }
 
-        // Countdown timer for miners
-        function startMinerCountdown(miner) {
-            const timerElement = document.querySelector(`[data-timer="${miner.id}"]`);
-            const progressBar = document.getElementById(`progress-${miner.id}`);
-            if (!timerElement) return;
+        // --- Core Logic Functions ---
 
-            const endTime = new Date(miner.end_time).getTime();
-            const totalDuration = miner.duration_hours * 3600000;
-            
-            const updateTimer = () => {
-                const now = Date.now();
-                const diff = endTime - now;
-                
-                if (diff <= 0) {
-                    clearInterval(minerIntervals[miner.id]);
-                    timerElement.textContent = 'EXPIRED';
-                    timerElement.style.color = '#ff6464';
-                    if (progressBar) progressBar.style.width = '0%';
-                    // Pass the full miner object to the expiration handler
-                    handleMinerExpired(miner);
-                    return;
-                }
-                
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                
-                // Update progress bar
-                if (progressBar) {
-                    const progress = Math.max(0, Math.min(100, ((totalDuration - diff) / totalDuration) * 100));
-                    progressBar.style.width = `${progress}%`;
-                }
-            };
-            
-            updateTimer();
-            const interval = setInterval(updateTimer, 1000);
-            minerIntervals[miner.id] = interval;
-        }
+        // Countdown timer for miners
+        function startMinerCountdown(miner) {
+            const timerElement = document.querySelector(`[data-timer="${miner.id}"]`);
+            const progressBar = document.getElementById(`progress-${miner.id}`);
+            if (!timerElement) return;
 
-        // *** CRITICAL FIX: Handle miner expiration ***
-        async function handleMinerExpired(miner) {
-            // Clear interval
-            if (minerIntervals && minerIntervals[miner.id]) {
-                clearInterval(minerIntervals[miner.id]);
-                delete minerIntervals[miner.id];
-            }
+            const endTime = new Date(miner.end_time).getTime();
+            const totalDuration = miner.duration_hours * 3600000;
+            
+            const updateTimer = () => {
+                const now = Date.now();
+                const diff = endTime - now;
+                
+                if (diff <= 0) {
+                    clearInterval(minerIntervals[miner.id]);
+                    timerElement.textContent = 'EXPIRED';
+                    timerElement.style.color = '#ff6464';
+                    if (progressBar) progressBar.style.width = '0%';
+          _         // Pass the full miner object to the expiration handler
+                    handleMinerExpired(miner);
+                    return;
+                }
+                
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+          _     // Update progress bar
+                if (progressBar) {
+                    const progress = Math.max(0, Math.min(100, ((totalDuration - diff) / totalDuration) * 100));
+                    progressBar.style.width = `${progress}%`;
+                }
+            };
+            
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
+            minerIntervals[miner.id] = interval;
+        }
 
-            try {
-                // 1. Calculate final earnings
-                const earnings = parseFloat(miner.earnings_rate) * parseFloat(miner.duration_hours);
+        // *** CRITICAL FIX: Handle miner expiration ***
+        async function handleMinerExpired(miner) {
+            // Clear interval
+            if (minerIntervals && minerIntervals[miner.id]) {
+                clearInterval(minerIntervals[miner.id]);
+                delete minerIntervals[miner.id];
+            }
 
-                // 2. Get current user balance to prevent race conditions
-                const { data: user, error: userError } = await supabase_client
-                    .from('users')
-                    .select('balance, total_earned')
-                    .eq('telegram_id', currentUser.telegram_id)
-                    .single();
-                
-                if (userError) throw new Error(`User fetch failed: ${userError.message}`);
+            try {
+                // 1. Calculate final earnings
+                const earnings = parseFloat(miner.earnings_rate) * parseFloat(miner.duration_hours);
 
-                // 3. Calculate new totals
-                const newBalance = (parseFloat(user.balance) || 0) + earnings;
-                const newTotalEarned = (parseFloat(user.total_earned) || 0) + earnings;
-                
-                // 4. Update user balance and total earned
-                const { error: balanceError } = await supabase_client
-                    .from('users')
-                    .update({ balance: newBalance, total_earned: newTotalEarned })
-                    .eq('telegram_id', currentUser.telegram_id);
-                
-                if (balanceError) throw new Error(`Balance update failed: ${balanceError.message}`);
+                // 2. Get current user balance to prevent race conditions
+                const { data: user, error: userError } = await supabase_client
+                    .from('users')
+                  _ .select('balance, total_earned')
+                    .eq('telegram_id', currentUser.telegram_id)
+                    .single();
+                
+                if (userError) throw new Error(`User fetch failed: ${userError.message}`);
 
-                // 5. Update miner status to inactive and log total earned
-                await supabase_client
-                    .from('miners')
-                    .update({ active: false, total_earned: earnings })
-                    .eq('id', miner.id);
+                // 3. Calculate new totals
+                const newBalance = (parseFloat(user.balance) || 0) + earnings;
+                const newTotalEarned = (parseFloat(user.total_earned) || 0) + earnings;
+                
+                // 4. Update user balance and total earned
+                const { error: balanceError } = await supabase_client
+                    .from('users')
+                    .update({ balance: newBalance, total_earned: newTotalEarned })
+                    .eq('telegram_id', currentUser.telegram_id);
+                
+                if (balanceError) throw new Error(`Balance update failed: ${balanceError.message}`);
 
-                // 6. Log the transaction
-                await supabase_client
-                    .from('transactions')
-                    .insert({
-                        user_id: currentUser.telegram_id,
-                        type: 'mining',
-                        amount: earnings,
-                        description: `Earnings from ${miner.miner_name}`,
-                        reference_id: miner.id
-                    });
-                
-                // 7. Send Telegram notification
-                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)} ${miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
-                
-                // Fix: Use window.location.origin to build the full URL
-                const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
-                const minersUrl = baseUrl + 'miners.html';
+                // 5. Update miner status to inactive and log total earned
+                await supabase_client
+                    .from('miners')
+                    .update({ active: false, total_earned: earnings })
+                    .eq('id', miner.id);
 
-                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        chat_id: currentUser.telegram_id,
-                        text: message,
-                        parse_mode: 'Markdown',
-                        reply_markup: {
-                            inline_keyboard: [[
-                                // Fix: Use a proper web_app button
-                                { text: '🔄 Renew Miner', web_app: { url: minersUrl } }
-                            ]]
-                        }
-                    })
-                });
-                
-                // 8. Reload UI
-                await loadUserData();
+                // 6. Log the transaction
+                await supabase_client
+                    .from('transactions')
+                    .insert({
+                        user_id: currentUser.telegram_id,
+                        type: 'mining',
+                        amount: earnings,
+                        description: `Earnings from ${miner.miner_name}`,
+                        reference_id: miner.id
+                    });
+                
+                // 7. Send Telegram notification
+                const message = `⚠️ Your *${miner.miner_name}* has expired!\n\nYou earned: *$${earnings.toFixed(6)} ${miner.crypto}*.\n\nYour new balance is ${newBalance.toFixed(6)}. Click below to renew and continue earning.`;
+                
+                // Fix: Use window.location.origin to build the full URL
+                const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+                const minersUrl = baseUrl + 'miners.html';
 
-            } catch (error) {
-                console.error(`Error handling expiration for miner ${miner.id}:`, error);
-                // Optionally send a failure message to user
-            }
-        }
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: currentUser.telegram_id,
+                        text: message,
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                // Fix: Use a proper web_app button
+                                { text: '🔄 Renew Miner', web_app: { url: minersUrl } }
+                            ]]
+                        }
+                    })
+                });
+                
+                // 8. Reload UI
+                await loadUserData();
 
-        // Handle referral bonus
-        async function handleReferralBonus(referrerId, newUserId) {
-            try {
-                const { data: settings } = await supabase_client
-                    .from('settings')
-                    .select('*')
-                    .in('key', ['referral_enabled', 'referral_bonus']);
-                
-                const referralEnabled = settings?.find(s => s.key === 'referral_enabled')?.value === 'true';
-                const bonusAmount = parseFloat(settings?.find(s => s.key === 'referral_bonus')?.value || 0);
-                
-                if (referralEnabled && bonusAmount > 0 && referrerId !== newUserId) {
-                    
-                    // Get referrer data
-                    const { data: referrer, error: referrerError } = await supabase_client
-                        .from('users')
-                        .select('balance, referral_count')
-                        .eq('telegram_id', referrerId)
-                        .single();
+            } catch (error) {
+                console.error(`Error handling expiration for miner ${miner.id}:`, error);
+                // Optionally send a failure message to user
+            }
+        }
 
-                    if (referrerError || !referrer) {
-                        console.error('Referrer not found:', referrerId);
-                        return;
-                    }
+        // Handle referral bonus
+        async function handleReferralBonus(referrerId, newUserId) {
+            try {
+                const { data: settings } = await supabase_client
+                    .from('settings')
+                    .select('*')
+                    .in('key', ['referral_enabled', 'referral_bonus']);
+                
+                const referralEnabled = settings?.find(s => s.key === 'referral_enabled')?.value === 'true';
+                const bonusAmount = parseFloat(settings?.find(s => s.key === 'referral_bonus')?.value || 0);
+                
+                if (referralEnabled && bonusAmount > 0 && referrerId !== newUserId) {
+                    
+                    // Get referrer data
+                    const { data: referrer, error: referrerError } = await supabase_client
+                        .from('users')
+                        .select('balance, referral_count')
+                        .eq('telegram_id', referrerId)
+                        .single();
 
-                    // Update referrer's balance and count
-                    const newBalance = (parseFloat(referrer.balance) || 0) + bonusAmount;
-                    const newRefCount = (referrer.referral_count || 0) + 1;
+                    if (referrerError || !referrer) {
+Read 1 item
+                        console.error('Referrer not found:', referrerId);
+                        return;
+                    }
 
-                    await supabase_client
-                        .from('users')
-                        .update({ balance: newBalance, referral_count: newRefCount })
-                        .eq('telegram_id', referrerId);
-                    
-                    // Log transaction
-                    await supabase_client
-                        .from('transactions')
-                        .insert([{
-                            user_id: referrerId,
-                            type: 'referral',
-                            amount: bonusAmount,
-                            description: `Referral bonus for inviting user ${newUserId}`
-                        }]);
-                }
-            } catch (error) {
-                console.error('Error handling referral bonus:', error);
-            }
-        }
-        
-        // Give registration bonus
-        async function giveRegistrationBonus(userId) {
-             try {
-                const { data: settings } = await supabase_client
-                    .from('settings')
-                    .select('value')
-                    .eq('key', 'registration_bonus')
-                    .single();
-                
-                const bonus = parseFloat(settings?.value || 0);
-                if (bonus > 0) {
-                    await supabase_client
-                        .from('users')
-                        .update({ balance: bonus, total_earned: bonus })
-                        .eq('telegram_id', userId);
-                    
-                    await supabase_client
-                        .from('transactions')
-                        .insert([{
-                            user_id: userId,
-                            type: 'registration',
-                            amount: bonus,
-                            description: 'Registration bonus'
-                        }]);
-                }
-            } catch (error) {
-                console.error('Error giving registration bonus:', error);
-            }
-        }
-        
-        // Update last active
-        async function updateLastActive(userId) {
-            try {
-                await supabase_client
-                    .from('users')
-                    .update({ last_active: new Date().toISOString() })
-                    .eq('telegram_id', userId);
-            } catch (error) {
-                console.error('Error updating last active:', error);
-            }
-        }
-        
-        // Cleanup intervals on page unload
-        window.addEventListener('beforeunload', () => {
-            Object.values(minerIntervals).forEach(interval => clearInterval(interval));
-        });
-        
-        // --- Start App ---
-        initApp();
+                    // Update referrer's balance and count
+                    const newBalance = (parseFloat(referrer.balance) || 0) + bonusAmount;
+                    const newRefCount = (referrer.referral_count || 0) + 1;
 
-    </script>
+                    await supabase_client
+                        .from('users')
+                        .update({ balance: newBalance, referral_count: newRefCount })
+                        .eq('telegram_id', referrerId);
+                    
+                    // Log transaction
+                    await supabase_client
+                        .from('transactions')
+s                    .insert([{
+                            user_id: referrerId,
+                            type: 'referral',
+                            amount: bonusAmount,
+data                      description: `Referral bonus for inviting user ${newUserId}`
+                        }]);
+                }
+            } catch (error) {
+                console.error('Error handling referral bonus:', error);
+            }
+        }
+        
+        // Give registration bonus
+        async function giveRegistrationBonus(userId) {
+             try {
+                const { data: settings } = await supabase_client
+                    .from('settings')
+                    .select('value')
+s                .eq('key', 'registration_bonus')
+                    .single();
+                
+                const bonus = parseFloat(settings?.value || 0);
+                if (bonus > 0) {
+                    await supabase_client
+                        .from('users')
+                        .update({ balance: bonus, total_earned: bonus })
+s                    .eq('telegram_id', userId);
+                    
+                    await supabase_client
+A page                     .from('transactions')
+                        .insert([{
+                            user_id: userId,
+s                        type: 'registration',
+                D             amount: bonus,
+                            description: 'Registration bonus'
+                        }]);
+                }
+            } catch (error) {
+Two            console.error('Error giving registration bonus:', error);
+            }
+        }
+        
+        // Update last active
+        async function updateLastActive(userId) {
+            try {
+                await supabase_client
+                    .from('users')
+  D                 .update({ last_active: new Date().toISOString() })
+                    .eq('telegram_id', userId);
+            } catch (error) {
+                console.error('Error updating last active:', error);
+Following          }
+        }
+        
+        // Cleanup intervals on page unload
+        window.addEventListener('beforeunload', () => {
+            Object.values(minerIntervals).forEach(interval => clearInterval(interval));
+        });
+        
+        // --- Start App ---
+        initApp();
+
+    </script>
 </body>
 </html>
-
 
 
