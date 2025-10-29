@@ -639,32 +639,13 @@
             // Load profile
             document.getElementById('userName').textContent = currentUser.first_name || 'User';
             document.getElementById('userUsername').textContent = currentUser.username ? '@' + currentUser.username : '';
-            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(4); // Show more precision
-            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(4);
+            document.getElementById('userBalance').textContent = parseFloat(currentUser.balance || 0).toFixed(2);
+            document.getElementById('totalEarned').textContent = parseFloat(currentUser.total_earned || 0).toFixed(2);
             document.getElementById('referralCount').textContent = currentUser.referral_count || 0;
             
             if (currentUser.photo_url) {
-                // We'll try to get the photo via the bot
-                try {
-                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${currentUser.telegram_id}&limit=1`);
-                    const data = await response.json();
-                    if (data.ok && data.result.photos.length > 0) {
-                        const fileId = data.result.photos[0][0].file_id;
-                        const fileResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
-                        const fileData = await fileResponse.json();
-                        if (fileData.ok) {
-                            document.getElementById('userPhoto').src = `https://api.telegram.org/file/bot$${BOT_TOKEN}/$$ {fileData.result.file_path}`;
-                        } else {
-                            document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
-                        }
-                    }
-                } catch (e) {
-                     document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
-                }
-            } else {
-                 document.getElementById('userPhoto').src = 'https://via.placeholder.com/60';
+                document.getElementById('userPhoto').src = currentUser.photo_url;
             }
-
             if (currentUser.verified) {
                 document.getElementById('verifiedBadge').style.display = 'inline-block';
             }
