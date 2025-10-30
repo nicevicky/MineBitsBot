@@ -528,18 +528,18 @@
         }
     </style>
 </head>
+
 <body>
+
     <div class="container">
-        <!-- Header -->
+
         <div class="header">
             <h1><i class="fas fa-bullhorn"></i> Broadcast Message</h1>
             <p>Send personalized messages with custom button layouts</p>
         </div>
 
-        <!-- Message Container -->
         <div id="messageContainer"></div>
 
-        <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
                 <i class="fas fa-users"></i>
@@ -553,13 +553,12 @@
             </div>
         </div>
 
-        <!-- Broadcast Form -->
         <div class="card">
             <form id="broadcastForm">
-                <!-- Personalization Tags -->
+
                 <div class="personalization-options">
                     <h4><i class="fas fa-user-tag"></i> Personalization Tags</h4>
-                    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">
+                    <p style="font-size: 12px; color: var(--tg-hint); margin-bottom: 10px;">
                         Click to insert into your message
                     </p>
                     <button type="button" class="tag-button" data-tag="{username}">
@@ -579,22 +578,21 @@
                     </button>
                 </div>
 
-                <!-- Message Text -->
                 <div class="form-group">
                     <label><i class="fas fa-comment-dots"></i> Message Text</label>
-                    <textarea id="messageText" placeholder="Enter your broadcast message here... Use tags above for personalization." required></textarea>
+                    <textarea id="messageText"
+                        placeholder="Enter your broadcast message here... Use tags above for personalization. You can use <b>bold</b> and <i>italic</i> HTML tags."
+                        required></textarea>
                     <small>Use personalization tags to customize messages for each user</small>
                 </div>
 
-                <!-- Add Buttons Toggle -->
                 <div class="checkbox-group">
                     <input type="checkbox" id="addButtons">
                     <label for="addButtons">Add Inline Buttons</label>
                 </div>
 
-                <!-- Button Configuration -->
                 <div id="buttonConfiguration" style="display: none;">
-                    <!-- Layout Selection -->
+
                     <div class="form-group">
                         <label><i class="fas fa-th"></i> Button Layout</label>
                         <div class="layout-options">
@@ -608,41 +606,40 @@
                             </div>
                             <div class="layout-option" data-layout="mixed">
                                 <i class="fas fa-table-cells"></i>
-                                <div class="layout-name">Mixed</div>
+                                <div class="layout-name">Mixed (2/row)</div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Buttons Container -->
                     <div class="button-container">
                         <div id="buttonsWrapper"></div>
                         <button type="button" class="add-button-btn" id="addButtonBtn">
                             <i class="fas fa-plus"></i> Add Button
                         </button>
                     </div>
+
                 </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary" id="sendBtn">
+                <button type="submit" class="btn btn-primary" id="sendBtn" style="margin-top: 20px;">
                     <i class="fas fa-paper-plane"></i> Send Broadcast
                 </button>
+
             </form>
         </div>
 
-        <!-- Broadcast History -->
         <div class="card">
             <h2 style="font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                 <i class="fas fa-history"></i> Recent Broadcasts
             </h2>
             <div id="historyContainer">
                 <div class="loading">
-                    <i class="fas fa-spinner"></i>
+                    <i class="fas fa-spinner fa-spin"></i>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <!-- Bottom Navigation -->
     <nav>
         <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
         <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
@@ -669,6 +666,14 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.ready();
+
+        // Apply theme
+        if (tg.colorScheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        tg.onEvent('themeChanged', () => {
+            document.documentElement.setAttribute('data-theme', tg.colorScheme);
+        });
 
         // State
         let currentLayout = 'horizontal';
@@ -698,7 +703,10 @@
             const firstName = user.first_name || displayName;
             const lastName = user.last_name || '';
             const username = user.username || displayName;
-            const fullName = `$${user.first_name || ''}$$ {user.last_name || ''}`.trim() || displayName;
+            
+            // --- FIX 1: Corrected template literal for full_name ---
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || displayName;
+            
             const balance = parseFloat(user.balance || 0).toFixed(8);
 
             return message
@@ -712,9 +720,10 @@
         // ============================================
         // AUTH CHECK
         // ============================================
+
         async function checkAdminAccess() {
             const telegramUser = tg.initDataUnsafe?.user;
-            
+
             if (!telegramUser) {
                 showMessage('Access denied. Open this page from Telegram.', 'error');
                 setTimeout(() => {
@@ -731,7 +740,9 @@
                 return false;
             }
 
-            const { data: user } = await supabase
+            const {
+                data: user
+            } = await supabase
                 .from('users')
                 .select('role')
                 .eq('telegram_id', telegramUser.id)
@@ -751,17 +762,17 @@
         // ============================================
         // SHOW MESSAGE
         // ============================================
+
         function showMessage(text, type = 'success') {
             const container = document.getElementById('messageContainer');
             const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-            
+
             container.innerHTML = `
                 <div class="message ${type}">
                     <i class="fas ${icon}"></i>
                     <span>${text}</span>
                 </div>
             `;
-
             setTimeout(() => {
                 container.innerHTML = '';
             }, 5000);
@@ -770,20 +781,28 @@
         // ============================================
         // LOAD STATS
         // ============================================
+
         async function loadStats() {
             try {
-                const { count: usersCount } = await supabase
+                const {
+                    count: usersCount
+                } = await supabase
                     .from('users')
-                    .select('*', { count: 'exact', head: true });
-
+                    .select('*', {
+                        count: 'exact',
+                        head: true
+                    });
                 document.getElementById('totalUsers').textContent = usersCount || 0;
 
-                const { count: broadcastsCount } = await supabase
+                const {
+                    count: broadcastsCount
+                } = await supabase
                     .from('messages')
-                    .select('*', { count: 'exact', head: true });
-
+                    .select('*', {
+                        count: 'exact',
+                        head: true
+                    });
                 document.getElementById('totalBroadcasts').textContent = broadcastsCount || 0;
-
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
@@ -792,14 +811,19 @@
         // ============================================
         // LOAD BROADCAST HISTORY
         // ============================================
+
         async function loadHistory() {
             const container = document.getElementById('historyContainer');
-
             try {
-                const { data: messages, error } = await supabase
+                const {
+                    data: messages,
+                    error
+                } = await supabase
                     .from('messages')
                     .select('*')
-                    .order('created_at', { ascending: false })
+                    .order('created_at', {
+                        ascending: false
+                    })
                     .limit(10);
 
                 if (error) throw error;
@@ -817,7 +841,7 @@
 
                 container.innerHTML = messages.map(msg => {
                     let buttonsHTML = '';
-                    
+
                     if (msg.buttons_data) {
                         try {
                             const buttonsData = JSON.parse(msg.buttons_data);
@@ -858,7 +882,6 @@
                         </div>
                     `;
                 }).join('');
-
             } catch (error) {
                 console.error('Error loading history:', error);
                 container.innerHTML = `
@@ -877,16 +900,15 @@
 
         function renderButtons() {
             const wrapper = document.getElementById('buttonsWrapper');
-            
+
             if (buttons.length === 0) {
                 wrapper.innerHTML = '';
                 return;
             }
 
             let html = '';
-            
+
             if (currentLayout === 'horizontal') {
-                // All buttons in one row (side by side)
                 html = '<div class="button-row"><div class="button-fields horizontal">';
                 buttons.forEach((btn, index) => {
                     html += `
@@ -901,8 +923,7 @@
                 });
                 html += '</div></div>';
             } else if (currentLayout === 'vertical') {
-                // Each button in separate row (stacked)
-                                buttons.forEach((btn, index) => {
+                buttons.forEach((btn, index) => {
                     html += `
                         <div class="button-row">
                             <div class="button-fields">
@@ -916,11 +937,9 @@
                     `;
                 });
             } else if (currentLayout === 'mixed') {
-                // Two buttons per row
                 for (let i = 0; i < buttons.length; i += 2) {
                     html += '<div class="button-row"><div class="button-fields horizontal">';
                     
-                    // First button in row
                     html += `
                         <div>
                             <input type="text" placeholder="Button ${i + 1} Text" value="${buttons[i].text}" data-index="${i}" data-field="text" class="button-input">
@@ -930,8 +949,7 @@
                             </button>
                         </div>
                     `;
-                    
-                    // Second button in row (if exists)
+
                     if (i + 1 < buttons.length) {
                         html += `
                             <div>
@@ -943,7 +961,6 @@
                             </div>
                         `;
                     }
-                    
                     html += '</div></div>';
                 }
             }
@@ -970,7 +987,10 @@
 
         // Add button
         document.getElementById('addButtonBtn').addEventListener('click', () => {
-            buttons.push({ text: '', url: '' });
+            buttons.push({
+                text: '',
+                url: ''
+            });
             renderButtons();
         });
 
@@ -985,13 +1005,16 @@
         });
 
         // Toggle button configuration
-        document.getElementById('addButtons').addEventListener('change', function() {
+        document.getElementById('addButtons').addEventListener('change', function () {
             const buttonConfiguration = document.getElementById('buttonConfiguration');
-            
+
             if (this.checked) {
                 buttonConfiguration.style.display = 'block';
                 if (buttons.length === 0) {
-                    buttons.push({ text: '', url: '' });
+                    buttons.push({
+                        text: '',
+                        url: ''
+                    });
                     renderButtons();
                 }
             } else {
@@ -1004,6 +1027,7 @@
         // ============================================
         // PERSONALIZATION TAGS
         // ============================================
+
         document.querySelectorAll('.tag-button').forEach(button => {
             button.addEventListener('click', () => {
                 const tag = button.dataset.tag;
@@ -1011,7 +1035,7 @@
                 const cursorPos = textarea.selectionStart;
                 const textBefore = textarea.value.substring(0, cursorPos);
                 const textAfter = textarea.value.substring(cursorPos);
-                
+
                 textarea.value = textBefore + tag + textAfter;
                 textarea.focus();
                 textarea.selectionStart = textarea.selectionEnd = cursorPos + tag.length;
@@ -1021,22 +1045,19 @@
         // ============================================
         // BUILD INLINE KEYBOARD
         // ============================================
+
         function buildInlineKeyboard(buttons, layout) {
             if (!buttons || buttons.length === 0) {
                 return null;
             }
-
             const keyboard = [];
-
             if (layout === 'horizontal') {
-                // All buttons in one row
                 const row = buttons.map(btn => ({
                     text: btn.text,
                     url: btn.url
                 }));
                 keyboard.push(row);
             } else if (layout === 'vertical') {
-                // Each button in separate row
                 buttons.forEach(btn => {
                     keyboard.push([{
                         text: btn.text,
@@ -1044,24 +1065,21 @@
                     }]);
                 });
             } else if (layout === 'mixed') {
-                // Two buttons per row
                 for (let i = 0; i < buttons.length; i += 2) {
                     const row = [{
                         text: buttons[i].text,
                         url: buttons[i].url
                     }];
-                    
+
                     if (i + 1 < buttons.length) {
                         row.push({
                             text: buttons[i + 1].text,
                             url: buttons[i + 1].url
                         });
                     }
-                    
                     keyboard.push(row);
                 }
             }
-
             return {
                 inline_keyboard: keyboard
             };
@@ -1070,56 +1088,60 @@
         // ============================================
         // VALIDATE BUTTONS
         // ============================================
+
         function validateButtons(buttons) {
             if (!buttons || buttons.length === 0) {
-                return { valid: true };
+                return {
+                    valid: true
+                };
             }
-
             for (let i = 0; i < buttons.length; i++) {
                 const btn = buttons[i];
-                
+
                 if (!btn.text || !btn.text.trim()) {
                     return {
                         valid: false,
                         message: `Button ${i + 1} text is required`
                     };
                 }
-                
+
                 if (!btn.url || !btn.url.trim()) {
                     return {
                         valid: false,
                         message: `Button ${i + 1} URL is required`
                     };
                 }
-
                 // Validate URL format
                 try {
                     new URL(btn.url);
                 } catch (e) {
                     return {
                         valid: false,
-                        message: `Button ${i + 1} has invalid URL format`
+                        message: `Button ${i + 1} has invalid URL format. Make sure it starts with http:// or https://`
                     };
                 }
             }
-
-            return { valid: true };
+            return {
+                valid: true
+            };
         }
 
         // ============================================
         // SEND BROADCAST
         // ============================================
+
         async function sendBroadcast(messageText, buttons, layout) {
             const telegramUser = tg.initDataUnsafe?.user;
-
             // Get all users with their details for personalization
-            const { data: users, error } = await supabase
+            const {
+                data: users,
+                error
+            } = await supabase
                 .from('users')
                 .select('telegram_id, username, first_name, last_name, balance')
                 .eq('banned', false);
 
             if (error) throw error;
-
             if (!users || users.length === 0) {
                 throw new Error('No users found');
             }
@@ -1135,11 +1157,10 @@
                 try {
                     // Personalize message for this user
                     const personalizedMessage = personalizeMessage(messageText, user);
-
                     const messageData = {
                         chat_id: user.telegram_id,
                         text: personalizedMessage,
-                        parse_mode: 'HTML'
+                        parse_mode: 'HTML' // Kept as HTML as it's more flexible
                     };
 
                     if (replyMarkup) {
@@ -1155,17 +1176,15 @@
                     });
 
                     const result = await response.json();
-                    
+
                     if (result.ok) {
                         successCount++;
                     } else {
                         failCount++;
                         console.error(`Failed to send to ${user.telegram_id}:`, result);
                     }
-
                     // Small delay to avoid rate limits
                     await new Promise(resolve => setTimeout(resolve, 50));
-
                 } catch (error) {
                     failCount++;
                     console.error(`Error sending to ${user.telegram_id}:`, error);
@@ -1185,7 +1204,7 @@
                     buttons: buttons,
                     layout: layout
                 });
-                
+
                 // For backward compatibility, store first button
                 if (buttons[0]) {
                     broadcastData.button_text = buttons[0].text;
@@ -1194,16 +1213,18 @@
             }
 
             await supabase.from('messages').insert(broadcastData);
-
-            return { successCount, failCount };
+            return {
+                successCount,
+                failCount
+            };
         }
 
         // ============================================
         // FORM SUBMISSION
         // ============================================
+
         document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const sendBtn = document.getElementById('sendBtn');
             const messageText = document.getElementById('messageText').value.trim();
             const addButtons = document.getElementById('addButtons').checked;
@@ -1222,63 +1243,71 @@
                 }
             }
 
-            // Confirm broadcast
-            let confirmMessage = `Send this message to all users?\n\n"$${messageText.substring(0, 100)}$$ {messageText.length > 100 ? '...' : ''}"`;
-            
+            // --- FIX 2 & 3: Corrected template literals in confirm messages ---
+            let confirmMessage = `Send this message to all users?\n\n"${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}"`;
+
             if (addButtons && buttons.length > 0) {
-                confirmMessage += `\n\nWith $${buttons.length} button(s) in$$ {currentLayout} layout`;
+                confirmMessage += `\n\nWith ${buttons.length} button(s) in ${currentLayout} layout`;
             }
 
-            const confirmed = confirm(confirmMessage);
-            if (!confirmed) return;
+            // Use Telegram's native confirmation popup
+            tg.showConfirm(confirmMessage, async (confirmed) => {
+                if (!confirmed) return;
 
-            // Disable button
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                // Disable button
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
-            try {
-                const buttonsToSend = addButtons ? buttons : [];
-                const { successCount, failCount } = await sendBroadcast(messageText, buttonsToSend, currentLayout);
-                
-                showMessage(`Broadcast sent! Success: ${successCount}, Failed: ${failCount}`, 'success');
-                
-                // Reset form
-                document.getElementById('broadcastForm').reset();
-                document.getElementById('buttonConfiguration').style.display = 'none';
-                document.getElementById('addButtons').checked = false;
-                buttons = [];
-                currentLayout = 'horizontal';
-                renderButtons();
-                
-                // Reset layout selection
-                document.querySelectorAll('.layout-option').forEach(opt => opt.classList.remove('active'));
-                document.querySelector('.layout-option[data-layout="horizontal"]').classList.add('active');
-                
-                // Reload data
-                await loadStats();
-                await loadHistory();
+                try {
+                    const buttonsToSend = addButtons ? buttons : [];
+                    const {
+                        successCount,
+                        failCount
+                    } = await sendBroadcast(messageText, buttonsToSend, currentLayout);
 
-            } catch (error) {
-                console.error('Broadcast error:', error);
-                showMessage(`Error: ${error.message}`, 'error');
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Broadcast';
-            }
+                    showMessage(`Broadcast sent! Success: ${successCount}, Failed: ${failCount}`, 'success');
+
+                    // Reset form
+                    document.getElementById('broadcastForm').reset();
+                    document.getElementById('buttonConfiguration').style.display = 'none';
+                    document.getElementById('addButtons').checked = false;
+                    buttons = [];
+                    currentLayout = 'horizontal';
+                    renderButtons();
+
+                    // Reset layout selection
+                    document.querySelectorAll('.layout-option').forEach(opt => opt.classList.remove('active'));
+                    document.querySelector('.layout-option[data-layout="horizontal"]').classList.add('active');
+
+                    // Reload data
+                    await loadStats();
+                    await loadHistory();
+
+                } catch (error) {
+                    console.error('Broadcast error:', error);
+                    showMessage(`Error: ${error.message}`, 'error');
+                } finally {
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Broadcast';
+                }
+            });
         });
 
         // ============================================
         // INITIALIZE
         // ============================================
+
+        // --- FIX 4: Added DOMContentLoaded to run the functions ---
         window.addEventListener('DOMContentLoaded', async () => {
-            const hasAccess = await checkAdminAccess();
-            
-            if (hasAccess) {
+            if (await checkAdminAccess()) {
                 await loadStats();
                 await loadHistory();
+            } else {
+                // Hide content if not admin
+                document.querySelector('.container').innerHTML = '';
+                document.querySelector('nav').innerHTML = '';
             }
         });
     </script>
-</body>
+    </body>
 </html>
-
