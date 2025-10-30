@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Manage Miners - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Message */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Add Miner Form */
+        .form-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-card h2 i {
+            color: var(--green);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .btn-success {
+            background-color: var(--green);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--red);
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Miners List */
+        .miners-section h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .miners-section h2 i {
+            color: var(--yellow);
+        }
+        
+        .miners-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .miner-item {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+        }
+        
+        .miner-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .miner-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .miner-name i {
+            color: var(--primary-color);
+        }
+        
+        .miner-crypto {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .miner-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-item {
+            font-size: 13px;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+        
+        .detail-value {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        .miner-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+        
+        /* Loading & Empty States */
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .loading i, .empty-state i {
+            font-size: 30px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .loading i {
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            flex: 1;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        nav a i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        nav a.active {
+            color: var(--primary-color);
+        }
+        
+        nav a span {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-coins"></i>Manage Miners</h1>
+            <p>Add and manage mining machines</p>
+        </div>
+        
+        <div id="messageContainer"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-server"></i>
+                <div class="stat-value" id="totalMiners">0</div>
+                <div class="stat-label">Total Miners</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle"></i>
+                <div class="stat-value" id="activeMiners">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+        </div>
+        
+        <div class="form-card">
+            <h2><i class="fas fa-plus-circle"></i>Add New Miner</h2>
+            <form id="addMinerForm">
+                <div class="form-group">
+                    <label for="minerName">Miner Name</label>
+                    <input type="text" id="minerName" placeholder="e.g., Bitcoin Miner Pro" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="minerCrypto">Cryptocurrency</label>
+                        <select id="minerCrypto" required>
+                            <option value="">Select...</option>
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="BNB">Binance Coin (BNB)</option>
+                            <option value="SOL">Solana (SOL)</option>
+                            <option value="USDT">Tether (USDT)</option>
+                            <option value="TRX">Tron (TRX)</option>
+                            <option value="DOGE">Dogecoin (DOGE)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="minerCost">Cost (USD)</label>
+                        <input type="number" id="minerCost" step="0.01" placeholder="50.00" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="earningsRate">Earnings/Hour</label>
+                        <input type="number" id="earningsRate" step="0.00000001" placeholder="0.00001" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="duration">Duration (Hours)</label>
+                        <input type="number" id="duration" placeholder="24" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-plus"></i>Add Miner
+                </button>
+            </form>
+        </div>
+        
+        <div class="miners-section">
+            <h2><i class="fas fa-list"></i>Available Miners</h2>
+            <div id="minersListContainer">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading miners...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <nav>
+        <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="machineminers.html" class="active"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="deposits.html"><i class="fas fa-download"></i><span>Deposit</span></a>
+        <a href="withdrawals.html"><i class="fas fa-upload"></i><span>Withdrawal</span></a>
+        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
+        <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+    
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+        
+        // Apply theme colors
+        // Apply theme colors
+document.body.style.backgroundColor = tg.themeParams.secondary_bg_color || 'var(--bg-color)';
+document.body.style.color = tg.themeParams.text_color || 'var(--text-color)';
+
+        // Supabase Configuration - REPLACE WITH YOUR CREDENTIALS
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Your Admin Telegram ID - REPLACE WITH YOUR ADMIN ID
+        const ADMIN_ID = 5727413041; // Replace with your actual Telegram ID
+        
+        let currentUser = null;
+        
+        // Show Message
+        function showMessage(text, type = 'success') {
+            const messageContainer = document.getElementById('messageContainer');
+            const msgId = `msg-${Date.now()}`;
+            const msgElement = document.createElement('div');
+            msgElement.className = `message ${type}`;
+            msgElement.id = msgId;
+            msgElement.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${text}
+            `;
+            
+            messageContainer.appendChild(msgElement);
+            
+            setTimeout(() => {
+                const el = document.getElementById(msgId);
+                if (el) {
+                    el.remove();
+                }
+            }, 3000);
+        }
+        
+        // Check Admin Access
+        async function checkAdminAccess() {
+            try {
+                const telegramUser = tg.initDataUnsafe?.user;
+                
+                if (!telegramUser) {
+                    showMessage('Unable to verify user. Please open from Telegram.', 'error');
+                    return false;
+                }
+                
+                // Check if user is admin
+                if (telegramUser.id !== ADMIN_ID) {
+                    showMessage('Access denied. Admin only.', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // Redirect to user page
+                    }, 2000);
+                    return false;
+                }
+                
+                // Get user from database
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('telegram_id', telegramUser.id)
+                    .single();
+                
+                if (error || !user || user.role !== 'admin') {
+                    showMessage('You do not have admin privileges.', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // Redirect to user page
+                    }, 2000);
+                    return false;
+                }
+                
+                currentUser = user;
+                return true;
+            } catch (error) {
+                console.error('Access check error:', error);
+                showMessage('Access verification failed.', 'error');
+                return false;
+            }
+        }
+        
+        // Load Miners from Settings
+        async function loadMinersTemplates() {
+            try {
+                const { data: setting, error } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'miner_templates')
+                    .single();
+                
+                let miners = [];
+                if (!error && setting) {
+                    miners = JSON.parse(setting.value || '[]');
+                }
+                
+                updateStats(miners);
+                displayMiners(miners);
+                
+            } catch (error) {
+                console.error('Error loading miners:', error);
+                document.getElementById('minersListContainer').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Miners</h3>
+                        <p>Please try again</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update Stats
+        function updateStats(miners) {
+            document.getElementById('totalMiners').textContent = miners.length;
+            // Assuming 'active' is a property. If not, default to true.
+            const active = miners.filter(m => m.active !== false).length;
+            document.getElementById('activeMiners').textContent = active;
+        }
+        
+        // Display Miners
+        function displayMiners(miners) {
+            const container = document.getElementById('minersListContainer');
+            
+            if (miners.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No Miners Yet</h3>
+                        <p>Add your first miner template above</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort miners by cost, for example
+            miners.sort((a, b) => a.cost - b.cost);
+            
+            const html = `
+                <div class="miners-list">
+                    ${miners.map((miner, index) => `
+                        <div class="miner-item">
+                            <div class="miner-header">
+                                <div class="miner-name">
+                                    <i class="fas fa-server"></i>
+                                    ${miner.name}
+                                </div>
+                                <div class="miner-crypto">${miner.crypto}</div>
+                            </div>
+                            <div class="miner-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Cost</div>
+                                    <div class="detail-value">$${parseFloat(miner.cost).toFixed(2)}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Earnings/Hour</div>
+                                    <div class="detail-value">${parseFloat(miner.earnings_rate).toFixed(8)} ${miner.crypto}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Duration</div>
+                                    <div class="detail-value">${miner.duration_hours}h</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Total Earnings</div>
+                                    <div class="detail-value">${(miner.earnings_rate * miner.duration_hours).toFixed(8)} ${miner.crypto}</div>
+                                </div>
+                            </div>
+                            <div class="miner-actions">
+                                <button class="btn btn-primary btn-small" onclick="editMiner(${index})">
+                                    <i class="fas fa-edit"></i>Edit
+                                </button>
+                                <button class="btn btn-danger btn-small" onclick="deleteMiner(${index})">
+                                    <i class="fas fa-trash"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Add Miner
+        document.getElementById('addMinerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('minerName').value.trim();
+            const crypto = document.getElementById('minerCrypto').value;
+            const cost = parseFloat(document.getElementById('minerCost').value);
+            const earningsRate = parseFloat(document.getElementById('earningsRate').value);
+            const duration = parseInt(document.getElementById('duration').value);
+            
+            if (!name || !crypto || isNaN(cost) || isNaN(earningsRate) || isNaN(duration)) {
+                showMessage('Please fill all fields correctly', 'error');
+                return;
+            }
+            
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+            try {
+                // Get existing miners
+                const { data: setting, error: fetchError } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'miner_templates')
+                    .single();
+                
+                let miners = [];
+                if (!fetchError && setting) {
+                    miners = JSON.parse(setting.value || '[]');
+                }
+                
+                // Add new miner
+                const newMiner = {
+                    id: Date.now(), // Use a simple timestamp as a unique ID for the template
+                    name,
+                    crypto,
+                    cost,
+                    earnings_rate: earningsRate,
+                    duration_hours: duration,
+                    active: true, // Default to active
+                    created_at: new Date().toISOString()
+                };
+                
+                miners.push(newMiner);
+                
+                // Save back to database
+                const { error: saveError } = await supabase
+                    .from('settings')
+                    .upsert({
+                        key: 'miner_templates',
+                        value: JSON.stringify(miners),
+                        description: 'Available miner templates',
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'key' }); // Use onConflict to ensure it updates if 'key' exists
+                
+                if (saveError) throw saveError;
+                
+                showMessage('Miner added successfully!', 'success');
+                document.getElementById('addMinerForm').reset();
+                loadMinersTemplates();
+                
+            } catch (error) {
+                console.error('Error adding miner:', error);
+                showMessage(`Failed to add miner: ${error.message}`, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-plus"></i> Add Miner';
+            }
+        });
+        
+        // Edit Miner
+        window.editMiner = async (index) => {
+            try {
+                const { data: setting, error } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'miner_templates')
+                    .single();
+                
+                if (error) throw error;
+                
+                const miners = JSON.parse(setting.value || '[]');
+                // Sort miners by cost to match the display order
+                miners.sort((a, b) => a.cost - b.cost);
+                const miner = miners[index];
+                
+                if (!miner) {
+                    showMessage('Could not find miner to edit. Please refresh.', 'error');
+                    return;
+                }
+
+                // Populate form
+                document.getElementById('minerName').value = miner.name;
+                document.getElementById('minerCrypto').value = miner.crypto;
+                document.getElementById('minerCost').value = miner.cost;
+                document.getElementById('earningsRate').value = miner.earnings_rate;
+                document.getElementById('duration').value = miner.duration_hours;
+                
+                // Remove the old one from the array
+                // Find the *actual* index in the unsorted/original array if needed,
+                // but for this simple "edit" (delete and re-add) we find by ID.
+                
+                const originalMiners = JSON.parse(setting.value || '[]');
+                const originalIndex = originalMiners.findIndex(m => m.id === miner.id);
+                
+                if (originalIndex === -1) {
+                     showMessage('Error finding miner. Please refresh.', 'error');
+                     return;
+                }
+
+                originalMiners.splice(originalIndex, 1);
+                
+                // Save the array without the miner
+                await supabase
+                    .from('settings')
+                    .update({
+                        value: JSON.stringify(originalMiners),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('key', 'miner_templates');
+                
+                showMessage('Edit values and click "Add Miner" to save', 'success');
+                loadMinersTemplates(); // Reload to show it's gone
+                document.getElementById('minerName').focus(); // Focus form
+                
+            } catch (error) {
+                console.error('Error editing miner:', error);
+                showMessage('Failed to load miner for editing', 'error');
+            }
+        };
+        
+        // Delete Miner
+        window.deleteMiner = async (index) => {
+            if (!confirm('Are you sure you want to delete this miner template?')) return;
+            
+            try {
+                const { data: setting, error } = await supabase
+                    .from('settings')
+                    .select('value')
+                    .eq('key', 'miner_templates')
+                    .single();
+                
+                if (error) throw error;
+                
+                let miners = JSON.parse(setting.value || '[]');
+                // Sort miners by cost to match the display order
+                miners.sort((a, b) => a.cost - b.cost);
+                
+                const minerToDelete = miners[index];
+                
+                // Find and remove from the original array by ID
+                const originalMiners = JSON.parse(setting.value || '[]');
+                const finalMiners = originalMiners.filter(m => m.id !== minerToDelete.id);
+
+                await supabase
+                    .from('settings')
+                    .update({
+                        value: JSON.stringify(finalMiners),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('key', 'miner_templates');
+                
+                showMessage('Miner deleted successfully', 'success');
+                loadMinersTemplates();
+                
+            } catch (error) {
+                console.error('Error deleting miner:', error);
+                showMessage('Failed to delete miner', 'error');
+            }
+        };
+        
+        // Initialize
+        async function init() {
+            const hasAccess = await checkAdminAccess();
+            if (hasAccess) {
+                await loadMinersTemplates();
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>
