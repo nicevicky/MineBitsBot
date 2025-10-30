@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Broadcast Message - Admin Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+            word-wrap: break-word;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1 i {
+            color: var(--primary-color);
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Card */
+        .card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* Form Group */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .form-group label i {
+            margin-right: 5px;
+            color: var(--primary-color);
+        }
+        
+        .form-group textarea,
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s ease;
+        }
+        
+        .form-group textarea:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-group small {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+        
+        .checkbox-group label {
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 0;
+        }
+        
+        /* Button Group */
+        .button-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+        
+        .btn-primary:disabled {
+            background-color: #2a3a7a;
+            color: #6a7aa8;
+            cursor: not-allowed;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* History */
+        .history-item {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .history-date {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        .history-count {
+            background-color: var(--green);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .history-message {
+            color: var(--text-color);
+            font-size: 14px;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .history-button {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            color: var(--primary-light);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .loading i {
+            font-size: 30px;
+            color: var(--primary-color);
+            animation: spin 1.5s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            padding: 5px;
+            transition: color 0.2s ease;
+            flex: 1;
+            max-width: 80px;
+        }
+        
+        nav a i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        nav a.active {
+            color: var(--primary-color);
+        }
+        
+        nav a span {
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-bullhorn"></i> Broadcast Message</h1>
+            <p>Send messages to all users with optional buttons</p>
+        </div>
+
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users"></i>
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-paper-plane"></i>
+                <div class="stat-value" id="totalBroadcasts">0</div>
+                <div class="stat-label">Broadcasts Sent</div>
+            </div>
+        </div>
+
+        <!-- Broadcast Form -->
+        <div class="card">
+            <form id="broadcastForm">
+                <div class="form-group">
+                    <label><i class="fas fa-comment-dots"></i> Message Text</label>
+                    <textarea id="messageText" placeholder="Enter your broadcast message here..." required></textarea>
+                    <small>This message will be sent to all users</small>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="addButton">
+                    <label for="addButton">Add Inline Button (Link Only)</label>
+                </div>
+
+                <div id="buttonInputs" class="button-inputs" style="display: none;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" id="buttonText" placeholder="Button Text">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="url" id="buttonUrl" placeholder="https://example.com">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="sendBtn">
+                    <i class="fas fa-paper-plane"></i> Send Broadcast
+                </button>
+            </form>
+        </div>
+
+        <!-- Broadcast History -->
+        <div class="card">
+            <h2 style="font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-history"></i> Recent Broadcasts
+            </h2>
+            <div id="historyContainer">
+                <div class="loading">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav>
+        <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="deposits.html"><i class="fas fa-download"></i><span>Deposit</span></a>
+        <a href="withdrawals.html"><i class="fas fa-upload"></i><span>Withdrawal</span></a>
+        <a href="broadcast.html" class="active"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
+        <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
+        const ADMIN_IDS = [5727413041, 5727413041]; // Add your admin Telegram IDs
+
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        // ============================================
+        // AUTH CHECK
+        // ============================================
+        async function checkAdminAccess() {
+            const telegramUser = tg.initDataUnsafe?.user;
+            
+            if (!telegramUser) {
+                showMessage('Access denied. Open this page from Telegram.', 'error');
+                setTimeout(() => {
+                    tg.close();
+                }, 2000);
+                return false;
+            }
+
+            // Check if user is admin
+            if (!ADMIN_IDS.includes(telegramUser.id)) {
+                showMessage('Access denied. Admin only.', 'error');
+                setTimeout(() => {
+                    tg.close();
+                }, 2000);
+                return false;
+            }
+
+            // Check database role
+            const { data: user } = await supabase
+                .from('users')
+                .select('role')
+                .eq('telegram_id', telegramUser.id)
+                .single();
+
+            if (!user || user.role !== 'admin') {
+                showMessage('Access denied. Admin only.', 'error');
+                setTimeout(() => {
+                    tg.close();
+                }, 2000);
+                return false;
+            }
+
+            return true;
+        }
+
+        // ============================================
+        // SHOW MESSAGE
+        // ============================================
+        function showMessage(text, type = 'success') {
+            const container = document.getElementById('messageContainer');
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            container.innerHTML = `
+                <div class="message ${type}">
+                    <i class="fas ${icon}"></i>
+                    <span>${text}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // ============================================
+        // LOAD STATS
+        // ============================================
+        async function loadStats() {
+            try {
+                // Get total users count
+                const { count: usersCount } = await supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true });
+
+                document.getElementById('totalUsers').textContent = usersCount || 0;
+
+                // Get total broadcasts count
+                const { count: broadcastsCount } = await supabase
+                    .from('messages')
+                    .select('*', { count: 'exact', head: true });
+
+                document.getElementById('totalBroadcasts').textContent = broadcastsCount || 0;
+
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // ============================================
+        // LOAD BROADCAST HISTORY
+        // ============================================
+        async function loadHistory() {
+            const container = document.getElementById('historyContainer');
+
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                if (!messages || messages.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No Broadcasts Yet</h3>
+                            <p>Your broadcast history will appear here</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = messages.map(msg => `
+                    <div class="history-item">
+                        <div class="history-header">
+                            <span class="history-date">
+                                <i class="fas fa-clock"></i> ${new Date(msg.created_at).toLocaleString()}
+                            </span>
+                            <span class="history-count">
+                                <i class="fas fa-paper-plane"></i> ${msg.sent_count} sent
+                            </span>
+                        </div>
+                        <div class="history-message">${msg.message_text}</div>
+                        ${msg.button_text ? `
+                            <div class="history-button">
+                                <i class="fas fa-link"></i> ${msg.button_text}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading History</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // TOGGLE BUTTON INPUTS
+        // ============================================
+        document.getElementById('addButton').addEventListener('change', function() {
+            const buttonInputs = document.getElementById('buttonInputs');
+            const buttonText = document.getElementById('buttonText');
+            const buttonUrl = document.getElementById('buttonUrl');
+            
+            if (this.checked) {
+                buttonInputs.style.display = 'grid';
+                buttonText.required = true;
+                buttonUrl.required = true;
+            } else {
+                buttonInputs.style.display = 'none';
+                buttonText.required = false;
+                buttonUrl.required = false;
+                buttonText.value = '';
+                buttonUrl.value = '';
+            }
+        });
+
+        // ============================================
+        // SEND BROADCAST
+        // ============================================
+        async function sendBroadcast(messageText, buttonText, buttonUrl) {
+            const telegramUser = tg.initDataUnsafe?.user;
+
+            // Get all users
+            const { data: users, error } = await supabase
+                .from('users')
+                .select('telegram_id')
+                .eq('banned', false);
+
+            if (error) throw error;
+
+            if (!users || users.length === 0) {
+                throw new Error('No users found');
+            }
+
+            let successCount = 0;
+            let failCount = 0;
+
+            // Prepare message with inline button if provided
+            const messageData = {
+                text: messageText,
+                parse_mode: 'HTML'
+            };
+
+            if (buttonText && buttonUrl) {
+                messageData.reply_markup = {
+                    inline_keyboard: [[
+                        {
+                            text: buttonText,
+                            url: buttonUrl
+                        }
+                    ]]
+                };
+            }
+
+            // Send to each user
+            for (const user of users) {
+                try {
+                    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            chat_id: user.telegram_id,
+                            ...messageData
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.ok) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                        console.error(`Failed to send to ${user.telegram_id}:`, result);
+                    }
+
+                    // Small delay to avoid rate limits
+                    await new Promise(resolve => setTimeout(resolve, 50));
+
+                } catch (error) {
+                    failCount++;
+                    console.error(`Error sending to ${user.telegram_id}:`, error);
+                }
+            }
+
+            // Save broadcast to database
+            await supabase.from('messages').insert({
+                admin_id: telegramUser.id,
+                message_text: messageText,
+                button_text: buttonText || null,
+                button_url: buttonUrl || null,
+                sent_count: successCount
+            });
+
+            return { successCount, failCount };
+        }
+
+        // ============================================
+        // FORM SUBMISSION
+        // ============================================
+        document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const sendBtn = document.getElementById('sendBtn');
+            const messageText = document.getElementById('messageText').value.trim();
+            const addButton = document.getElementById('addButton').checked;
+            const buttonText = addButton ? document.getElementById('buttonText').value.trim() : '';
+            const buttonUrl = addButton ? document.getElementById('buttonUrl').value.trim() : '';
+
+            if (!messageText) {
+                showMessage('Please enter a message', 'error');
+                return;
+            }
+
+            if (addButton && (!buttonText || !buttonUrl)) {
+                showMessage('Please fill in both button text and URL', 'error');
+                return;
+            }
+
+            // Confirm broadcast
+            const confirmed = confirm(`Send this message to all users?\n\n"${messageText}"`);
+            if (!confirmed) return;
+
+            // Disable button
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+            try {
+                const { successCount, failCount } = await sendBroadcast(messageText, buttonText, buttonUrl);
+                
+                showMessage(`Broadcast sent! Success: ${successCount}, Failed: ${failCount}`, 'success');
+                
+                // Reset form
+                document.getElementById('broadcastForm').reset();
+                document.getElementById('buttonInputs').style.display = 'none';
+                document.getElementById('addButton').checked = false;
+                
+                // Reload data
+                await loadStats();
+                await loadHistory();
+
+            } catch (error) {
+                console.error('Broadcast error:', error);
+                showMessage(`Error: ${error.message}`, 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Broadcast';
+            }
+        });
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            const hasAccess = await checkAdminAccess();
+            
+            if (hasAccess) {
+                await loadStats();
+                await loadHistory();
+            }
+        });
+    </script>
+</body>
+</html>
