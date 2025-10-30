@@ -543,14 +543,14 @@
     </style>
 </head>
 <body>
+
     <div class="container">
-        <!-- Header -->
+
         <div class="header">
             <h1><i class="fas fa-user-shield"></i> User Management</h1>
             <p>Manage users, balances, verification & bans</p>
         </div>
 
-        <!-- Stats Grid -->
         <div class="stats-grid">
             <div class="stat-card">
                 <i class="fas fa-users" style="color: var(--primary-color);"></i>
@@ -574,33 +574,28 @@
             </div>
         </div>
 
-        <!-- Search Box -->
         <div class="search-box">
             <i class="fas fa-search"></i>
             <input type="text" id="searchInput" placeholder="Search by username or ID...">
         </div>
 
-        <!-- Message Container -->
         <div id="messageContainer"></div>
 
-        <!-- Loading State -->
         <div id="loadingState" class="loading">
             <i class="fas fa-spinner"></i>
             <p>Loading users...</p>
         </div>
 
-        <!-- Users List -->
         <div id="usersList" class="users-list" style="display: none;"></div>
 
-        <!-- Empty State -->
         <div id="emptyState" class="empty-state" style="display: none;">
             <i class="fas fa-users-slash"></i>
             <h3>No Users Found</h3>
             <p>No users match your search criteria</p>
         </div>
+
     </div>
 
-    <!-- Edit Balance Modal -->
     <div id="balanceModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -681,11 +676,9 @@
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
-
                 allUsers = data || [];
                 updateStats();
                 displayUsers(allUsers);
-
             } catch (error) {
                 console.error('Error loading users:', error);
                 showMessage('Failed to load users', 'error');
@@ -720,7 +713,6 @@
 
             usersList.style.display = 'flex';
             emptyState.style.display = 'none';
-
             usersList.innerHTML = users.map(user => `
                 <div class="user-card ${user.banned ? 'banned' : ''}">
                     <div class="user-header">
@@ -732,7 +724,7 @@
                         </div>
                         <div class="user-info">
                             <div class="user-name">
-                                $${user.first_name || 'Unknown'}$$ {user.last_name || ''}
+                                ${user.first_name || 'Unknown'} ${user.last_name || ''}
                                 ${user.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}
                                 ${user.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}
                             </div>
@@ -767,13 +759,15 @@
                         <button class="action-btn btn-balance" onclick="openBalanceModal(${user.telegram_id})">
                             <i class="fas fa-coins"></i> Balance
                         </button>
+                        
                         <button class="action-btn ${user.verified ? 'btn-unverify' : 'btn-verify'}" 
-                                onclick="toggleVerify($${user.telegram_id},$$ {user.verified})">
+                                onclick="toggleVerify(${user.telegram_id}, ${user.verified})">
                             <i class="fas ${user.verified ? 'fa-times-circle' : 'fa-check-circle'}"></i> 
                             ${user.verified ? 'Unverify' : 'Verify'}
                         </button>
+
                         <button class="action-btn ${user.banned ? 'btn-unban' : 'btn-ban'}" 
-                                onclick="toggleBan($${user.telegram_id},$$ {user.banned})"
+                                onclick="toggleBan(${user.telegram_id}, ${user.banned})"
                                 ${user.role === 'admin' ? 'disabled' : ''}>
                             <i class="fas ${user.banned ? 'fa-user-check' : 'fa-ban'}"></i> 
                             ${user.banned ? 'Unban' : 'Ban'}
@@ -800,18 +794,14 @@
             if (!confirm(`Are you sure you want to ${currentStatus ? 'unverify' : 'verify'} this user?`)) {
                 return;
             }
-
             try {
                 const { error } = await supabase
                     .from('users')
                     .update({ verified: !currentStatus })
                     .eq('telegram_id', telegramId);
-
                 if (error) throw error;
-
                 showMessage(`User ${currentStatus ? 'unverified' : 'verified'} successfully`, 'success');
                 await loadUsers();
-
             } catch (error) {
                 console.error('Error updating verification:', error);
                 showMessage('Failed to update verification status', 'error');
@@ -823,18 +813,14 @@
             if (!confirm(`Are you sure you want to ${currentStatus ? 'unban' : 'ban'} this user?`)) {
                 return;
             }
-
             try {
                 const { error } = await supabase
                     .from('users')
                     .update({ banned: !currentStatus })
                     .eq('telegram_id', telegramId);
-
                 if (error) throw error;
-
                 showMessage(`User ${currentStatus ? 'unbanned' : 'banned'} successfully`, 'success');
                 await loadUsers();
-
             } catch (error) {
                 console.error('Error updating ban status:', error);
                 showMessage('Failed to update ban status', 'error');
@@ -847,7 +833,8 @@
             const user = allUsers.find(u => u.telegram_id === telegramId);
             
             if (user) {
-                document.getElementById('modalUserName').value = `$${user.first_name || ''}$$ {user.last_name || ''} (@${user.username || 'N/A'})`;
+                // FIX: Corrected template literal from $$ to ${}
+                document.getElementById('modalUserName').value = `${user.first_name || ''} ${user.last_name || ''} (@${user.username || 'N/A'})`;
                 document.getElementById('newBalance').value = parseFloat(user.balance || 0).toFixed(8);
                 document.getElementById('balanceModal').classList.add('active');
             }
@@ -862,24 +849,19 @@
         // Update balance
         async function updateBalance() {
             const newBalance = parseFloat(document.getElementById('newBalance').value);
-
             if (isNaN(newBalance) || newBalance < 0) {
                 showMessage('Please enter a valid balance', 'error');
                 return;
             }
-
             try {
                 const { error } = await supabase
                     .from('users')
                     .update({ balance: newBalance })
                     .eq('telegram_id', selectedUserId);
-
                 if (error) throw error;
-
                 showMessage('Balance updated successfully', 'success');
                 closeBalanceModal();
                 await loadUsers();
-
             } catch (error) {
                 console.error('Error updating balance:', error);
                 showMessage('Failed to update balance', 'error');
@@ -897,7 +879,6 @@
                     <span>${text}</span>
                 </div>
             `;
-
             setTimeout(() => {
                 container.innerHTML = '';
             }, 3000);
@@ -913,9 +894,9 @@
 
         // Start app
         init();
+
     </script>
 
-    <!-- Bottom Navigation -->
     <nav>
         <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
         <a href="users.html" class="active"><i class="fas fa-user-shield"></i><span>Users</span></a>
@@ -925,5 +906,6 @@
         <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
         <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
     </nav>
+
 </body>
 </html>
