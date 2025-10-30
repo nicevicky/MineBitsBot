@@ -680,6 +680,30 @@
         // Global cache for crypto prices
         let cryptoPrices = {};
 
+        ========================================
+// LOAD GLOBAL SETTINGS
+// ========================================
+async function loadGlobalSettings() {
+    try {
+        const { data, error } = await supabase
+            .from('settings')
+            .select('key, value')
+            .in('key', ['min_withdrawal', 'withdrawal_enabled']);
+
+        if (error) throw error;
+
+        const settings = {};
+        data.forEach(item => {
+            settings[item.key] = item.value;
+        });
+
+        return settings;
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        return null;
+    }
+}
+
         // ========================================
         // GET TELEGRAM USER DATA
         // ========================================
