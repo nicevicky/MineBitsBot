@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>User Management - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --bg-color: #0a0e27;
+            --card-color: #1c1f3a;
+            --primary-color: #4a69ff;
+            --primary-light: #6a85ff;
+            --text-color: #ffffff;
+            --text-secondary: #a0a8d3;
+            --green: #28a745;
+            --red: #ff6464;
+            --yellow: #ffc107;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            padding-bottom: 90px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overscroll-behavior-y: none;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 i {
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Search Bar */
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .search-box input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        /* Message Container */
+        #messageContainer {
+            margin-bottom: 15px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message.success {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+        
+        .message.error {
+            background-color: rgba(255, 100, 100, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+        
+        /* Loading & Empty States */
+        .loading, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: var(--card-color);
+            border-radius: 16px;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .loading i, .empty-state i {
+            font-size: 40px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .loading i {
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 5px 0;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* User Cards */
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .user-card {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-card.banned {
+            opacity: 0.6;
+            border-color: var(--red);
+        }
+        
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 3px;
+        }
+        
+        .user-name .verified-badge {
+            color: var(--green);
+            font-size: 14px;
+        }
+        
+        .user-name .admin-badge {
+            background-color: var(--yellow);
+            color: var(--bg-color);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .user-username {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        
+        .detail-label {
+            color: var(--text-secondary);
+        }
+        
+        .detail-value {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        
+        .detail-value.balance {
+            color: var(--yellow);
+            font-weight: 600;
+        }
+        
+        .detail-value.status-active {
+            color: var(--green);
+        }
+        
+        .detail-value.status-banned {
+            color: var(--red);
+        }
+        
+        /* Action Buttons */
+        .user-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .action-btn i {
+            font-size: 14px;
+        }
+        
+        .btn-edit {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: var(--primary-light);
+        }
+        
+        .btn-verify {
+            background-color: var(--green);
+            color: white;
+        }
+        
+        .btn-unverify {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-ban {
+            background-color: var(--red);
+            color: white;
+        }
+        
+        .btn-unban {
+            background-color: var(--green);
+            color: white;
+        }
+        
+        .btn-balance {
+            background-color: var(--yellow);
+            color: var(--bg-color);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: var(--card-color);
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            animation: modalSlide 0.3s ease;
+        }
+        
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-modal {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-modal-cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-modal-submit {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Bottom Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+        }
+        
+        nav a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 10px;
+            flex: 1;
+            padding: 5px;
+            transition: all 0.2s ease;
+        }
+        
+        nav a i {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+        
+        nav a.active {
+            color: var(--primary-color);
+        }
+        
+        nav a span {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><i class="fas fa-user-shield"></i> User Management</h1>
+            <p>Manage users, balances, verification & bans</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-users" style="color: var(--primary-color);"></i>
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-check-circle" style="color: var(--green);"></i>
+                <div class="stat-value" id="verifiedUsers">0</div>
+                <div class="stat-label">Verified</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-ban" style="color: var(--red);"></i>
+                <div class="stat-value" id="bannedUsers">0</div>
+                <div class="stat-label">Banned</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-coins" style="color: var(--yellow);"></i>
+                <div class="stat-value" id="totalBalance">0</div>
+                <div class="stat-label">Total Balance</div>
+            </div>
+        </div>
+
+        <!-- Search Box -->
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Search by username or ID...">
+        </div>
+
+        <!-- Message Container -->
+        <div id="messageContainer"></div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading">
+            <i class="fas fa-spinner"></i>
+            <p>Loading users...</p>
+        </div>
+
+        <!-- Users List -->
+        <div id="usersList" class="users-list" style="display: none;"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <i class="fas fa-users-slash"></i>
+            <h3>No Users Found</h3>
+            <p>No users match your search criteria</p>
+        </div>
+    </div>
+
+    <!-- Edit Balance Modal -->
+    <div id="balanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-coins"></i> Edit Balance</h2>
+                <button class="modal-close" onclick="closeBalanceModal()">×</button>
+            </div>
+            <div class="form-group">
+                <label>User</label>
+                <input type="text" id="modalUserName" readonly>
+            </div>
+            <div class="form-group">
+                <label>New Balance</label>
+                <input type="number" id="newBalance" step="0.00000001" placeholder="Enter new balance">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-modal btn-modal-cancel" onclick="closeBalanceModal()">Cancel</button>
+                <button class="btn-modal btn-modal-submit" onclick="updateBalance()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const ADMIN_TELEGRAM_ID = '5727413041'; // Replace with your admin Telegram ID
+
+        // Initialize Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        let currentUser = null;
+        let allUsers = [];
+        let selectedUserId = null;
+
+        // Check admin access
+        async function checkAdminAccess() {
+            const telegramUser = tg.initDataUnsafe?.user;
+            
+            if (!telegramUser) {
+                showMessage('Access denied: Telegram user not found', 'error');
+                return false;
+            }
+
+            // Check if user is admin by ID
+            if (telegramUser.id.toString() === ADMIN_TELEGRAM_ID) {
+                return true;
+            }
+
+            // Also check database role
+            const { data, error } = await supabase
+                .from('users')
+                .select('role')
+                .eq('telegram_id', telegramUser.id)
+                .single();
+
+            if (data && data.role === 'admin') {
+                return true;
+            }
+
+            showMessage('Access denied: Admin privileges required', 'error');
+            setTimeout(() => {
+                tg.close();
+            }, 2000);
+            return false;
+        }
+
+        // Load all users
+        async function loadUsers() {
+            try {
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allUsers = data || [];
+                updateStats();
+                displayUsers(allUsers);
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage('Failed to load users', 'error');
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const total = allUsers.length;
+            const verified = allUsers.filter(u => u.verified).length;
+            const banned = allUsers.filter(u => u.banned).length;
+            const totalBalance = allUsers.reduce((sum, u) => sum + parseFloat(u.balance || 0), 0);
+
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('verifiedUsers').textContent = verified;
+            document.getElementById('bannedUsers').textContent = banned;
+            document.getElementById('totalBalance').textContent = totalBalance.toFixed(4);
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const usersList = document.getElementById('usersList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (users.length === 0) {
+                usersList.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            usersList.style.display = 'flex';
+            emptyState.style.display = 'none';
+
+            usersList.innerHTML = users.map(user => `
+                <div class="user-card ${user.banned ? 'banned' : ''}">
+                    <div class="user-header">
+                        <div class="user-avatar">
+                            ${user.photo_url ? 
+                                `<img src="${user.photo_url}" alt="${user.first_name}">` : 
+                                `${(user.first_name || 'U')[0].toUpperCase()}`
+                            }
+                        </div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                $${user.first_name || 'Unknown'}$$ {user.last_name || ''}
+                                ${user.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}
+                                ${user.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}
+                            </div>
+                            <div class="user-username">@${user.username || 'No username'}</div>
+                        </div>
+                    </div>
+                    <div class="user-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Telegram ID:</span>
+                            <span class="detail-value">${user.telegram_id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Balance:</span>
+                            <span class="detail-value balance">${parseFloat(user.balance || 0).toFixed(8)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Total Earned:</span>
+                            <span class="detail-value">${parseFloat(user.total_earned || 0).toFixed(8)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Referrals:</span>
+                            <span class="detail-value">${user.referral_count || 0}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value ${user.banned ? 'status-banned' : 'status-active'}">
+                                ${user.banned ? 'Banned' : 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="action-btn btn-balance" onclick="openBalanceModal(${user.telegram_id})">
+                            <i class="fas fa-coins"></i> Balance
+                        </button>
+                        <button class="action-btn ${user.verified ? 'btn-unverify' : 'btn-verify'}" 
+                                onclick="toggleVerify($${user.telegram_id},$$ {user.verified})">
+                            <i class="fas ${user.verified ? 'fa-times-circle' : 'fa-check-circle'}"></i> 
+                            ${user.verified ? 'Unverify' : 'Verify'}
+                        </button>
+                        <button class="action-btn ${user.banned ? 'btn-unban' : 'btn-ban'}" 
+                                onclick="toggleBan($${user.telegram_id},$$ {user.banned})"
+                                ${user.role === 'admin' ? 'disabled' : ''}>
+                            <i class="fas ${user.banned ? 'fa-user-check' : 'fa-ban'}"></i> 
+                            ${user.banned ? 'Unban' : 'Ban'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(user => 
+                user.username?.toLowerCase().includes(searchTerm) ||
+                user.first_name?.toLowerCase().includes(searchTerm) ||
+                user.last_name?.toLowerCase().includes(searchTerm) ||
+                user.telegram_id?.toString().includes(searchTerm)
+            );
+            displayUsers(filtered);
+        });
+
+        // Toggle verify status
+        async function toggleVerify(telegramId, currentStatus) {
+            if (!confirm(`Are you sure you want to ${currentStatus ? 'unverify' : 'verify'} this user?`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ verified: !currentStatus })
+                    .eq('telegram_id', telegramId);
+
+                if (error) throw error;
+
+                showMessage(`User ${currentStatus ? 'unverified' : 'verified'} successfully`, 'success');
+                await loadUsers();
+
+            } catch (error) {
+                console.error('Error updating verification:', error);
+                showMessage('Failed to update verification status', 'error');
+            }
+        }
+
+        // Toggle ban status
+        async function toggleBan(telegramId, currentStatus) {
+            if (!confirm(`Are you sure you want to ${currentStatus ? 'unban' : 'ban'} this user?`)) {
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ banned: !currentStatus })
+                    .eq('telegram_id', telegramId);
+
+                if (error) throw error;
+
+                showMessage(`User ${currentStatus ? 'unbanned' : 'banned'} successfully`, 'success');
+                await loadUsers();
+
+            } catch (error) {
+                console.error('Error updating ban status:', error);
+                showMessage('Failed to update ban status', 'error');
+            }
+        }
+
+        // Open balance modal
+        function openBalanceModal(telegramId) {
+            selectedUserId = telegramId;
+            const user = allUsers.find(u => u.telegram_id === telegramId);
+            
+            if (user) {
+                document.getElementById('modalUserName').value = `$${user.first_name || ''}$$ {user.last_name || ''} (@${user.username || 'N/A'})`;
+                document.getElementById('newBalance').value = parseFloat(user.balance || 0).toFixed(8);
+                document.getElementById('balanceModal').classList.add('active');
+            }
+        }
+
+        // Close balance modal
+        function closeBalanceModal() {
+            document.getElementById('balanceModal').classList.remove('active');
+            selectedUserId = null;
+        }
+
+        // Update balance
+        async function updateBalance() {
+            const newBalance = parseFloat(document.getElementById('newBalance').value);
+
+            if (isNaN(newBalance) || newBalance < 0) {
+                showMessage('Please enter a valid balance', 'error');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ balance: newBalance })
+                    .eq('telegram_id', selectedUserId);
+
+                if (error) throw error;
+
+                showMessage('Balance updated successfully', 'success');
+                closeBalanceModal();
+                await loadUsers();
+
+            } catch (error) {
+                console.error('Error updating balance:', error);
+                showMessage('Failed to update balance', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const container = document.getElementById('messageContainer');
+            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            
+            container.innerHTML = `
+                <div class="message ${type}">
+                    <i class="fas ${icon}"></i>
+                    <span>${text}</span>
+                </div>
+            `;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3000);
+        }
+
+        // Initialize
+        async function init() {
+            const hasAccess = await checkAdminAccess();
+            if (hasAccess) {
+                await loadUsers();
+            }
+        }
+
+        // Start app
+        init();
+    </script>
+
+    <!-- Bottom Navigation -->
+    <nav>
+        <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
+        <a href="users.html" class="active"><i class="fas fa-user-shield"></i><span>Users</span></a>
+        <a href="machineminers.html"><i class="fas fa-coins"></i><span>Miners</span></a>
+        <a href="deposits.html"><i class="fas fa-download"></i><span>Deposit</span></a>
+        <a href="withdrawals.html"><i class="fas fa-upload"></i><span>Withdrawal</span></a>
+        <a href="broadcast.html"><i class="fas fa-bullhorn"></i><span>Broadcast</span></a>
+        <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
+    </nav>
+</body>
+</html>
