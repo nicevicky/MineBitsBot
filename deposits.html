@@ -567,14 +567,13 @@
     </style>
 </head>
 <body>
+
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-download"></i> Manage Deposits</h1>
             <p>Configure wallets and approve deposits</p>
         </div>
-
         <div id="messageContainer"></div>
-
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('wallets')">
                 <i class="fas fa-wallet"></i> Wallets
@@ -583,7 +582,6 @@
                 <i class="fas fa-clock"></i> Pending <span id="pendingCount"></span>
             </button>
         </div>
-
         <div id="walletsTab" class="tab-content active">
             <div class="loading" id="walletsLoading">
                 <i class="fas fa-spinner"></i>
@@ -591,7 +589,6 @@
             </div>
             <div class="wallet-list" id="walletsList"></div>
         </div>
-
         <div id="depositsTab" class="tab-content">
             <div class="loading" id="depositsLoading">
                 <i class="fas fa-spinner"></i>
@@ -611,8 +608,6 @@
         <a href="SystemSettings.html"><i class="fas fa-cog"></i><span>Settings</span></a>
     </nav>
 
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Supabase Configuration
         const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
@@ -630,11 +625,14 @@
                 } else {
                     // Fallback in case SDK loads slowly
                     document.addEventListener('DOMContentLoaded', () => {
-                         window.Telegram.WebApp.ready();
-                         resolve();
+                        window.Telegram.WebApp.ready();
+                        resolve();
                     });
                 }
             });
+            
+            // Set background color from Telegram theme
+            document.body.style.backgroundColor = window.Telegram.WebApp.themeParams.bg_color || '#1a1a1a';
             
             const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
             if (!telegramId) {
@@ -643,20 +641,18 @@
                 return false;
             }
             
-            // Note: The logic below checks for a user role, not the hardcoded ADMIN_TELEGRAM_ID.
-            // You can change this if you prefer to check against the constant.
             const { data: user, error } = await supabase
                 .from('users')
                 .select('role')
                 .eq('telegram_id', telegramId)
                 .single();
-
+                
             if (error || user?.role !== 'admin') {
                 showMessage('Access denied. Admin only.', 'error');
                 setTimeout(() => window.location.href = 'index.html', 2000);
                 return false;
             }
-
+            
             return true;
         }
 
@@ -723,7 +719,7 @@
                             <div class="wallet-header">
                                 <div class="wallet-info">
                                     <div class="wallet-icon">
-                                        <i class="fab fa-${crypto.icon}"></i>
+                                        <i class="fab fa-${crypto.icon || 'bitcoin'}"></i>
                                     </div>
                                     <div class="wallet-details">
                                         <h3>${crypto.name}</h3>
@@ -762,7 +758,7 @@
         async function updateWallet(cryptoId) {
             const input = document.getElementById(`wallet_${cryptoId}`);
             const address = input.value.trim();
-
+            
             if (!address) {
                 showMessage('Please enter a wallet address', 'error');
                 return;
@@ -775,173 +771,176 @@
                     .eq('id', cryptoId);
 
                 if (error) throw error;
-
                 showMessage('Wallet address updated successfully!', 'success');
             } catch (error) {
                 showMessage('Error updating wallet: ' + error.message, 'error');
             }
         }
 
-        // Load Deposits (UPDATED WITH PROOF IMAGE)
-async function loadDeposits() {
-    const loading = document.getElementById('depositsLoading');
-    const list = document.getElementById('depositsList');
-    
-    loading.style.display = 'block';
-    list.innerHTML = '';
+        // Load Deposits (UPDATED WITH FIXES)
+        async function loadDeposits() {
+            const loading = document.getElementById('depositsLoading');
+            const list = document.getElementById('depositsList');
+            
+            loading.style.display = 'block';
+            list.innerHTML = '';
 
-    try {
-        const { data: deposits, error } = await supabase
-            .from('deposits')
-            .select(`
-                *,
-                users!deposits_user_id_fkey(telegram_id, username, first_name)
-            `)
-            .order('created_at', { ascending: false });
+            try {
+                const { data: deposits, error } = await supabase
+                    .from('deposits')
+                    .select(`
+                        *,
+                        users!deposits_user_id_fkey(telegram_id, username, first_name)
+                    `)
+                    .order('created_at', { ascending: false });
 
-        if (error) throw error;
+                if (error) throw error;
 
-        loading.style.display = 'none';
+                loading.style.display = 'none';
+                
+                // Update pending count
+                const pendingCount = deposits.filter(d => d.status === 'pending').length;
+                document.getElementById('pendingCount').textContent = pendingCount > 0 ? `(${pendingCount})` : '';
 
-        // Update pending count
-        const pendingCount = deposits.filter(d => d.status === 'pending').length;
-        document.getElementById('pendingCount').textContent = pendingCount > 0 ? `(${pendingCount})` : '';
-
-        if (deposits.length === 0) {
-            list.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Deposits</h3>
-                    <p>No deposit requests found</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Build deposit cards
-        for (const deposit of deposits) {
-            const user = deposit.users;
-            const userName = user?.username || user?.first_name || 'Unknown User';
-            const initial = userName.charAt(0).toUpperCase();
-            const statusClass = deposit.status;
-
-            // Get proof image URL if exists
-            let proofImageHtml = '';
-            if (deposit.proof_url) {
-                try {
-                    const { data: urlData } = supabase.storage
-                        .from('transaction-proofs')
-                        .getPublicUrl(deposit.proof_url);
-                    
-                    const imageUrl = urlData.publicUrl;
-                    proofImageHtml = `
-                        <div class="proof-display">
-                            <label><i class="fas fa-image"></i> Proof of Payment</label>
-                            <div class="proof-image-container">
-                                <img src="${imageUrl}" alt="Proof" class="proof-image" onclick="openLightbox('${imageUrl}')">
-                                <button class="view-fullscreen" onclick="openLightbox('${imageUrl}')">
-                                    <i class="fas fa-expand"></i> View Full
-                                </button>
-                            </div>
+                if (deposits.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No Deposits</h3>
+                            <p>No deposit requests found</p>
                         </div>
                     `;
-                } catch (imgError) {
-                    console.error('Error loading proof image:', imgError);
-                    proofImageHtml = `
-                        <div class="proof-display">
-                            <label><i class="fas fa-image"></i> Proof of Payment</label>
-                            <div class="no-proof">
-                                <i class="fas fa-exclamation-triangle"></i> Error loading image
+                    return;
+                }
+
+                // Build deposit cards
+                for (const deposit of deposits) {
+                    const user = deposit.users;
+                    const userName = user?.username || user?.first_name || 'Unknown User';
+                    const initial = userName.charAt(0).toUpperCase();
+                    const statusClass = deposit.status;
+                    
+                    // Get proof image URL if exists
+                    let proofImageHtml = '';
+                    if (deposit.proof_url) {
+                        try {
+                            const { data: urlData } = supabase.storage
+                                .from('transaction-proofs')
+                                .getPublicUrl(deposit.proof_url);
+                            
+                            const imageUrl = urlData.publicUrl;
+                            proofImageHtml = `
+                                <div class="proof-display">
+                                    <label><i class="fas fa-image"></i> Proof of Payment</label>
+                                    <div class="proof-image-container">
+                                        <img src="${imageUrl}" alt="Proof" class="proof-image" onclick="openLightbox('${imageUrl}')">
+                                        <button class="view-fullscreen" onclick="openLightbox('${imageUrl}')">
+                                            <i class="fas fa-expand"></i> View Full
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } catch (imgError) {
+                            console.error('Error loading proof image:', imgError);
+                            proofImageHtml = `
+                                <div class="proof-display">
+                                    <label><i class="fas fa-image"></i> Proof of Payment</label>
+                                    <div class="no-proof">
+                                        <i class="fas fa-exclamation-triangle"></i> Error loading image
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        proofImageHtml = `
+                            <div class="proof-display">
+                                <label><i class="fas fa-image"></i> Proof of Payment</label>
+                                <div class="no-proof">
+                                    <i class="fas fa-image"></i> No proof uploaded
+                                </div>
                             </div>
+                        `;
+                    }
+
+                    list.innerHTML += `
+                        <div class="deposit-card">
+                            <div class="deposit-header">
+                                <div class="user-info">
+                                    <div class="user-avatar">${initial}</div>
+                                    <div class="user-details">
+                                        <h4>${userName}</h4>
+                                        <p>ID: ${user?.telegram_id || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div class="deposit-status ${statusClass}">
+                                    <i class="fas fa-${statusClass === 'pending' ? 'clock' : statusClass === 'approved' ? 'check' : 'times'}"></i>
+                                    ${deposit.status}
+                                </div>
+                            </div>
+                            <div class="deposit-info">
+                                <div class="info-item">
+                                    <span class="info-label">Cryptocurrency</span>
+                                    <span class="info-value">${deposit.crypto}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Amount</span>
+                                    <span class="info-value highlight">\$${deposit.amount} ${deposit.crypto}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Date</span>
+                                    <span class="info-value">${new Date(deposit.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Time</span>
+                                    <span class="info-value">${new Date(deposit.created_at).toLocaleTimeString()}</span>
+                                </div>
+                            </div>
+                            
+                            ${proofImageHtml}
+                            
+                            <div class="wallet-display">
+                                <label>User's Wallet Address</label>
+                                <p>${deposit.wallet_address}</p>
+                            </div>
+
+                            ${deposit.transaction_id ? `
+                                <div class="wallet-display">
+                                    <label>Transaction ID</label>
+                                    <p>${deposit.transaction_id}</p>
+                                </div>
+                            ` : ''}
+
+                            ${deposit.admin_note ? `
+                                <div class="wallet-display">
+                                    <label>Admin Note</label>
+                                    <p>${deposit.admin_note}</p>
+                                </div>
+                            ` : ''}
+
+                            ${deposit.status === 'pending' ? `
+                                <div class="deposit-actions">
+                                    <button class="btn btn-approve" onclick="approveDeposit(${deposit.id}, ${deposit.user_id}, ${deposit.amount}, '${deposit.crypto}')">
+                                        <i class="fas fa-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-reject" onclick="rejectDeposit(${deposit.id}, ${deposit.user_id})">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     `;
                 }
-            } else {
-                proofImageHtml = `
-                    <div class="proof-display">
-                        <label><i class="fas fa-image"></i> Proof of Payment</label>
-                        <div class="no-proof">
-                            <i class="fas fa-image"></i> No proof uploaded
-                        </div>
-                    </div>
-                `;
+            } catch (error) {
+                loading.style.display = 'none';
+                showMessage('Error loading deposits: ' + error.message, 'error');
             }
-
-            list.innerHTML += `
-                <div class="deposit-card">
-                    <div class="deposit-header">
-                        <div class="user-info">
-                            <div class="user-avatar">${initial}</div>
-                            <div class="user-details">
-                                <h4>${userName}</h4>
-                                <p>ID: ${user?.telegram_id || 'N/A'}</p>
-                            </div>
-                        </div>
-                        <div class="deposit-status ${statusClass}">
-                            <i class="fas fa-${statusClass === 'pending' ? 'clock' : statusClass === 'approved' ? 'check' : 'times'}"></i>
-                            ${deposit.status.toUpperCase()}
-                        </div>
-                    </div>
-                    <div class="deposit-info">
-                        <div class="info-item">
-                            <span class="info-label">Cryptocurrency</span>
-                            <span class="info-value">${deposit.crypto}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Amount</span>
-                            <span class="info-value highlight">$$${deposit.amount}$$ {deposit.crypto}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Date</span>
-                            <span class="info-value">${new Date(deposit.created_at).toLocaleDateString()}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Time</span>
-                            <span class="info-value">${new Date(deposit.created_at).toLocaleTimeString()}</span>
-                        </div>
-                    </div>
-                    
-                    ${proofImageHtml}
-                    
-                    <div class="wallet-display">
-                        <label>User's Wallet Address</label>
-                        <p>${deposit.wallet_address}</p>
-                    </div>
-                    ${deposit.transaction_id ? `
-                        <div class="wallet-display">
-                            <label>Transaction ID</label>
-                            <p>${deposit.transaction_id}</p>
-                        </div>
-                    ` : ''}
-                    ${deposit.admin_note ? `
-                        <div class="wallet-display">
-                            <label>Admin Note</label>
-                            <p>${deposit.admin_note}</p>
-                        </div>
-                    ` : ''}
-                    ${deposit.status === 'pending' ? `
-                        <div class="deposit-actions">
-                            <button class="btn btn-approve" onclick="approveDeposit($${deposit.id},$$ {deposit.user_id}, $${deposit.amount}, '$$ {deposit.crypto}')">
-                                <i class="fas fa-check"></i> Approve
-                            </button>
-                            <button class="btn btn-reject" onclick="rejectDeposit($${deposit.id},$$ {deposit.user_id})">
-                                <i class="fas fa-times"></i> Reject
-                            </button>
-                        </div>
-                    ` : ''}
-                </div>
-            `;
         }
-    } catch (error) {
-        loading.style.display = 'none';
-        showMessage('Error loading deposits: ' + error.message, 'error');
-    }
-}
 
-        // Approve Deposit
+        // Approve Deposit (UPDATED WITH FIXES)
         async function approveDeposit(depositId, userId, amount, crypto) {
-            if (!confirm(`Approve deposit of $${amount} ${crypto}?`)) return;
-
+            // FIX 4: Corrected confirm message
+            if (!confirm(`Approve deposit of \$${amount} ${crypto}?`)) return;
+            
             try {
                 // Update deposit status
                 const { error: depositError } = await supabase
@@ -952,7 +951,7 @@ async function loadDeposits() {
                         admin_note: 'Deposit approved by admin'
                     })
                     .eq('id', depositId);
-
+                
                 if (depositError) throw depositError;
 
                 // Update user balance
@@ -965,7 +964,7 @@ async function loadDeposits() {
                 if (userError) throw userError;
 
                 const newBalance = parseFloat(user.balance) + parseFloat(amount);
-
+                
                 const { error: updateError } = await supabase
                     .from('users')
                     .update({ balance: newBalance })
@@ -978,12 +977,14 @@ async function loadDeposits() {
                     user_id: userId,
                     type: 'deposit',
                     amount: amount,
-                    description: `Deposit approved: $${amount} ${crypto}`,
+                    // FIX 5: Corrected description string
+                    description: `Deposit approved: \$${amount} ${crypto}`,
                     reference_id: depositId
                 });
 
                 showMessage('Deposit approved successfully!', 'success');
                 loadDeposits();
+
             } catch (error) {
                 showMessage('Error approving deposit: ' + error.message, 'error');
             }
@@ -992,7 +993,7 @@ async function loadDeposits() {
         // Reject Deposit
         async function rejectDeposit(depositId, userId) {
             const reason = prompt('Enter rejection reason (optional):');
-
+            
             try {
                 const { error } = await supabase
                     .from('deposits')
@@ -1004,54 +1005,56 @@ async function loadDeposits() {
                     .eq('id', depositId);
 
                 if (error) throw error;
-
                 showMessage('Deposit rejected', 'success');
                 loadDeposits();
+
             } catch (error) {
                 showMessage('Error rejecting deposit: ' + error.message, 'error');
             }
         }
         
         // Open Lightbox for Full Image View
-function openLightbox(imageUrl) {
-    // Remove existing lightbox if any
-    const existingLightbox = document.getElementById('lightbox');
-    if (existingLightbox) {
-        existingLightbox.remove();
-    }
+        function openLightbox(imageUrl) {
+            // Remove existing lightbox if any
+            const existingLightbox = document.getElementById('lightbox');
+            if (existingLightbox) {
+                existingLightbox.remove();
+            }
 
-    // Create lightbox
-    const lightbox = document.createElement('div');
-    lightbox.id = 'lightbox';
-    lightbox.className = 'lightbox active';
-    lightbox.innerHTML = `
-        <div class="lightbox-content">
-            <button class="lightbox-close" onclick="closeLightbox()">
-                <i class="fas fa-times"></i> Close
-            </button>
-            <img src="${imageUrl}" alt="Proof Fullscreen" class="lightbox-image">
-        </div>
-    `;
-    
-    document.body.appendChild(lightbox);
+            // Create lightbox
+            const lightbox = document.createElement('div');
+            lightbox.id = 'lightbox';
+            lightbox.className = 'lightbox';
+            lightbox.innerHTML = `
+                <div class="lightbox-content">
+                    <button class="lightbox-close" onclick="closeLightbox()">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <img src="${imageUrl}" alt="Proof Fullscreen" class="lightbox-image">
+                </div>
+            `;
+            
+            document.body.appendChild(lightbox);
+            
+            // Trigger the transition
+            setTimeout(() => lightbox.classList.add('active'), 10);
 
-    // Close on background click
-    lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) {
-            closeLightbox();
+            // Close on background click
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) {
+                    closeLightbox();
+                }
+            });
         }
-    });
-}
 
-// Close Lightbox
-function closeLightbox() {
-    const lightbox = document.getElementById('lightbox');
-    if (lightbox) {
-        lightbox.classList.remove('active');
-        setTimeout(() => lightbox.remove(), 300);
-    }
-}
-
+        // Close Lightbox
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox) {
+                lightbox.classList.remove('active');
+                setTimeout(() => lightbox.remove(), 300);
+            }
+        }
 
         // Initialize
         window.onload = async () => {
