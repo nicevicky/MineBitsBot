@@ -727,7 +727,7 @@
         // ==========================================
         function generateInviteLink() {
             if (!currentUser) return;
-            const inviteLink = `https://t.me/${TELEGRAM_BOT_USERNAME}?startapp=${currentUser.id}`;
+            const inviteLink = `https://t.me/${TELEGRAM_BOT_USERNAME}/MineCore?startapp=${currentUser.id}`;
             document.getElementById('inviteLink').textContent = inviteLink;
         }
         // ==========================================
@@ -1063,4 +1063,3 @@
     </script>
 </body>
 </html>
-
