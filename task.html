@@ -444,7 +444,6 @@
     </style>
 </head>
 <body>
-
     <div class="container">
         <div class="header">
             <h1>
@@ -453,20 +452,24 @@
             </h1>
         </div>
 
+        <!-- Message Container -->
         <div id="messageContainer"></div>
 
+        <!-- Tabs -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('tasks', this)">
+            <button class="tab-btn active" onclick="switchTab('tasks')">
                 <i class="fas fa-list-check"></i>
                 Tasks
             </button>
-            <button class="tab-btn" onclick="switchTab('ads', this)">
+            <button class="tab-btn" onclick="switchTab('ads')">
                 <i class="fas fa-rectangle-ad"></i>
                 Ads
             </button>
         </div>
 
+        <!-- Tasks Tab -->
         <div id="tasksTab" class="tab-content active">
+            <!-- Create Task Form -->
             <div class="card">
                 <h2><i class="fas fa-plus-circle"></i> Create New Task</h2>
                 <form id="createTaskForm">
@@ -530,6 +533,7 @@
                 </form>
             </div>
 
+            <!-- Existing Tasks List -->
             <div class="card">
                 <h2><i class="fas fa-list"></i> Existing Tasks</h2>
                 <div id="tasksList" class="list-container">
@@ -541,7 +545,9 @@
             </div>
         </div>
 
+        <!-- Ads Tab -->
         <div id="adsTab" class="tab-content">
+            <!-- Create Ad Form -->
             <div class="card">
                 <h2><i class="fas fa-plus-circle"></i> Create New Ad</h2>
                 <form id="createAdForm">
@@ -571,6 +577,7 @@
                 </form>
             </div>
 
+            <!-- Existing Ads List -->
             <div class="card">
                 <h2><i class="fas fa-rectangle-ad"></i> Existing Ads</h2>
                 <div id="adsList" class="list-container">
@@ -583,6 +590,7 @@
         </div>
     </div>
 
+    <!-- Bottom Navigation -->
     <nav>
         <a href="admin.html"><i class="fas fa-home"></i><span>Home</span></a>
         <a href="users.html"><i class="fas fa-user-shield"></i><span>Users</span></a>
@@ -598,17 +606,12 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.enableClosingConfirmation();
-        // Set background color to match Telegram theme
-        tg.setHeaderColor(getComputedStyle(document.documentElement).getPropertyValue('--tg-header-bg').trim());
-        tg.setBackgroundColor(getComputedStyle(document.documentElement).getPropertyValue('--tg-bg').trim());
 
         // Supabase Configuration
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'; // <-- PUT YOUR URL HERE
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // <-- PUT YOUR KEY HERE
-        
-        // **FIXED:** Use window.supabase.createClient
-        const { createClient } = window.supabase;
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
         // Get admin ID from Telegram
         const adminId = tg.initDataUnsafe?.user?.id;
@@ -617,35 +620,30 @@
         async function checkAdmin() {
             if (!adminId) {
                 showMessage('Access denied. Admin only.', 'error');
-                // setTimeout(() => window.location.href = 'index.html', 2000);
+                setTimeout(() => window.location.href = 'index.html', 2000);
                 return false;
             }
             
-            try {
-                const { data, error } = await supabase
-                    .from('users')
-                    .select('role')
-                    .eq('telegram_id', adminId)
-                    .single();
-                
-                if (error || !data || data.role !== 'admin') {
-                    showMessage('Access denied. You are not an admin.', 'error');
-                    // setTimeout(() => window.location.href = 'index.html', 2000);
-                    return false;
-                }
-                
-                return true;
-            } catch (error) {
-                showMessage('Error verifying admin status: ' + error.message, 'error');
+            const { data, error } = await supabase
+                .from('users')
+                .select('role')
+                .eq('telegram_id', adminId)
+                .single();
+            
+            if (error || !data || data.role !== 'admin') {
+                showMessage('Access denied. Admin only.', 'error');
+                setTimeout(() => window.location.href = 'index.html', 2000);
                 return false;
             }
+            
+            return true;
         }
 
         // Tab Switching
-        function switchTab(tab, buttonElement) {
+        function switchTab(tab) {
             // Update tab buttons
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            buttonElement.classList.add('active');
+            event.target.closest('.tab-btn').classList.add('active');
             
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -662,25 +660,13 @@
         function showMessage(text, type = 'success') {
             const container = document.getElementById('messageContainer');
             const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
-            
-            const messageEl = document.createElement('div');
-            messageEl.className = `message ${type}`;
-            messageEl.innerHTML = `
-                <i class="fas ${icon}"></i>
-                <span>${text}</span>
+            container.innerHTML = `
+                <div class="message ${type}">
+                    <i class="fas ${icon}"></i>
+                    <span>${text}</span>
+                </div>
             `;
-            
-            container.innerHTML = ''; // Clear previous messages
-            container.appendChild(messageEl);
-            
-            setTimeout(() => {
-                messageEl.style.opacity = '0';
-                setTimeout(() => {
-                    if (container.contains(messageEl)) {
-                        container.removeChild(messageEl);
-                    }
-                }, 500);
-            }, 4500);
+            setTimeout(() => container.innerHTML = '', 5000);
         }
 
         // Icon Selection
@@ -691,7 +677,7 @@
         }
 
         // ==================== TASKS MANAGEMENT ====================
-        
+
         // Create Task
         document.getElementById('createTaskForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -711,7 +697,7 @@
                 .from('tasks')
                 .insert([taskData])
                 .select();
-            
+
             if (error) {
                 showMessage('Error creating task: ' + error.message, 'error');
             } else {
@@ -725,22 +711,22 @@
         async function loadTasks() {
             const container = document.getElementById('tasksList');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>Loading tasks...</p></div>';
-            
+
             const { data, error } = await supabase
                 .from('tasks')
                 .select('*')
                 .order('created_at', { ascending: false });
-            
+
             if (error) {
                 container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
                 return;
             }
-            
+
             if (!data || data.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Tasks</h3><p>Create your first task above.</p></div>';
                 return;
             }
-            
+
             container.innerHTML = data.map(task => `
                 <div class="list-item">
                     <div class="list-item-header">
@@ -758,7 +744,7 @@
                         <div class="list-item-detail"><i class="fas fa-link"></i> ${task.link}</div>
                     </div>
                     <div class="list-item-actions">
-                        <button class="btn btn-small ${task.active ? 'btn-danger' : 'btn-success'}" onclick="toggleTaskStatus(${task.id}, ${!task.active})">
+                        <button class="btn btn-small ${task.active ? 'btn-danger' : 'btn-success'}" onclick="toggleTaskStatus($${task.id},$$ {!task.active})">
                             <i class="fas fa-power-off"></i>
                             ${task.active ? 'Deactivate' : 'Activate'}
                         </button>
@@ -777,7 +763,7 @@
                 .from('tasks')
                 .update({ active })
                 .eq('id', taskId);
-            
+
             if (error) {
                 showMessage('Error updating task: ' + error.message, 'error');
             } else {
@@ -789,12 +775,12 @@
         // Delete Task
         async function deleteTask(taskId) {
             if (!confirm('Are you sure you want to delete this task?')) return;
-            
+
             const { error } = await supabase
                 .from('tasks')
                 .delete()
                 .eq('id', taskId);
-            
+
             if (error) {
                 showMessage('Error deleting task: ' + error.message, 'error');
             } else {
@@ -804,7 +790,7 @@
         }
 
         // ==================== ADS MANAGEMENT ====================
-        
+
         // Create Ad
         document.getElementById('createAdForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -815,14 +801,14 @@
                 reward: parseFloat(document.getElementById('adReward').value),
                 description: document.getElementById('adDescription').value,
                 active: true,
-                created_by: adminId 
+                created_by: adminId
             };
-            
+
             const { data, error } = await supabase
                 .from('ads')
                 .insert([adData])
                 .select();
-            
+
             if (error) {
                 showMessage('Error creating ad: ' + error.message, 'error');
             } else {
@@ -836,22 +822,22 @@
         async function loadAds() {
             const container = document.getElementById('adsList');
             container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i><p>Loading ads...</p></div>';
-            
+
             const { data, error } = await supabase
                 .from('ads')
                 .select('*')
                 .order('created_at', { ascending: false });
-            
+
             if (error) {
                 container.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
                 return;
             }
-            
+
             if (!data || data.length === 0) {
                 container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Ads</h3><p>Create your first ad above.</p></div>';
                 return;
             }
-            
+
             container.innerHTML = data.map(ad => `
                 <div class="list-item">
                     <div class="list-item-header">
@@ -868,9 +854,8 @@
                         <div class="list-item-detail"><i class="fas fa-code"></i> SDK: ${ad.sdk_name}</div>
                         <div class="list-item-detail"><i class="fas fa-coins"></i> Reward: ${ad.reward}</div>
                         ${ad.description ? `<div class="list-item-detail"><i class="fas fa-info-circle"></i> ${ad.description}</div>` : ''}
-                    </div>
-                    <div class="list-item-actions">
-                        <button class="btn btn-small ${ad.active ? 'btn-danger' : 'btn-success'}" onclick="toggleAdStatus(${ad.id}, ${!ad.active})">
+                                        <div class="list-item-actions">
+                        <button class="btn btn-small ${ad.active ? 'btn-danger' : 'btn-success'}" onclick="toggleAdStatus($${ad.id},$$ {!ad.active})">
                             <i class="fas fa-power-off"></i>
                             ${ad.active ? 'Deactivate' : 'Activate'}
                         </button>
@@ -889,7 +874,7 @@
                 .from('ads')
                 .update({ active })
                 .eq('id', adId);
-            
+
             if (error) {
                 showMessage('Error updating ad: ' + error.message, 'error');
             } else {
@@ -901,12 +886,12 @@
         // Delete Ad
         async function deleteAd(adId) {
             if (!confirm('Are you sure you want to delete this ad?')) return;
-            
+
             const { error } = await supabase
                 .from('ads')
                 .delete()
                 .eq('id', adId);
-            
+
             if (error) {
                 showMessage('Error deleting ad: ' + error.message, 'error');
             } else {
@@ -919,25 +904,20 @@
         (async function init() {
             const isAdmin = await checkAdmin();
             if (isAdmin) {
-                loadTasks(); // Load tasks on initial page load
+                loadTasks();
             }
         })();
 
         // Highlight active nav item
         document.addEventListener('DOMContentLoaded', () => {
-            const currentPage = window.location.pathname.split('/').pop() || 'admin.html'; // Default to admin.html
+            const currentPage = window.location.pathname.split('/').pop();
             document.querySelectorAll('nav a').forEach(link => {
                 if (link.getAttribute('href') === currentPage) {
                     link.classList.add('active');
                 }
             });
-            
-            // Set default icon selection
-            const defaultIcon = document.querySelector('.icon-option');
-            if(defaultIcon) {
-                selectIcon('fa-telegram', defaultIcon);
-            }
         });
     </script>
 </body>
 </html>
+
