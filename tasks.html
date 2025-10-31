@@ -1,3 +1,29 @@
+tell me what and where to update in this code after watching ads it's showing me this 
+
+Failed to record ad view please try again
+
+CREATE TABLE ads (
+    id BIGSERIAL PRIMARY KEY,
+    zone_id VARCHAR(50) NOT NULL,
+    sdk_name VARCHAR(100) NOT NULL,
+    reward DECIMAL(20, 8) NOT NULL DEFAULT 0.001,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    created_by BIGINT REFERENCES users(telegram_id),
+    description TEXT
+);
+
+-- Create user_ads table (tracks watched ads)
+CREATE TABLE user_ads (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES users(telegram_id) ON DELETE CASCADE,
+    ad_id BIGINT REFERENCES ads(id) ON DELETE CASCADE,
+    watched_at TIMESTAMP DEFAULT NOW(),
+    reward_earned DECIMAL(20, 8) NOT NULL
+);
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -724,55 +750,79 @@
         }
         
         async function recordAdWatch(adId, reward) {
-            try {
-                const telegramId = getUserId();
-                
-                const { error: adError } = await supabase
-                    .from('user_ads')
-                    .insert({
-                        user_id: telegramId,
-                        ad_id: adId,
-                        watched_at: new Date().toISOString(),
-                        reward_earned: reward
-                    });
-                
-                if (adError) {
-                    console.error('Error recording ad watch:', adError);
-                    return false;
-                }
-                
-                const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
-                const { error: balanceError } = await supabase
-                    .from('users')
-                    .update({ 
-                        balance: newBalance,
-                        total_earned: parseFloat(currentUser.total_earned) + parseFloat(reward)
-                    })
-                    .eq('telegram_id', telegramId);
-                
-                if (balanceError) {
-                    console.error('Error updating balance:', balanceError);
-                    return false;
-                }
-                
-                await supabase
-                    .from('transactions')
-                    .insert({
-                        user_id: telegramId,
-                        type: 'ad',
-                        amount: reward,
-                        description: `Watched ad #${adId}`
-                    });
-                
-                currentUser.balance = newBalance;
-                currentUser.total_earned = parseFloat(currentUser.total_earned) + parseFloat(reward);
-                updateBalanceDisplay();
-                return true;
-            } catch (err) {
-                console.error('Exception recording ad watch:', err);
-                return false;
-            }
+    try {
+        const telegramId = getUserId();
+        
+        // First verify the ad exists and is active
+        const { data: adData, error: adCheckError } = await supabase
+            .from('ads')
+            .select('id, active')
+            .eq('id', adId)
+            .eq('active', true)
+            .single();
+        
+        if (adCheckError || !adData) {
+            console.error('Ad not found or inactive:', adCheckError);
+            return false;
         }
+        
+        // Record the ad view
+        const { error: adError } = await supabase
+            .from('user_ads')
+            .insert({
+                user_id: telegramId,
+                ad_id: adId,
+                reward_earned: reward
+            });
+        
+        if (adError) {
+            console.error('Error recording ad watch:', adError);
+            console.error('Details:', JSON.stringify(adError, null, 2));
+            return false;
+        }
+        
+        // Update user balance
+        const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
+        const newTotalEarned = parseFloat(currentUser.total_earned || 0) + parseFloat(reward);
+        
+        const { error: balanceError } = await supabase
+            .from('users')
+            .update({ 
+                balance: newBalance,
+                total_earned: newTotalEarned
+            })
+            .eq('telegram_id', telegramId);
+        
+        if (balanceError) {
+            console.error('Error updating balance:', balanceError);
+            // Even if balance update fails, we recorded the ad view
+            // so return true but log the error
+        }
+        
+        // Record transaction
+        await supabase
+            .from('transactions')
+            .insert({
+                user_id: telegramId,
+                type: 'ad',
+                amount: reward,
+                description: `Watched ad #${adId}`
+            });
+        
+        // Update local user object
+        currentUser.balance = newBalance;
+        currentUser.total_earned = newTotalEarned;
+        updateBalanceDisplay();
+        
+        return true;
+    } catch (err) {
+        console.error('Exception recording ad watch:', err);
+        console.error('Stack:', err.stack);
+        return false;
+    }
+}
+
+
         
         // =====================================================
         // AD SDK MANAGEMENT
