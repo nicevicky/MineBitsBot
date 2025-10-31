@@ -1,28 +1,3 @@
-tell me what and where to update in this code after watching ads it's showing me this 
-
-Failed to record ad view please try again
-
-CREATE TABLE ads (
-    id BIGSERIAL PRIMARY KEY,
-    zone_id VARCHAR(50) NOT NULL,
-    sdk_name VARCHAR(100) NOT NULL,
-    reward DECIMAL(20, 8) NOT NULL DEFAULT 0.001,
-    active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW(),
-    created_by BIGINT REFERENCES users(telegram_id),
-    description TEXT
-);
-
--- Create user_ads table (tracks watched ads)
-CREATE TABLE user_ads (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users(telegram_id) ON DELETE CASCADE,
-    ad_id BIGINT REFERENCES ads(id) ON DELETE CASCADE,
-    watched_at TIMESTAMP DEFAULT NOW(),
-    reward_earned DECIMAL(20, 8) NOT NULL
-);
-
-
 
 <!DOCTYPE html>
 <html lang="en">
