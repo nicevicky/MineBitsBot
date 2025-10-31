@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,7 +45,6 @@
             margin: 0 auto;
         }
         
-        /* 3D Canvas Background */
         #canvas3d {
             position: fixed;
             top: 0;
@@ -57,7 +55,6 @@
             opacity: 0.3;
         }
         
-        /* Header & Balance */
         .header {
             margin-bottom: 20px;
         }
@@ -95,7 +92,6 @@
             margin-right: 5px;
         }
         
-        /* Message Container */
         #messageContainer {
             margin-bottom: 15px;
         }
@@ -130,7 +126,6 @@
             border: 1px solid var(--red);
         }
         
-        /* Loading & Empty States */
         .loading, .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -157,14 +152,12 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Tasks Grid */
         .tasks-grid {
             display: grid;
             grid-template-columns: 1fr;
             gap: 15px;
         }
         
-        /* Task Card */
         .task-card {
             background-color: var(--card-color);
             border-radius: 16px;
@@ -187,7 +180,6 @@
             border-color: var(--green);
         }
         
-        /* Daily Bonus Card */
         .task-card.daily-bonus {
             border-color: var(--yellow);
             background: linear-gradient(135deg, var(--card-color) 0%, #3a321c 100%);
@@ -196,7 +188,6 @@
             color: var(--yellow);
         }
         
-        /* Watch Ads Card */
         .task-card.watch-ads {
             border-color: var(--purple);
             background: linear-gradient(135deg, var(--card-color) 0%, #2d1f3a 100%);
@@ -321,7 +312,6 @@
             border-top-color: var(--bg-color);
         }
         
-        /* Completed Badge */
         .completed-badge {
             position: absolute;
             top: 10px;
@@ -337,7 +327,6 @@
             gap: 4px;
         }
         
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -437,19 +426,17 @@
         const DAILY_BONUS_REWARD = 0.01;
         const DAILY_BONUS_COOLDOWN_HOURS = 24;
         
-        // Initialize Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Initialize Telegram WebApp
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
         
-        // Global variables
         let currentUser = null;
         let allTasks = [];
         let completedTaskIds = new Set();
         let activeAds = [];
+        let watchedAdIds = new Set();
         let adSDKLoaded = false;
         
         // =====================================================
@@ -610,17 +597,34 @@
         
         async function fetchActiveAds() {
             try {
-                const { data, error } = await supabase
+                const telegramId = getUserId();
+                
+                const { data: allAds, error: adsError } = await supabase
                     .from('ads')
                     .select('*')
                     .eq('active', true)
                     .order('created_at', { ascending: false });
                 
-                if (error) {
-                    console.error('Error fetching ads:', error);
+                if (adsError) {
+                    console.error('Error fetching ads:', adsError);
                     return [];
                 }
-                return data || [];
+                
+                const { data: watchedAds, error: watchedError } = await supabase
+                    .from('user_ads')
+                    .select('ad_id')
+                    .eq('user_id', telegramId);
+                
+                if (watchedError) {
+                    console.error('Error fetching watched ads:', watchedError);
+                }
+                
+                const watchedSet = new Set((watchedAds || []).map(item => item.ad_id));
+                watchedAdIds = watchedSet;
+                
+                const unwatchedAds = (allAds || []).filter(ad => !watchedSet.has(ad.id));
+                
+                return unwatchedAds;
             } catch (err) {
                 console.error('Exception fetching ads:', err);
                 return [];
@@ -641,7 +645,7 @@
                     });
                 
                 if (taskError) {
-                    if (taskError.code === '23505') { // Unique violation (already completed)
+                    if (taskError.code === '23505') {
                         console.warn('Task already marked as completed.');
                         return true;
                     }
@@ -663,7 +667,7 @@
                     return false;
                 }
                 
-                await supabase
+                const { error: transactionError } = await supabase
                     .from('transactions')
                     .insert({
                         user_id: telegramId,
@@ -672,6 +676,10 @@
                         description: `Completed task #${taskId}`,
                         reference_id: taskId
                     });
+                
+                if (transactionError) {
+                    console.error('Error recording transaction:', transactionError);
+                }
                 
                 currentUser.balance = newBalance;
                 currentUser.total_earned = parseFloat(currentUser.total_earned) + parseFloat(reward);
@@ -704,7 +712,7 @@
                     return false;
                 }
 
-                await supabase
+                const { error: transactionError } = await supabase
                     .from('transactions')
                     .insert({
                         user_id: telegramId,
@@ -712,6 +720,10 @@
                         amount: DAILY_BONUS_REWARD,
                         description: 'Daily login bonus'
                     });
+                
+                if (transactionError) {
+                    console.error('Error recording bonus transaction:', transactionError);
+                }
                 
                 currentUser.balance = newBalance;
                 currentUser.total_earned = newTotalEarned;
@@ -725,79 +737,78 @@
         }
         
         async function recordAdWatch(adId, reward) {
-    try {
-        const telegramId = getUserId();
-        
-        // First verify the ad exists and is active
-        const { data: adData, error: adCheckError } = await supabase
-            .from('ads')
-            .select('id, active')
-            .eq('id', adId)
-            .eq('active', true)
-            .single();
-        
-        if (adCheckError || !adData) {
-            console.error('Ad not found or inactive:', adCheckError);
-            return false;
+            try {
+                const telegramId = getUserId();
+                
+                const { data: adData, error: adCheckError } = await supabase
+                    .from('ads')
+                    .select('id, active')
+                    .eq('id', adId)
+                    .eq('active', true)
+                    .single();
+                
+                if (adCheckError || !adData) {
+                    console.error('Ad not found or inactive:', adCheckError);
+                    return false;
+                }
+                
+                const { error: adError } = await supabase
+                    .from('user_ads')
+                    .insert({
+                        user_id: telegramId,
+                        ad_id: adId,
+                        reward_earned: reward
+                    });
+                
+                if (adError) {
+                    if (adError.code === '23505') {
+                        console.warn('Ad already watched by user.');
+                        return false;
+                    }
+                    console.error('Error recording ad watch:', adError);
+                    return false;
+                }
+                
+                const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
+                const newTotalEarned = parseFloat(currentUser.total_earned || 0) + parseFloat(reward);
+                
+                const { error: balanceError } = await supabase
+                    .from('users')
+                    .update({ 
+                        balance: newBalance,
+                        total_earned: newTotalEarned
+                    })
+                    .eq('telegram_id', telegramId);
+                
+                if (balanceError) {
+                    console.error('Error updating balance:', balanceError);
+                }
+                
+                const { error: transactionError } = await supabase
+                    .from('transactions')
+                    .insert({
+                        user_id: telegramId,
+                        type: 'ad',
+                        amount: reward,
+                        description: `Watched ad #${adId}`,
+                        reference_id: adId
+                    });
+                
+                if (transactionError) {
+                    console.error('Error recording ad transaction:', transactionError);
+                }
+                
+                currentUser.balance = newBalance;
+                currentUser.total_earned = newTotalEarned;
+                watchedAdIds.add(adId);
+                updateBalanceDisplay();
+                
+                return true;
+            } catch (err) {
+                console.error('Exception recording ad watch:', err);
+                return false;
+            }
         }
-        
-        // Record the ad view
-        const { error: adError } = await supabase
-            .from('user_ads')
-            .insert({
-                user_id: telegramId,
-                ad_id: adId,
-                reward_earned: reward
-            });
-        
-        if (adError) {
-            console.error('Error recording ad watch:', adError);
-            console.error('Details:', JSON.stringify(adError, null, 2));
-            return false;
-        }
-        
-        // Update user balance
-        const newBalance = parseFloat(currentUser.balance) + parseFloat(reward);
-        const newTotalEarned = parseFloat(currentUser.total_earned || 0) + parseFloat(reward);
-        
-        const { error: balanceError } = await supabase
-            .from('users')
-            .update({ 
-                balance: newBalance,
-                total_earned: newTotalEarned
-            })
-            .eq('telegram_id', telegramId);
-        
-        if (balanceError) {
-            console.error('Error updating balance:', balanceError);
-            // Even if balance update fails, we recorded the ad view
-            // so return true but log the error
-        }
-        
-        // Record transaction
-        await supabase
-            .from('transactions')
-            .insert({
-                user_id: telegramId,
-                type: 'ad',
-                amount: reward,
-                description: `Watched ad #${adId}`
-            });
-        
-        // Update local user object
-        currentUser.balance = newBalance;
-        currentUser.total_earned = newTotalEarned;
-        updateBalanceDisplay();
-        
-        return true;
-    } catch (err) {
-        console.error('Exception recording ad watch:', err);
-        console.error('Stack:', err.stack);
-        return false;
-    }
-}
-
-
         
         // =====================================================
         // AD SDK MANAGEMENT
@@ -832,7 +843,6 @@
             try {
                 const chatUsername = extractChatUsername(chatId);
                 if (!chatUsername) {
-                    // If it's not a public channel link we can check, assume true
                     return true;
                 }
                 
@@ -845,12 +855,11 @@
                     return ['creator', 'administrator', 'member'].includes(status);
                 } else {
                     console.error('Telegram API error:', data.description);
-                    // Fail open: If API fails, assume they joined to not block user.
                     return true; 
                 }
             } catch (err) {
                 console.error('Error verifying membership:', err);
-                return true; // Fail open
+                return true;
             }
         }
         
@@ -901,7 +910,6 @@
                 const nextClaimDate = new Date(lastClaimDate.getTime() + DAILY_BONUS_COOLDOWN_HOURS * 60 * 60 * 1000);
                 const hoursRemaining = Math.floor((nextClaimDate - new Date()) / (1000 * 60 * 60));
                 const minutesRemaining = Math.floor(((nextClaimDate - new Date()) / (1000 * 60)) % 60);
-                // FIXED: Corrected template literal syntax
                 description = `Claim again in ${hoursRemaining}h ${minutesRemaining}m`;
                 buttonHtml = `
                     <button class="btn-task btn-claimed" disabled>
@@ -938,7 +946,7 @@
             const ad = activeAds[0];
             const reward = parseFloat(ad.reward).toFixed(8);
             const description = ad.description || 'Watch an ad to earn rewards!';
-            // FIXED: Corrected template literals and quotes in onclick
+            
             return `
             <div class="task-card watch-ads" data-ad-id="${ad.id}">
                 <div class="task-icon">
@@ -968,11 +976,9 @@
             const watchAdsCardHtml = renderWatchAdsCard();
 
             if (allTasks.length === 0 && !watchAdsCardHtml) {
-                 // FIXED: Corrected template literal syntax
                 container.innerHTML = `<div class="tasks-grid">${dailyBonusCardHtml}</div>`;
-                // Add an empty state if there are no other tasks
                 if (allTasks.length === 0) {
-                    container.innerHTML += '<div class="empty-state"><i class="fas fa-inbox"></i><p>No new tasks right now. Check back later!</p></div>';
+                    container.innerHTML += '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No Tasks Available</h3><p>No new tasks right now. Check back later!</p></div>';
                 }
                 return;
             }
@@ -981,7 +987,6 @@
                 const isCompleted = completedTaskIds.has(task.id);
                 const cardClass = isCompleted ? 'task-card completed' : 'task-card';
                 
-                // FIXED: Corrected template literals and quotes in onclick
                 return `
                 <div class="${cardClass}" data-task-id="${task.id}">
                     ${isCompleted ? '<div class="completed-badge"><i class="fas fa-check"></i> Completed</div>' : ''}
@@ -1011,7 +1016,6 @@
                 `;
             }).join('');
             
-            // FIXED: Corrected template literal syntax
             container.innerHTML = `<div class="tasks-grid">${dailyBonusCardHtml}${watchAdsCardHtml}${tasksHTML}</div>`;
         }
         
@@ -1027,7 +1031,6 @@
 
             if (success) {
                 showMessage(`Congratulations! You earned ${DAILY_BONUS_REWARD.toFixed(8)} coins!`, 'success');
-                // Re-render just the daily bonus card
                 const card = button.closest('.daily-bonus');
                 card.outerHTML = renderDailyBonusCard();
             } else {
@@ -1051,17 +1054,20 @@
                         const success = await recordAdWatch(adId, reward);
                         
                         if (success) {
-                            showMessage(`🎉 You earned ${parseFloat(reward).toFixed(8)} coins!`, 'success');
+                            showMessage(`You earned ${parseFloat(reward).toFixed(8)} coins!`, 'success');
+                            
+                            activeAds = activeAds.filter(ad => ad.id !== adId);
+                            
+                            renderTasks();
                         } else {
                             showMessage('Failed to record ad view. Please try again.', 'error');
+                            button.classList.remove('loading');
+                            button.disabled = false;
+                            button.innerHTML = '<i class="fa-solid fa-play"></i> Watch Ad';
                         }
-                        
-                        button.classList.remove('loading');
-                        button.disabled = false;
-                        button.innerHTML = '<i class="fa-solid fa-play"></i> Watch Ad';
                     }).catch((err) => {
                         console.error('Ad display error:', err);
-                        showMessage('❌ Failed to load ad. Try again.', 'error');
+                        showMessage('Failed to load ad. Try again.', 'error');
                         button.classList.remove('loading');
                         button.disabled = false;
                         button.innerHTML = '<i class="fa-solid fa-play"></i> Watch Ad';
@@ -1126,7 +1132,7 @@
                 if (success) {
                     completedTaskIds.add(taskId);
                     showMessage(`Congratulations! You earned ${parseFloat(reward).toFixed(8)} coins!`, 'success');
-                    renderTasks(); // Re-render all tasks to show the completed state
+                    renderTasks();
                 } else {
                     showMessage('Failed to complete task. Please try again.', 'error');
                     verifyBtn.classList.remove('loading');
