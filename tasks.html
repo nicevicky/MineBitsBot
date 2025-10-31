@@ -417,9 +417,6 @@
     </nav>
     
     <script>
-        // =====================================================
-        // CONFIGURATION
-        // =====================================================
         const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
         const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
@@ -439,9 +436,6 @@
         let watchedAdIds = new Set();
         let adSDKLoaded = false;
         
-        // =====================================================
-        // 3D BACKGROUND ANIMATION
-        // =====================================================
         function init3DBackground() {
             const canvas = document.getElementById('canvas3d');
             if (!canvas || !window.THREE) {
@@ -502,9 +496,6 @@
             });
         }
         
-        // =====================================================
-        // UTILITY FUNCTIONS
-        // =====================================================
         function showMessage(message, type = 'success') {
             const container = document.getElementById('messageContainer');
             const messageDiv = document.createElement('div');
@@ -530,9 +521,6 @@
             return localStorage.getItem('testUserId') || 123456789;
         }
         
-        // =====================================================
-        // DATABASE OPERATIONS
-        // =====================================================
         async function fetchUser() {
             try {
                 const telegramId = getUserId();
@@ -810,9 +798,6 @@
             }
         }
         
-        // =====================================================
-        // AD SDK MANAGEMENT
-        // =====================================================
         function loadAdSDK(zoneId, sdkName) {
             return new Promise((resolve, reject) => {
                 if (document.querySelector(`script[data-zone="${zoneId}"]`)) {
@@ -836,17 +821,72 @@
             });
         }
         
-        // =====================================================
-        // TELEGRAM BOT API
-        // =====================================================
+        function extractTelegramUsernameOrCode(link) {
+            const publicMatch = link.match(/t\.me\/([a-zA-Z0-9_]+)/);
+            if (publicMatch && publicMatch[1] && !publicMatch[1].startsWith('joinchat')) {
+                return { type: 'username', value: publicMatch[1] };
+            }
+            
+            const privateMatch = link.match(/t\.me\/\+([a-zA-Z0-9_-]+)/);
+            if (privateMatch && privateMatch[1]) {
+                return { type: 'invite', value: privateMatch[1] };
+            }
+            
+            const joinchatMatch = link.match(/t\.me\/joinchat\/([a-zA-Z0-9_-]+)/);
+            if (joinchatMatch && joinchatMatch[1]) {
+                return { type: 'invite', value: joinchatMatch[1] };
+            }
+            
+            return null;
+        }
+        
+        async function verifyBotIsAdmin(chatIdentifier) {
+            try {
+                const botInfoUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getMe`;
+                const botResponse = await fetch(botInfoUrl);
+                const botData = await botResponse.json();
+                
+                if (!botData.ok) {
+                    console.error('Failed to get bot info:', botData.description);
+                    return { isAdmin: false, error: 'Failed to get bot info' };
+                }
+                
+                const botId = botData.result.id;
+                
+                const memberUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(chatIdentifier)}&user_id=${botId}`;
+                const memberResponse = await fetch(memberUrl);
+                const memberData = await memberResponse.json();
+                
+                if (!memberData.ok) {
+                    console.error('Failed to check bot admin status:', memberData.description);
+                    return { isAdmin: false, error: memberData.description };
+                }
+                
+                const status = memberData.result.status;
+                const isAdmin = status === 'administrator' || status === 'creator';
+                
+                return { isAdmin, status };
+            } catch (err) {
+                console.error('Error verifying bot admin status:',err);
+                return { isAdmin: false, error: err.message };
+            }
+        }
+        
         async function verifyTelegramMembership(chatId, userId) {
             try {
-                const chatUsername = extractChatUsername(chatId);
-                if (!chatUsername) {
+                const extracted = extractTelegramUsernameOrCode(chatId);
+                if (!extracted) {
                     return true;
                 }
                 
-                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${chatUsername}&user_id=${userId}`;
+                let chatIdentifier;
+                if (extracted.type === 'username') {
+                    chatIdentifier = '@' + extracted.value;
+                } else {
+                    return true;
+                }
+                
+                const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${encodeURIComponent(chatIdentifier)}&user_id=${userId}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
@@ -863,19 +903,6 @@
             }
         }
         
-        function extractChatUsername(link) {
-            const match = link.match(/t\.me\/([^/?]+)/);
-            if (match && match[1]) {
-                if (!match[1].startsWith('joinchat') && !match[1].startsWith('+')) {
-                    return '@' + match[1];
-                }
-            }
-            return null;
-        }
-        
-        // =====================================================
-        // UI RENDERING
-        // =====================================================
         function updateBalanceDisplay() {
             if (currentUser) {
                 document.getElementById('userBalance').textContent = parseFloat(currentUser.balance).toFixed(8);
@@ -1019,9 +1046,6 @@
             container.innerHTML = `<div class="tasks-grid">${dailyBonusCardHtml}${watchAdsCardHtml}${tasksHTML}</div>`;
         }
         
-        // =====================================================
-        // TASK ACTIONS
-        // =====================================================
         window.handleClaimBonus = async function(button) {
             button.classList.add('loading');
             button.disabled = true;
@@ -1113,15 +1137,44 @@
                 let verified = false;
                 
                 if (requireVerification && (taskType === 'join_channel' || taskType === 'join_group')) {
-                    const userId = getUserId();
-                    verified = await verifyTelegramMembership(link, userId);
+                    const extracted = extractTelegramUsernameOrCode(link);
                     
-                    if (!verified) {
-                        showMessage('Please join the channel/group first!', 'error');
+                    if (!extracted) {
+                        showMessage('Invalid Telegram link format.', 'error');
                         verifyBtn.classList.remove('loading');
                         verifyBtn.disabled = false;
                         verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
                         return;
+                    }
+                    
+                    let chatIdentifier;
+                    if (extracted.type === 'username') {
+                        chatIdentifier = '@' + extracted.value;
+                    } else {
+                        verified = true;
+                    }
+                    
+                    if (extracted.type === 'username') {
+                        const botCheck = await verifyBotIsAdmin(chatIdentifier);
+                        
+                        if (!botCheck.isAdmin) {
+                            showMessage('Bot must be admin in the channel.', 'error');
+                            verifyBtn.classList.remove('loading');
+                            verifyBtn.disabled = false;
+                            verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
+                            return;
+                        }
+                        
+                        const userId = getUserId();
+                        verified = await verifyTelegramMembership(link, userId);
+                        
+                        if (!verified) {
+                            showMessage('Please join the channel/group first!', 'error');
+                            verifyBtn.classList.remove('loading');
+                            verifyBtn.disabled = false;
+                            verifyBtn.innerHTML = '<i class="fas fa-check-circle"></i> Verify';
+                            return;
+                        }
                     }
                 } else {
                     verified = true;
@@ -1148,9 +1201,6 @@
             }
         };
         
-        // =====================================================
-        // INITIALIZATION
-        // =====================================================
         async function init() {
             init3DBackground();
             
