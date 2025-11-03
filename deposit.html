@@ -213,6 +213,54 @@
             color: var(--text-secondary);
             opacity: 0.6;
         }
+
+        /* Crypto Amount Info */
+        .crypto-amount-info {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .crypto-amount-info.visible {
+            display: block;
+        }
+
+        .crypto-amount-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .crypto-amount-row:last-child {
+            margin-bottom: 0;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .crypto-amount-label {
+            color: var(--text-secondary);
+        }
+
+        .crypto-amount-value {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .crypto-amount-value.highlight {
+            color: var(--green);
+            font-size: 16px;
+        }
+
+        .crypto-price-loading {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-style: italic;
+        }
         
         /* Wallet Address Display */
         .wallet-display {
@@ -221,7 +269,6 @@
             border-radius: 10px;
             padding: 15px;
             margin-top: 10px;
-            position: relative;
         }
         
         .wallet-label {
@@ -552,6 +599,16 @@
                         min="1"
                         required
                     >
+                    <div id="cryptoAmountInfo" class="crypto-amount-info">
+                        <div class="crypto-amount-row">
+                            <span class="crypto-amount-label">Current Price:</span>
+                            <span class="crypto-amount-value" id="cryptoPriceDisplay">$0.00</span>
+                        </div>
+                        <div class="crypto-amount-row">
+                            <span class="crypto-amount-label">You will send:</span>
+                            <span class="crypto-amount-value highlight" id="cryptoAmountDisplay">0.00000000</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -622,15 +679,23 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // CoinCap API Configuration
+        const COINCAP_API = 'https://api.coincap.io/v2';
+
         // Get user data from Telegram
         const user = tg.initDataUnsafe?.user;
         const telegramId = user?.id || 123456789; // Fallback for testing
 
         let selectedFile = null;
         let cryptocurrencies = [];
+        let cryptoPrices = {};
+        let minimumDepositUSD = 10.00; // Default minimum
+        let currentCryptoSymbol = '';
+        let currentCryptoAmount = 0;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            await loadSettings();
             await loadUserBalance();
             await loadCryptocurrencies();
             await loadDepositHistory();
@@ -640,7 +705,30 @@
         // Go Back
         function goBack() {
             tg.HapticFeedback.impactOccurred('light');
-            window.location.href = 'index.html'; // Or use tg.close() if this is the main page
+            window.location.href = 'index.html';
+        }
+
+        // Load System Settings
+        async function loadSettings() {
+            try {
+                const { data, error } = await supabase
+                    .from('settings')
+                    .select('key, value')
+                    .eq('key', 'minimum_deposit_usd')
+                    .single();
+                
+                if (error) {
+                    console.error('Error loading settings:', error);
+                    return;
+                }
+
+                if (data && data.value) {
+                    minimumDepositUSD = parseFloat(data.value);
+                    console.log(`Minimum deposit set to: $${minimumDepositUSD}`);
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
         }
 
         // Load User Balance
@@ -675,10 +763,68 @@
                 
                 cryptocurrencies = data || [];
                 populateCryptoSelect();
+                
+                // Fetch prices for all cryptocurrencies
+                await fetchCryptoPrices();
             } catch (error) {
                 console.error('Error loading cryptocurrencies:', error);
                 showMessage('Failed to load cryptocurrencies', 'error');
             }
+        }
+
+        // Fetch Crypto Prices from CoinCap
+        async function fetchCryptoPrices() {
+            try {
+                // Get all unique symbols
+                const symbols = cryptocurrencies.map(c => c.symbol.toLowerCase());
+                
+                // Fetch prices for each cryptocurrency
+                for (const crypto of cryptocurrencies) {
+                    try {
+                        const coinCapId = getCoinCapId(crypto.symbol);
+                        const response = await fetch(`${COINCAP_API}/assets/${coinCapId}`);
+                        const result = await response.json();
+                        
+                        if (result.data && result.data.priceUsd) {
+                            cryptoPrices[crypto.symbol] = parseFloat(result.data.priceUsd);
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching price for ${crypto.symbol}:`, err);
+                    }
+                }
+                
+                console.log('Crypto prices loaded:', cryptoPrices);
+            } catch (error) {
+                console.error('Error fetching crypto prices:', error);
+            }
+        }
+
+        // Map crypto symbols to CoinCap IDs
+        function getCoinCapId(symbol) {
+            const mapping = {
+                'BTC': 'bitcoin',
+                'ETH': 'ethereum',
+                'USDT': 'tether',
+                'BNB': 'binance-coin',
+                'SOL': 'solana',
+                'XRP': 'ripple',
+                'USDC': 'usd-coin',
+                'ADA': 'cardano',
+                'DOGE': 'dogecoin',
+                'TRX': 'tron',
+                'LTC': 'litecoin',
+                'DOT': 'polkadot',
+                'MATIC': 'polygon',
+                'SHIB': 'shiba-inu',
+                'DAI': 'dai',
+                'AVAX': 'avalanche',
+                'LINK': 'chainlink',
+                'BCH': 'bitcoin-cash',
+                'UNI': 'uniswap',
+                'ATOM': 'cosmos'
+            };
+            
+            return mapping[symbol.toUpperCase()] || symbol.toLowerCase();
         }
 
         // Populate Crypto Select
@@ -689,28 +835,50 @@
             cryptocurrencies.forEach(crypto => {
                 const option = document.createElement('option');
                 option.value = crypto.symbol;
-                // *** FIXED THIS LINE ***
-                // Used template literal (backticks ``) to correctly insert variables
                 option.textContent = `${crypto.name} (${crypto.symbol})`;
                 option.dataset.wallet = crypto.wallet_address || '';
-                select.appendChild(option);
+                option.dataset.name = crypto.name;
+                select.appendChild(option));
             });
         }
 
         // Setup Event Listeners
         function setupEventListeners() {
             // Crypto selection change
-            document.getElementById('cryptoSelect').addEventListener('change', (e) => {
+            document.getElementById('cryptoSelect').addEventListener('change', async (e) => {
                 const selectedOption = e.target.options[e.target.selectedIndex];
                 const walletAddress = selectedOption.dataset.wallet;
+                const cryptoSymbol = e.target.value;
                 
-                if (walletAddress) {
-                    displayWalletAddress(e.target.value, walletAddress);
+                currentCryptoSymbol = cryptoSymbol;
+                
+                if (cryptoSymbol && walletAddress) {
+                    displayWalletAddress(cryptoSymbol, walletAddress);
+                    
+                    // Fetch latest price for this crypto
+                    await updateCryptoPrice(cryptoSymbol);
+                    
+                    // Calculate amount if USD amount is already entered
+                    const usdAmount = parseFloat(document.getElementById('amountInput').value);
+                    if (usdAmount > 0) {
+                        calculateCryptoAmount(cryptoSymbol, usdAmount);
+                    }
                 } else {
                     document.getElementById('walletAddressDisplay').innerHTML = '';
-                    if (e.target.value) {
+                    document.getElementById('cryptoAmountInfo').classList.remove('visible');
+                    if (cryptoSymbol) {
                         showMessage('Wallet address not configured for this crypto', 'error');
                     }
+                }
+            });
+
+            // Amount input change
+            document.getElementById('amountInput').addEventListener('input', (e) => {
+                const usdAmount = parseFloat(e.target.value);
+                if (currentCryptoSymbol && usdAmount > 0) {
+                    calculateCryptoAmount(currentCryptoSymbol, usdAmount);
+                } else {
+                    document.getElementById('cryptoAmountInfo').classList.remove('visible');
                 }
             });
 
@@ -719,6 +887,52 @@
 
             // Form submit
             document.getElementById('depositForm').addEventListener('submit', handleDepositSubmit);
+        }
+
+        // Update Crypto Price
+        async function updateCryptoPrice(symbol) {
+            try {
+                const coinCapId = getCoinCapId(symbol);
+                const response = await fetch(`${COINCAP_API}/assets/${coinCapId}`);
+                const result = await response.json();
+                
+                if (result.data && result.data.priceUsd) {
+                    const price = parseFloat(result.data.priceUsd);
+                    cryptoPrices[symbol] = price;
+                    
+                    // Update display
+                    document.getElementById('cryptoPriceDisplay').textContent = `${price.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 8
+                    })}`;
+                }
+            } catch (error) {
+                console.error(`Error updating price for ${symbol}:`, error);
+                document.getElementById('cryptoPriceDisplay').textContent = 'Price unavailable';
+            }
+        }
+
+        // Calculate Crypto Amount
+        function calculateCryptoAmount(symbol, usdAmount) {
+            const price = cryptoPrices[symbol];
+            
+            if (!price || price <= 0) {
+                document.getElementById('cryptoAmountInfo').classList.add('visible');
+                document.getElementById('cryptoAmountDisplay').textContent = 'Price unavailable';
+                return;
+            }
+            
+            const cryptoAmount = usdAmount / price;
+            currentCryptoAmount = cryptoAmount;
+            
+            // Display the calculated amount
+            document.getElementById('cryptoAmountInfo').classList.add('visible');
+            document.getElementById('cryptoAmountDisplay').textContent = `${cryptoAmount.toFixed(8)} ${symbol}`;
+            
+            // Check minimum deposit
+            if (usdAmount < minimumDepositUSD) {
+                showMessage(`Minimum deposit is $${minimumDepositUSD.toFixed(2)} USD`, 'error');
+            }
         }
 
         // Display Wallet Address
@@ -785,15 +999,20 @@
             tg.HapticFeedback.impactOccurred('medium');
 
             const crypto = document.getElementById('cryptoSelect').value;
-            const amount = parseFloat(document.getElementById('amountInput').value);
+            const usdAmount = parseFloat(document.getElementById('amountInput').value);
             const txId = document.getElementById('txIdInput').value.trim();
 
+            // Validation
             if (!crypto) {
                 showMessage('Please select a cryptocurrency', 'error');
                 return;
             }
-            if (isNaN(amount) || amount <= 0) {
+            if (isNaN(usdAmount) || usdAmount <= 0) {
                 showMessage('Please enter a valid amount', 'error');
+                return;
+            }
+            if (usdAmount < minimumDepositUSD) {
+                showMessage(`Minimum deposit is $${minimumDepositUSD.toFixed(2)} USD`, 'error');
                 return;
             }
             if (!selectedFile) {
@@ -808,6 +1027,12 @@
                 return;
             }
 
+            // Check if price is available
+            if (!cryptoPrices[crypto] || cryptoPrices[crypto] <= 0) {
+                showMessage('Unable to get current crypto price. Please try again.', 'error');
+                return;
+            }
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
@@ -815,8 +1040,6 @@
             try {
                 // Upload proof image
                 const fileExt = selectedFile.name.split('.').pop();
-                // *** FIXED THIS LINE ***
-                // Used template literal (backticks ``) to correctly build the file name
                 const fileName = `${telegramId}_${Date.now()}.${fileExt}`;
                 const filePath = `deposit_proofs/${fileName}`;
 
@@ -826,16 +1049,19 @@
 
                 if (uploadError) throw uploadError;
 
-                // Insert deposit record
+                // Calculate crypto amount
+                const cryptoAmount = usdAmount / cryptoPrices[crypto];
+
+                // Insert deposit record with crypto amount
                 const { error: insertError } = await supabase
                     .from('deposits')
                     .insert({
                         user_id: telegramId,
                         crypto: crypto,
-                        amount: amount,
+                        amount: cryptoAmount, // Store the crypto amount
                         wallet_address: selectedCrypto.wallet_address,
                         transaction_id: txId || null,
-                        proof_url: filePath, // Store the path to the uploaded image
+                        proof_url: filePath,
                         status: 'pending'
                     });
 
@@ -847,10 +1073,13 @@
                 // Reset form
                 document.getElementById('depositForm').reset();
                 selectedFile = null;
+                currentCryptoSymbol = '';
+                currentCryptoAmount = 0;
                 document.getElementById('fileUploadLabel').classList.remove('has-file');
                 document.getElementById('fileUploadText').textContent = 'Choose Image';
                 document.getElementById('filePreview').innerHTML = '';
                 document.getElementById('walletAddressDisplay').innerHTML = '';
+                document.getElementById('cryptoAmountInfo').classList.remove('visible');
 
                 // Reload history
                 await loadDepositHistory();
@@ -895,6 +1124,9 @@
                     const date = new Date(deposit.created_at).toLocaleDateString();
                     const time = new Date(deposit.created_at).toLocaleTimeString();
                     
+                    // Get crypto amount in proper format
+                    const cryptoAmount = parseFloat(deposit.amount).toFixed(8);
+                    
                     return `
                         <div class="history-item">
                             <div class="history-header">
@@ -908,7 +1140,7 @@
                             <div class="history-details">
                                 <div class="history-row">
                                     <span>Amount:</span>
-                                    <span>$${parseFloat(deposit.amount).toFixed(2)}</span>
+                                    <span>${cryptoAmount} ${deposit.crypto}</span>
                                 </div>
                                 <div class="history-row">
                                     <span>Date:</span>
@@ -953,7 +1185,7 @@
         // Show Message
         function showMessage(text, type = 'info') {
             const container = document.getElementById('messageContainer');
-            const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
             
             container.innerHTML = `
                 <div class="message ${type}">
@@ -965,7 +1197,7 @@
             // Auto-hide after 5 seconds
             setTimeout(() => {
                 if (container.innerHTML.includes(text)) {
-                     container.innerHTML = '';
+                    container.innerHTML = '';
                 }
             }, 5000);
         }
@@ -986,15 +1218,13 @@
                     
                     // Show notification if status changed
                     if (payload.new.status === 'approved' && payload.old.status === 'pending') {
-                        // *** FIXED THIS LINE ***
-                        // Correctly formatted the string with variables
-                        showMessage(`Deposit of $${payload.new.amount} ${payload.new.crypto} has been approved!`, 'success');
+                        const cryptoAmount = parseFloat(payload.new.amount).toFixed(8);
+                        showMessage(`Deposit of ${cryptoAmount} ${payload.new.crypto} has been approved!`, 'success');
                         tg.HapticFeedback.notificationOccurred('success');
                         await loadUserBalance();
                     } else if (payload.new.status === 'rejected') {
-                         // *** FIXED THIS LINE ***
-                        // Correctly formatted the string with variables
-                        showMessage(`Deposit of $${payload.new.amount} ${payload.new.crypto} was rejected.`, 'error');
+                        const cryptoAmount = parseFloat(payload.new.amount).toFixed(8);
+                        showMessage(`Deposit of ${cryptoAmount} ${payload.new.crypto} was rejected.`, 'error');
                         tg.HapticFeedback.notificationOccurred('error');
                     }
                     
@@ -1003,6 +1233,19 @@
                 }
             )
             .subscribe();
+
+        // Refresh crypto prices every 60 seconds
+        setInterval(async () => {
+            if (currentCryptoSymbol) {
+                await updateCryptoPrice(currentCryptoSymbol);
+                
+                // Recalculate if amount is entered
+                const usdAmount = parseFloat(document.getElementById('amountInput').value);
+                if (usdAmount > 0) {
+                    calculateCryptoAmount(currentCryptoSymbol, usdAmount);
+                }
+            }
+        }, 60000); // 60 seconds
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
@@ -1018,8 +1261,8 @@
             document.documentElement.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#0a0e27');
             document.documentElement.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#ffffff');
             document.documentElement.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#4a69ff');
-            // You can add more theme variables here
         }
     </script>
 </body>
 </html>
+
