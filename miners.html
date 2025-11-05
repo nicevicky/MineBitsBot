@@ -286,7 +286,7 @@
             cursor: not-allowed;
         }
 
-        /* Bottom Navigation (from your first file) */
+        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -400,6 +400,7 @@
 
         let currentUser = null;
         let activeMinersInterval = null;
+        let availableMinersData = [];
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -417,80 +418,18 @@
             const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
             if (days > 0) {
-                // FIXED: Removed extra $
-                return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
             } else {
-                // FIXED: Removed extra $
-                return `${hours}h ${minutes}m ${seconds}s`;
+                return `$${hours}h$$ {minutes}m ${seconds}s`;
             }
         }
-
-        // ============================================
-        // MINER TEMPLATES
-        // ============================================
-        const AVAILABLE_MINERS = [
-            {
-                name: 'Nano Miner',
-                crypto: 'USDT',
-                cost: 10,
-                earnings_rate: 0.5,
-                duration_hours: 24,
-                icon: 'fa-microchip',
-                description: 'Perfect for beginners'
-            },
-            {
-                name: 'Basic Miner',
-                crypto: 'USDT',
-                cost: 50,
-                earnings_rate: 3,
-                duration_hours: 48,
-                icon: 'fa-server',
-                description: 'Steady earnings'
-            },
-            {
-                name: 'Pro Miner',
-                crypto: 'USDT',
-                cost: 150,
-                earnings_rate: 10,
-                duration_hours: 72,
-                icon: 'fa-hdd',
-                description: 'High performance'
-            },
-            {
-                name: 'Elite Miner',
-                crypto: 'USDT',
-                cost: 500,
-                earnings_rate: 40,
-                duration_hours: 168,
-                icon: 'fa-database',
-                description: 'Professional grade'
-            },
-            {
-                name: 'Mega Miner',
-                crypto: 'USDT',
-                cost: 1000,
-                earnings_rate: 90,
-                duration_hours: 336,
-                icon: 'fa-cloud',
-                description: 'Maximum power'
-            },
-            {
-                name: 'Ultimate Miner',
-                crypto: 'USDT',
-                cost: 5000,
-                earnings_rate: 500,
-                duration_hours: 720,
-                icon: 'fa-rocket',
-                description: 'Ultimate mining power'
-            }
-        ];
 
         // ============================================
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', async () => {
             await initUser();
-            displayAvailableMiners();
+            await loadAvailableMiners();
             loadActiveMiners();
         });
 
@@ -524,6 +463,28 @@
         }
 
         // ============================================
+        // LOAD AVAILABLE MINERS FROM DATABASE
+        // ============================================
+        async function loadAvailableMiners() {
+            try {
+                const { data: miners, error } = await supabase
+                    .from('miner')
+                    .select('*')
+                    .eq('active', true)
+                    .order('cost', { ascending: true });
+                
+                if (error) throw error;
+                
+                availableMinersData = miners;
+                displayAvailableMiners(miners);
+            } catch (error) {
+                console.error('Error loading available miners:', error);
+                document.getElementById('availableMiners').innerHTML = 
+                    '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners from database</div>';
+            }
+        }
+
+        // ============================================
         // TAB SWITCHING
         // ============================================
         function switchTab(tab) {
@@ -549,10 +510,22 @@
         // ============================================
         // DISPLAY AVAILABLE MINERS
         // ============================================
-        function displayAvailableMiners() {
+        function displayAvailableMiners(miners) {
             const container = document.getElementById('availableMiners');
+            
+            if (!miners || miners.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-server"></i>
+                        <h3>No Miners Available</h3>
+                        <p>Check back later for new mining machines!</p>
+                    </div>
+                `;
+                return;
+            }
+            
             container.innerHTML = '';
-            AVAILABLE_MINERS.forEach(miner => {
+            miners.forEach(miner => {
                 const totalEarnings = miner.earnings_rate * miner.duration_hours;
                 const profit = totalEarnings - miner.cost;
                 const roi = ((profit / miner.cost) * 100).toFixed(2);
@@ -563,16 +536,16 @@
                         <i class="fas ${miner.icon}"></i>
                     </div>
                     <h3>${miner.name}</h3>
-                    <p style="color: #a8b3cf; margin-bottom: 15px;">${miner.description}</p>
+                    <p style="color: #a8b3cf; margin-bottom: 15px;">${miner.description || ''}</p>
                     
                     <div class="miner-stats">
                         <div class="stat-row">
                             <span class="stat-label">Cost:</span>
-                            <span class="stat-value highlight currency">$${formatCurrency(miner.cost, 2)} ${miner.crypto}</span>
+                            <span class="stat-value highlight currency">$$${formatCurrency(miner.cost, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Earnings Rate:</span>
-                            <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
+                            <span class="stat-value currency">$$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Duration:</span>
@@ -580,11 +553,11 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Total Earnings:</span>
-                            <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 2)} ${miner.crypto}</span>
+                            <span class="stat-value highlight currency">$$${formatCurrency(totalEarnings, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Profit:</span>
-                            <span class="stat-value currency" style="color: #00d4ff;">$${formatCurrency(profit, 2)} ${miner.crypto}</span>
+                            <span class="stat-value currency" style="color: #00d4ff;">$$${formatCurrency(profit, 2)}$$ {miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">ROI:</span>
@@ -613,15 +586,14 @@
                 return;
             }
 
-            // FIXED: Removed extra $
-            const confirmed = confirm(`Purchase ${miner.name} for ${formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
+            const confirmed = confirm(`Purchase $${miner.name} for$$ {formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
             if (!confirmed) return;
 
             try {
                 const startTime = new Date();
                 const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
                 
-                // Insert miner
+                // Insert into miners table (user's purchased miners)
                 const { data: minerData, error: minerError } = await supabase
                     .from('miners')
                     .insert({
@@ -633,7 +605,8 @@
                         duration_hours: miner.duration_hours,
                         start_time: startTime.toISOString(),
                         end_time: endTime.toISOString(),
-                        active: true
+                        active: true,
+                        miner_id: miner.id // Reference to miner template
                     })
                     .select()
                     .single();
@@ -661,14 +634,13 @@
                 showMessage(`${miner.name} purchased successfully! Mining started.`, 'success');
                 
                 // Send Telegram notification
-                // FIXED: Removed extra $ signs from earnings and total earnings
                 await sendTelegramMessage(
                     currentUser.telegram_id,
                     `🎉 <b>Miner Activated!</b>\n\n` +
                     `💎 ${miner.name}\n` +
-                    `⚡ Earnings: $${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
+                    `⚡ Earnings: $$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour\n` +
                     `⏱️ Duration: ${miner.duration_hours} hours\n` +
-                    `💰 Total Earnings: $${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)} ${miner.crypto}\n\n` +
+                    `💰 Total Earnings: $$${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)}$$ {miner.crypto}\n\n` +
                     `Mining will complete at: ${endTime.toLocaleString()}`
                 );
             } catch (error) {
@@ -760,7 +732,7 @@
                 <div class="miner-stats">
                     <div class="stat-row">
                         <span class="stat-label">Earnings Rate:</span>
-                        <span class="stat-value currency">$${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
+                        <span class="stat-value currency">$$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Duration:</span>
@@ -768,13 +740,12 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Earnings:</span>
-                        <span class="stat-value highlight currency">$${formatCurrency(totalEarnings, 8)} ${miner.crypto}</span>
+                        <span class="stat-value highlight currency">$$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Started:</span>
                         <span class="stat-value">${new Date(miner.start_time).toLocaleString()}</span>
-                    </div>
-                </div>
+                                    </div>
                 
                 <button class="btn btn-success" disabled>
                     <i class="fas fa-cog fa-spin"></i> Mining in Progress
@@ -893,10 +864,8 @@
                 // Reload active miners
                 await loadActiveMiners();
 
-                // FIXED: Removed extra $
-                showMessage(`${miner.miner_name} completed! Earned $${formatCurrency(totalEarnings, 8)} ${miner.crypto}`, 'success');
-            } catch (error)
-            {
+                showMessage(`${miner.miner_name} completed! Earned $$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}`, 'success');
+            } catch (error) {
                 console.error('Error completing miner:', error);
             }
         }
@@ -942,25 +911,23 @@
         }
 
         async function sendMinerCompletionMessage(miner, totalEarnings) {
-            // FIXED: Removed extra $ from earnings rate and total earned
             const message = `
 ✅ <b>Mining Completed!</b>
 💎 <b>Miner:</b> ${miner.miner_name}
-⚡ <b>Earnings Rate:</b> $${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour
+⚡ <b>Earnings Rate:</b> $$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour
 ⏱️ <b>Duration:</b> ${miner.duration_hours} hours
-💰 <b>Total Earned:</b> $${formatCurrency(totalEarnings, 8)} ${miner.crypto}
+💰 <b>Total Earned:</b> $$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}
 
 Your earnings have been added to your balance!
             `;
             
             // Create inline keyboard with Renew button
-            // FIXED: Removed extra $ from callback_data
             const keyboard = {
                 inline_keyboard: [
                     [
                         {
                             text: '🔄 Renew Miner',
-                            callback_data: `renew_miner_${miner.id}_${miner.miner_name}_${miner.cost}`
+                            callback_data: `renew_miner_$${miner.miner_id}_$$ {miner.id}`
                         }
                     ],
                     [
@@ -983,13 +950,15 @@ Your earnings have been added to your balance!
         // ============================================
         // RENEW MINER FUNCTION
         // ============================================
-        async function renewMiner(minerName, cost) {
-            const minerTemplate = AVAILABLE_MINERS.find(m => m.name === minerName);
+        async function renewMiner(minerTemplateId) {
+            // Find the miner template from available miners
+            const minerTemplate = availableMinersData.find(m => m.id == minerTemplateId);
             
             if (!minerTemplate) {
                 showMessage('Miner template not found', 'error');
                 return;
             }
+            
             await purchaseMiner(minerTemplate);
         }
         // Make renewMiner globally accessible for callback handling
@@ -1059,6 +1028,7 @@ Your earnings have been added to your balance!
                 // Page became visible, refresh data
                 if (currentUser) {
                     initUser();
+                    loadAvailableMiners();
                     const activeTab = document.querySelector('.tab-btn.active');
                     if (activeTab && activeTab.textContent.includes('Active')) {
                         loadActiveMiners();
@@ -1071,3 +1041,5 @@ Your earnings have been added to your balance!
     </script>
 </body>
 </html>
+
+                
