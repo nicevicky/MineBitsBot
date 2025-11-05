@@ -393,37 +393,31 @@
         const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
         const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
-        
+       
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const tg = window.Telegram.WebApp;
         tg.expand();
-
         let currentUser = null;
         let activeMinersInterval = null;
         let availableMinersData = [];
-
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
-
         function formatCurrency(amount, decimals = 8) {
             return parseFloat(amount).toFixed(decimals);
         }
-
         function formatTime(ms) {
             if (ms <= 0) return 'Completed!';
             const seconds = Math.floor((ms / 1000) % 60).toString().padStart(2, '0');
             const minutes = Math.floor((ms / (1000 * 60)) % 60).toString().padStart(2, '0');
             const hours = Math.floor((ms / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
             const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-
             if (days > 0) {
-                return `$${days}d$$ {hours}h $${minutes}m$$ {seconds}s`;
+                return `${days}d ${hours}h ${minutes}m ${seconds}s`;
             } else {
-                return `$${hours}h$$ {minutes}m ${seconds}s`;
+                return `${hours}h ${minutes}m ${seconds}s`;
             }
         }
-
         // ============================================
         // INITIALIZATION
         // ============================================
@@ -432,14 +426,12 @@
             await loadAvailableMiners();
             loadActiveMiners();
         });
-
         async function initUser() {
             const user = tg.initDataUnsafe?.user;
             if (!user) {
                 showMessage('Please open this page through Telegram', 'error');
                 return;
             }
-
             try {
                 const { data, error } = await supabase
                     .from('users')
@@ -454,14 +446,12 @@
                 showMessage('Error loading user data', 'error');
             }
         }
-
         function updateBalanceDisplay() {
             if (currentUser) {
-                document.getElementById('userBalance').textContent = 
+                document.getElementById('userBalance').textContent =
                     formatCurrency(currentUser.balance, 8);
             }
         }
-
         // ============================================
         // LOAD AVAILABLE MINERS FROM DATABASE
         // ============================================
@@ -472,18 +462,17 @@
                     .select('*')
                     .eq('active', true)
                     .order('cost', { ascending: true });
-                
+               
                 if (error) throw error;
-                
+               
                 availableMinersData = miners;
                 displayAvailableMiners(miners);
             } catch (error) {
                 console.error('Error loading available miners:', error);
-                document.getElementById('availableMiners').innerHTML = 
+                document.getElementById('availableMiners').innerHTML =
                     '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners from database</div>';
             }
         }
-
         // ============================================
         // TAB SWITCHING
         // ============================================
@@ -491,7 +480,6 @@
             const buttons = document.querySelectorAll('.tab-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.closest('.tab-btn').classList.add('active');
-
             if (tab === 'available') {
                 document.getElementById('availableMiners').style.display = 'grid';
                 document.getElementById('activeMiners').style.display = 'none';
@@ -506,13 +494,12 @@
                 startActiveMinersUpdate();
             }
         }
-
         // ============================================
         // DISPLAY AVAILABLE MINERS
         // ============================================
         function displayAvailableMiners(miners) {
             const container = document.getElementById('availableMiners');
-            
+           
             if (!miners || miners.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -523,7 +510,7 @@
                 `;
                 return;
             }
-            
+           
             container.innerHTML = '';
             miners.forEach(miner => {
                 const totalEarnings = miner.earnings_rate * miner.duration_hours;
@@ -537,15 +524,15 @@
                     </div>
                     <h3>${miner.name}</h3>
                     <p style="color: #a8b3cf; margin-bottom: 15px;">${miner.description || ''}</p>
-                    
+                   
                     <div class="miner-stats">
                         <div class="stat-row">
                             <span class="stat-label">Cost:</span>
-                            <span class="stat-value highlight currency">$$${formatCurrency(miner.cost, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">${formatCurrency(miner.cost, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Earnings Rate:</span>
-                            <span class="stat-value currency">$$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
+                            <span class="stat-value currency">${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Duration:</span>
@@ -553,11 +540,11 @@
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Total Earnings:</span>
-                            <span class="stat-value highlight currency">$$${formatCurrency(totalEarnings, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value highlight currency">${formatCurrency(totalEarnings, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">Profit:</span>
-                            <span class="stat-value currency" style="color: #00d4ff;">$$${formatCurrency(profit, 2)}$$ {miner.crypto}</span>
+                            <span class="stat-value currency" style="color: #00d4ff;">${formatCurrency(profit, 2)} ${miner.crypto}</span>
                         </div>
                         <div class="stat-row">
                             <span class="stat-label">ROI:</span>
@@ -571,7 +558,6 @@
                 container.appendChild(card);
             });
         }
-
         // ============================================
         // PURCHASE MINER
         // ============================================
@@ -580,19 +566,16 @@
                 showMessage('User not loaded', 'error');
                 return;
             }
-
             if (parseFloat(currentUser.balance) < miner.cost) {
                 showMessage('Insufficient balance!', 'error');
                 return;
             }
-
-            const confirmed = confirm(`Purchase $${miner.name} for$$ {formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
+            const confirmed = confirm(`Purchase ${miner.name} for ${formatCurrency(miner.cost, 2)} ${miner.crypto}?`);
             if (!confirmed) return;
-
             try {
                 const startTime = new Date();
                 const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
-                
+               
                 // Insert into miners table (user's purchased miners)
                 const { data: minerData, error: minerError } = await supabase
                     .from('miners')
@@ -611,7 +594,6 @@
                     .select()
                     .single();
                 if (minerError) throw minerError;
-
                 // Update user balance
                 const newBalance = parseFloat(currentUser.balance) - miner.cost;
                 const { error: balanceError } = await supabase
@@ -619,7 +601,6 @@
                     .update({ balance: newBalance })
                     .eq('telegram_id', currentUser.telegram_id);
                 if (balanceError) throw balanceError;
-
                 // Record transaction
                 await supabase.from('transactions').insert({
                     user_id: currentUser.telegram_id,
@@ -628,19 +609,18 @@
                     description: `Purchased ${miner.name}`,
                     reference_id: minerData.id
                 });
-
                 currentUser.balance = newBalance;
                 updateBalanceDisplay();
                 showMessage(`${miner.name} purchased successfully! Mining started.`, 'success');
-                
+               
                 // Send Telegram notification
                 await sendTelegramMessage(
                     currentUser.telegram_id,
-                    `🎉 <b>Miner Activated!</b>\n\n` +
-                    `💎 ${miner.name}\n` +
-                    `⚡ Earnings: $$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour\n` +
-                    `⏱️ Duration: ${miner.duration_hours} hours\n` +
-                    `💰 Total Earnings: $$${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)}$$ {miner.crypto}\n\n` +
+                    `Miner Activated!\n\n` +
+                    `${miner.name}\n` +
+                    `Earnings: ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
+                    `Duration: ${miner.duration_hours} hours\n` +
+                    `Total Earnings: ${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)} ${miner.crypto}\n\n` +
                     `Mining will complete at: ${endTime.toLocaleString()}`
                 );
             } catch (error) {
@@ -648,7 +628,6 @@
                 showMessage('Purchase failed: ' + error.message, 'error');
             }
         }
-
         // ============================================
         // LOAD ACTIVE MINERS
         // ============================================
@@ -662,21 +641,20 @@
                     .eq('active', true)
                     .order('created_at', { ascending: false });
                 if (error) throw error;
-                
+               
                 displayActiveMiners(miners);
-                
+               
                 // Check for expired miners
                 await checkExpiredMiners(miners);
             } catch (error) {
                 console.error('Error loading active miners:', error);
-                document.getElementById('activeMiners').innerHTML = 
+                document.getElementById('activeMiners').innerHTML =
                     '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners</div>';
             }
         }
-
         function displayActiveMiners(miners) {
             const container = document.getElementById('activeMiners');
-            
+           
             if (!miners || miners.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -687,19 +665,16 @@
                 `;
                 return;
             }
-
             container.innerHTML = '';
             miners.forEach(miner => {
                 const card = createActiveMinerCard(miner);
                 container.appendChild(card);
             });
         }
-
         function createActiveMinerCard(miner) {
             const card = document.createElement('div');
             card.className = 'miner-card active-miner-card';
             card.id = `miner-${miner.id}`;
-
             const now = new Date();
             const endTime = new Date(miner.end_time);
             const startTime = new Date(miner.start_time);
@@ -707,32 +682,30 @@
             const elapsed = now - startTime;
             const remaining = Math.max(0, endTime - now);
             const progress = Math.min(100, (elapsed / totalDuration) * 100);
-
             const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
             const totalEarnings = miner.duration_hours * miner.earnings_rate;
-
             card.innerHTML = `
                 <div class="miner-icon">
                     <i class="fas fa-server"></i>
                 </div>
                 <h3>${miner.miner_name}</h3>
-                
+               
                 <div class="earnings-display">
                     <i class="fas fa-coins"></i> Current Earnings: <span class="currency">${formatCurrency(currentEarnings, 8)}</span> ${miner.crypto}
                 </div>
-                
+               
                 <div class="timer" id="timer-${miner.id}">
                     ${formatTime(remaining)}
                 </div>
-                
+               
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-${miner.id}" style="width: ${progress}%"></div>
                 </div>
-                
+               
                 <div class="miner-stats">
                     <div class="stat-row">
                         <span class="stat-label">Earnings Rate:</span>
-                        <span class="stat-value currency">$$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour</span>
+                        <span class="stat-value currency">${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Duration:</span>
@@ -740,20 +713,19 @@
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Total Earnings:</span>
-                        <span class="stat-value highlight currency">$$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}</span>
+                        <span class="stat-value highlight currency">${formatCurrency(totalEarnings, 8)} ${miner.crypto}</span>
                     </div>
                     <div class="stat-row">
                         <span class="stat-label">Started:</span>
                         <span class="stat-value">${new Date(miner.start_time).toLocaleString()}</span>
                                     </div>
-                
+               
                 <button class="btn btn-success" disabled>
                     <i class="fas fa-cog fa-spin"></i> Mining in Progress
                 </button>
             `;
             return card;
         }
-
         // ============================================
         // TIMER UPDATES
         // ============================================
@@ -763,14 +735,13 @@
             }
             activeMinersInterval = setInterval(async () => {
                 const cards = document.querySelectorAll('.active-miner-card');
-                
+               
                 for (const card of cards) {
                     const minerId = card.id.replace('miner-', '');
                     await updateMinerCard(minerId);
                 }
             }, 1000);
         }
-
         async function updateMinerCard(minerId) {
             try {
                 const { data: miner, error } = await supabase
@@ -779,26 +750,21 @@
                     .eq('id', minerId)
                     .single();
                 if (error || !miner) return;
-
                 const now = new Date();
                 const endTime = new Date(miner.end_time);
                 const startTime = new Date(miner.start_time);
                 const remaining = Math.max(0, endTime - now);
-
                 const timerElement = document.getElementById(`timer-${minerId}`);
                 const progressElement = document.getElementById(`progress-${minerId}`);
-
                 if (timerElement) {
                     timerElement.textContent = formatTime(remaining);
                 }
-
                 if (progressElement) {
                     const totalDuration = endTime - startTime;
                     const elapsed = now - startTime;
                     const progress = Math.min(100, (elapsed / totalDuration) * 100);
                     progressElement.style.width = progress + '%';
                 }
-
                 // Update earnings display
                 const elapsed = now - startTime;
                 const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
@@ -806,7 +772,6 @@
                 if (earningsDisplay) {
                     earningsDisplay.innerHTML = `<i class="fas fa-coins"></i> Current Earnings: <span class="currency">${formatCurrency(currentEarnings, 8)}</span> ${miner.crypto}`;
                 }
-
                 if (remaining === 0 && miner.active) {
                     await completeMiner(miner);
                 }
@@ -814,37 +779,34 @@
                 console.error('Error updating miner card:', error);
             }
         }
-
         // ============================================
         // COMPLETE MINER
         // ============================================
         async function completeMiner(miner) {
             try {
                 const totalEarnings = miner.earnings_rate * miner.duration_hours;
-                
+               
                 // Update miner status
                 const { error: minerError } = await supabase
                     .from('miners')
-                    .update({ 
+                    .update({
                         active: false,
                         total_earned: totalEarnings,
                         notified: true
                     })
                     .eq('id', miner.id);
                 if (minerError) throw minerError;
-
                 // Update user balance
                 const newBalance = parseFloat(currentUser.balance) + totalEarnings;
                 const newTotalEarned = parseFloat(currentUser.total_earned) + totalEarnings;
                 const { error: balanceError } = await supabase
                     .from('users')
-                    .update({ 
+                    .update({
                         balance: newBalance,
                         total_earned: newTotalEarned
                     })
                     .eq('telegram_id', currentUser.telegram_id);
                 if (balanceError) throw balanceError;
-
                 // Record transaction
                 await supabase.from('transactions').insert({
                     user_id: currentUser.telegram_id,
@@ -853,26 +815,21 @@
                     description: `Mining completed: ${miner.miner_name}`,
                     reference_id: miner.id
                 });
-
                 currentUser.balance = newBalance;
                 currentUser.total_earned = newTotalEarned;
                 updateBalanceDisplay();
-
                 // Send Telegram notification with Renew button
                 await sendMinerCompletionMessage(miner, totalEarnings);
-
                 // Reload active miners
                 await loadActiveMiners();
-
-                showMessage(`${miner.miner_name} completed! Earned $$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}`, 'success');
+                showMessage(`${miner.miner_name} completed! Earned ${formatCurrency(totalEarnings, 8)} ${miner.crypto}`, 'success');
             } catch (error) {
                 console.error('Error completing miner:', error);
             }
         }
-
         async function checkExpiredMiners(miners) {
             const now = new Date();
-            
+           
             for (const miner of miners) {
                 const endTime = new Date(miner.end_time);
                 if (now >= endTime && miner.active && !miner.notified) {
@@ -880,7 +837,6 @@
                 }
             }
         }
-
         // ============================================
         // TELEGRAM BOT INTEGRATION
         // ============================================
@@ -894,7 +850,6 @@
                 if (replyMarkup) {
                     payload.reply_markup = replyMarkup;
                 }
-
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                     method: 'POST',
                     headers: {
@@ -909,36 +864,34 @@
                 return false;
             }
         }
-
         async function sendMinerCompletionMessage(miner, totalEarnings) {
             const message = `
-✅ <b>Mining Completed!</b>
-💎 <b>Miner:</b> ${miner.miner_name}
-⚡ <b>Earnings Rate:</b> $$${formatCurrency(miner.earnings_rate, 2)}$$ {miner.crypto}/hour
-⏱️ <b>Duration:</b> ${miner.duration_hours} hours
-💰 <b>Total Earned:</b> $$${formatCurrency(totalEarnings, 8)}$$ {miner.crypto}
-
+<b>Mining Completed!</b>
+<b>Miner:</b> ${miner.miner_name}
+<b>Earnings Rate:</b> ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour
+<b>Duration:</b> ${miner.duration_hours} hours
+<b>Total Earned:</b> ${formatCurrency(totalEarnings, 8)} ${miner.crypto}
 Your earnings have been added to your balance!
             `;
-            
+           
             // Create inline keyboard with Renew button
             const keyboard = {
                 inline_keyboard: [
                     [
                         {
-                            text: '🔄 Renew Miner',
-                            callback_data: `renew_miner_$${miner.miner_id}_$$ {miner.id}`
+                            text: 'Renew Miner',
+                            callback_data: `renew_miner_${miner.miner_id}_${miner.id}`
                         }
                     ],
                     [
                         {
-                            text: '🛒 Browse Miners',
+                            text: 'Browse Miners',
                             web_app: { url: `${window.location.origin}/miners.html` }
                         }
                     ],
                     [
                         {
-                            text: '💼 View Balance',
+                            text: 'View Balance',
                             web_app: { url: `${window.location.origin}/index.html` }
                         }
                     ]
@@ -946,24 +899,22 @@ Your earnings have been added to your balance!
             };
             await sendTelegramMessage(currentUser.telegram_id, message, keyboard);
         }
-
         // ============================================
         // RENEW MINER FUNCTION
         // ============================================
         async function renewMiner(minerTemplateId) {
             // Find the miner template from available miners
             const minerTemplate = availableMinersData.find(m => m.id == minerTemplateId);
-            
+           
             if (!minerTemplate) {
                 showMessage('Miner template not found', 'error');
                 return;
             }
-            
+           
             await purchaseMiner(minerTemplate);
         }
         // Make renewMiner globally accessible for callback handling
         window.renewMiner = renewMiner;
-
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
@@ -975,20 +926,18 @@ Your earnings have been added to your balance!
                 <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
                 ${text}
             `;
-            
+           
             container.innerHTML = '';
             container.appendChild(message);
-
             setTimeout(() => {
                 message.remove();
             }, 5000);
-
             // Also show Telegram notification
             if (type === 'success') {
                 tg.showAlert(text);
             }
         }
-        
+       
         // ============================================
         // AUTO-REFRESH BALANCE
         // ============================================
@@ -1010,7 +959,6 @@ Your earnings have been added to your balance!
                 }
             }
         }, 10000); // Refresh every 10 seconds
-
         // ============================================
         // CLEANUP ON PAGE UNLOAD
         // ============================================
@@ -1019,7 +967,6 @@ Your earnings have been added to your balance!
                 clearInterval(activeMinersInterval);
             }
         });
-
         // ============================================
         // HANDLE VISIBILITY CHANGE
         // ============================================
@@ -1036,7 +983,7 @@ Your earnings have been added to your balance!
                 }
             }
         });
-        
+       
         tg.ready();
     </script>
 </body>
