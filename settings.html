@@ -20,6 +20,7 @@
             --green: #28a745;
             --red: #ff6464;
             --yellow: #ffc107;
+            --purple: #9b59b6;
             --border-color: rgba(255, 255, 255, 0.1);
         }
         
@@ -340,6 +341,11 @@
         .setting-icon.theme {
             background-color: rgba(255, 193, 7, 0.2);
             color: var(--yellow);
+        }
+        
+        .setting-icon.support {
+            background-color: rgba(155, 89, 182, 0.2);
+            color: var(--purple);
         }
         
         .setting-info h4 {
@@ -762,6 +768,19 @@
                         </div>
                         <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
                     </div>
+                    
+                    <div class="setting-item clickable" id="supportSetting">
+                        <div class="setting-left">
+                            <div class="setting-icon support">
+                                <i class="fas fa-headset"></i>
+                            </div>
+                            <div class="setting-info">
+                                <h4>Support</h4>
+                                <p>Get help and contact us</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right" style="color: var(--text-secondary);"></i>
+                    </div>
                 </div>
             </div>
 
@@ -807,7 +826,7 @@
                 <i class="fas fa-times" id="closeLanguageModal"></i>
             </div>
             <div class="modal-body" id="languageList">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -837,8 +856,8 @@
 
     <script>
         // Supabase Configuration
-        const SUPABASE_URL = 'https://npfdfllwwyvvpxfiruws.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5wZmRmbGx3d3l2dnB4ZmlydXdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MjQ0NjYsImV4cCI6MjA3NzEwMDQ2Nn0.mGdB8EsewcH8S9A-vAsVhD6Dil47TNwaJDupqqIbWn4';
+        const SUPABASE_URL = 'https://tdcsvixxbhvwqhhlxcbe.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkY3N2aXh4Ymh2d3FoaGx4Y2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNzc2MzEsImV4cCI6MjA3Nzk1MzYzMX0.cCfMJEkTgiKSZW6Sl58VPzPlI3oM12TINJBM-k8o2J8';
 
         // --- NEW: Modal and Setting Elements ---
         const languageModal = document.getElementById('languageModal');
@@ -847,6 +866,7 @@
         const closeThemeModal = document.getElementById('closeThemeModal');
         const languageSetting = document.getElementById('languageSetting');
         const themeSetting = document.getElementById('themeSetting');
+        const supportSetting = document.getElementById('supportSetting');
 
         // --- NEW: Language Definitions ---
         const languages = {
@@ -1020,6 +1040,11 @@
             // Open Modals
             languageSetting.addEventListener('click', () => languageModal.style.display = 'flex');
             themeSetting.addEventListener('click', () => themeModal.style.display = 'flex');
+            
+            // --- NEW: Support Setting Click Handler ---
+            supportSetting.addEventListener('click', () => {
+                window.location.href = 'support.html';
+            });
 
             // Close Modals
             closeLanguageModal.addEventListener('click', () => languageModal.style.display = 'none');
@@ -1222,3 +1247,4 @@
     </script>
 </body>
 </html>
+
