@@ -189,6 +189,44 @@
             color: var(--text-secondary);
         }
 
+        /* Message Status Ticks */
+        .message-status {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 5px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message-status i {
+            font-size: 12px;
+        }
+
+        .message-status.viewed {
+            color: #4fc3f7;
+        }
+
+        .message-status .tick-double {
+            position: relative;
+            display: inline-block;
+            width: 14px;
+            height: 12px;
+        }
+
+        .message-status .tick-double::before,
+        .message-status .tick-double::after {
+            content: '✓';
+            position: absolute;
+            font-weight: bold;
+        }
+
+        .message-status .tick-double::before {
+            left: 0;
+        }
+
+        .message-status .tick-double::after {
+            left: 4px;
+        }
+
         /* Reply Preview Bar (at top of input) */
         .reply-preview {
             padding: 10px 15px;
@@ -409,6 +447,21 @@
             margin-left: 8px;
         }
 
+        /* Admin Reply Notification */
+        .admin-reply-notification {
+            background-color: rgba(74, 105, 255, 0.15);
+            border-left: 3px solid var(--primary-color);
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 11px;
+            color: var(--primary-color);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         /* Typing Indicator */
         .typing-indicator {
             display: flex;
@@ -500,7 +553,7 @@
         const CONFIG = {
             SUPABASE_URL: 'https://tdcsvixxbhvwqhhlxcbe.supabase.co',
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkY3N2aXh4Ymh2d3FoaGx4Y2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNzc2MzEsImV4cCI6MjA3Nzk1MzYzMX0.cCfMJEkTgiKSZW6Sl58VPzPlI3oM12TINJBM-k8o2J8',
-            BOT_TOKEN: '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg'
+            BOT_TOKEN: '8219579371:AAHWS8i_5ZAFUlFMI4BZvGwhqdGBORYsC5w'
         };
 
         // Initialize Telegram WebApp
@@ -563,6 +616,9 @@
                     adminBadge.style.display = 'inline-flex';
                 }
 
+                // Mark messages as viewed when user opens chat
+                await markMessagesAsViewed();
+
                 // Load messages
                 await loadMessages();
 
@@ -572,9 +628,43 @@
                 // Enable input
                 sendBtn.disabled = false;
 
+                // Set up visibility change listener to mark messages as viewed
+                document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        markMessagesAsViewed();
+                    }
+                });
+
             } catch (error) {
                 console.error('Initialization error:', error);
                 showAlert('Failed to initialize app', 'error');
+            }
+        }
+
+        // Mark Messages as Viewed
+        async function markMessagesAsViewed() {
+            if (!currentUser) return;
+
+            try {
+                // Update all unviewed messages for current user
+                if (currentUser.role === 'admin') {
+                    // Admin views all user messages
+                    await supabase
+                        .from('support_messages')
+                        .update({ viewed: true })
+                        .eq('sender_role', 'user')
+                        .eq('viewed', false);
+                } else {
+                    // User views admin messages sent to them
+                    await supabase
+                        .from('support_messages')
+                        .update({ viewed: true })
+                        .eq('user_id', currentUser.telegram_id)
+                        .eq('sender_role', 'admin')
+                        .eq('viewed', false);
+                }
+            } catch (error) {
+                console.error('Error marking messages as viewed:', error);
             }
         }
 
@@ -641,6 +731,17 @@
             const bubble = document.createElement('div');
             bubble.className = 'message-bubble';
 
+            // Add reply notification if this is an admin reply
+            if (msg.reply_to_message_id && msg.sender_role === 'admin' && currentUser.role !== 'admin') {
+                const replyNotification = document.createElement('div');
+                replyNotification.className = 'admin-reply-notification';
+                replyNotification.innerHTML = `
+                    <i class="fas fa-reply"></i>
+                    Admin replied to your message
+                `;
+                bubble.appendChild(replyNotification);
+            }
+
             // Add reply quote if this message is a reply
             if (msg.reply_to_message_id && allMessages[msg.reply_to_message_id]) {
                 const repliedMsg = allMessages[msg.reply_to_message_id];
@@ -668,9 +769,19 @@
             const timeAgo = getTimeAgo(msg.created_at);
             const expiresIn = getExpiresIn(msg.expires_at);
             
+            // Add status ticks for user's own messages
+            let statusIcon = '';
+            if (msg.sender_role === currentUser.role) {
+                if (msg.viewed) {
+                    statusIcon = '<span class="message-status viewed"><span class="tick-double"></span></span>';
+                } else {
+                    statusIcon = '<span class="message-status"><span>✓</span></span>';
+                }
+            }
+            
             time.innerHTML = `
-                <i class="far fa-clock"></i>
                 ${timeAgo} • Expires ${expiresIn}
+                ${statusIcon}
             `;
 
             bubble.appendChild(text);
@@ -714,14 +825,9 @@
 
         // Subscribe to Real-time Messages
         function subscribeToMessages() {
-            let channel = 'support_messages:user_id=eq.' + currentUser.telegram_id;
-            
-            if (currentUser.role === 'admin') {
-                channel = 'support_messages';
-            }
-
+            // Subscribe to all support_messages changes
             messagesSubscription = supabase
-                .channel(channel)
+                .channel('support_messages_channel')
                 .on('postgres_changes', 
                     { 
                         event: 'INSERT', 
@@ -734,16 +840,49 @@
                         // Store in allMessages
                         allMessages[newMessage.id] = newMessage;
                         
-                        // Only add if relevant to current user or admin
-                        if (currentUser.role === 'admin' || newMessage.user_id === currentUser.telegram_id) {
+                        // Check if message is relevant to current user
+                        const isRelevant = currentUser.role === 'admin' || newMessage.user_id === currentUser.telegram_id;
+                        
+                        if (isRelevant) {
                             const messageEl = createMessageElement(newMessage);
                             messagesContainer.appendChild(messageEl);
                             scrollToBottom();
                             
-                            // Show notification if from admin and user is not admin
-                            if (newMessage.sender_role === 'admin' && currentUser.role !== 'admin') {
-                                tg.showAlert('You have a new reply from admin!');
+                            // Show notification and mark as viewed if message is from admin to this user
+                            if (newMessage.sender_role === 'admin' && currentUser.role !== 'admin' && newMessage.user_id === currentUser.telegram_id) {
+                                if (tg.showPopup) {
+                                    tg.showPopup({
+                                        title: 'New Reply',
+                                        message: 'Admin replied to your message!',
+                                        buttons: [{type: 'ok'}]
+                                    });
+                                } else {
+                                    tg.showAlert('Admin replied to your message!');
+                                }
+                                
+                                // Mark as viewed since user is in chat
+                                if (!document.hidden) {
+                                    markMessageAsViewed(newMessage.id);
+                                }
                             }
+                        }
+                    }
+                )
+                .on('postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'support_messages'
+                    },
+                    (payload) => {
+                        // Update message in allMessages
+                        allMessages[payload.new.id] = payload.new;
+                        
+                        // Update the message element if it exists
+                        const messageWrapper = document.querySelector(`[data-message-id="${payload.new.id}"]`);
+                        if (messageWrapper) {
+                            const newMessageEl = createMessageElement(payload.new);
+                            messageWrapper.replaceWith(newMessageEl);
                         }
                     }
                 )
@@ -761,6 +900,18 @@
                 .subscribe();
         }
 
+        // Mark Single Message as Viewed
+        async function markMessageAsViewed(messageId) {
+            try {
+                await supabase
+                    .from('support_messages')
+                    .update({ viewed: true })
+                    .eq('id', messageId);
+            } catch (error) {
+                console.error('Error marking message as viewed:', error);
+            }
+        }
+
         // Send Message
         async function sendMessage() {
             const message = messageInput.value.trim();
@@ -776,6 +927,7 @@
                     user_id: currentUser.telegram_id,
                     message: message,
                     sender_role: currentUser.role,
+                    viewed: false,
                     created_at: new Date().toISOString(),
                     expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
                 };
@@ -783,6 +935,11 @@
                 // Add reply_to_message_id if replying
                 if (replyToMessage) {
                     messageData.reply_to_message_id = replyToMessage.id;
+                    
+                    // If admin is replying, set user_id to the original message sender
+                    if (currentUser.role === 'admin' && replyToMessage.user_id) {
+                        messageData.user_id = replyToMessage.user_id;
+                    }
                 }
 
                 // Insert message to database
@@ -794,12 +951,13 @@
 
                 if (error) throw error;
 
-                // Send notification to bot (only if user sends message or admin replies)
+                // Send notification via Telegram Bot API
                 if (currentUser.role !== 'admin') {
-                    await sendBotNotification(message, false);
-                } else if (replyToMessage) {
-                    // Admin is replying to a user
-                    await sendBotNotification(message, true, replyToMessage.user_id);
+                    // User sends message - notify admin
+                    await sendTelegramNotification(message, 'user_message', null);
+                } else if (replyToMessage && replyToMessage.user_id) {
+                    // Admin replies to user - notify that specific user
+                    await sendTelegramNotification(message, 'admin_reply', replyToMessage.user_id);
                 }
 
                 // Clear input and reply
@@ -807,9 +965,18 @@
                 messageInput.style.height = 'auto';
                 cancelReply();
 
+                // Show success feedback
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('success');
+                }
+
             } catch (error) {
                 console.error('Error sending message:', error);
                 showAlert('Failed to send message', 'error');
+                
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
             } finally {
                 sendBtn.disabled = false;
                 messageInput.disabled = false;
@@ -817,32 +984,76 @@
             }
         }
 
-        // Send Bot Notification
-        async function sendBotNotification(message, isAdminReply = false, targetUserId = null) {
+        // Send Telegram Notification via Bot API
+        async function sendTelegramNotification(message, type, targetUserId = null) {
             try {
-                const userId = targetUserId || currentUser.telegram_id;
-                const notificationType = isAdminReply ? 'admin_reply' : 'user_message';
+                let chatId;
+                let notificationText;
+
+                if (type === 'user_message') {
+                    // Get admin IDs from database
+                    const { data: admins } = await supabase
+                        .from('users')
+                        .select('telegram_id')
+                        .eq('role', 'admin');
+
+                    if (!admins || admins.length === 0) {
+                        console.log('No admins found to notify');
+                        return;
+                    }
+
+                    // Send to all admins
+                    for (const admin of admins) {
+                        chatId = admin.telegram_id;
+                        notificationText = `🔔 <b>New Support Message</b>\n\n` +
+                                         `👤 From: ${currentUser.first_name || 'User'}\n` +
+                                         `💬 Message: ${message}\n\n` +
+                                         `Reply via Support Chat`;
+
+                        await sendTelegramMessage(chatId, notificationText);
+                    }
+
+                } else if (type === 'admin_reply' && targetUserId) {
+                    // Admin replies to specific user
+                    chatId = targetUserId;
+                    notificationText = `✅ <b>Admin Replied to Your Message</b>\n\n` +
+                                     `👨‍💼 Admin: ${currentUser.first_name || 'Support Team'}\n` +
+                                     `💬 Reply: ${message}\n\n` +
+                                     `Open Support Chat to continue the conversation`;
+
+                    await sendTelegramMessage(chatId, notificationText);
+                }
+
+            } catch (error) {
+                console.error('Error sending Telegram notification:', error);
+            }
+        }
+
+        // Send Message via Telegram Bot API
+        async function sendTelegramMessage(chatId, text) {
+            try {
+                const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`;
                 
-                const response = await fetch('/api/send-message', {
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        botToken: CONFIG.BOT_TOKEN,
-                        userId: userId,
-                        userName: currentUser.first_name || 'User',
-                        message: message,
-                        type: notificationType,
-                        replyToMessage: replyToMessage ? replyToMessage.message : null
+                        chat_id: chatId,
+                        text: text,
+                        parse_mode: 'HTML'
                     })
                 });
 
-                if (!response.ok) {
-                    console.error('Failed to send bot notification');
+                const result = await response.json();
+                
+                if (!result.ok) {
+                    console.error('Telegram API error:', result);
                 }
+
             } catch (error) {
-                console.error('Error sending bot notification:', error);
+                console.error('Error sending Telegram message:', error);
             }
         }
 
@@ -859,13 +1070,25 @@
         messageInput.addEventListener('input', (e) => {
             e.target.style.height = 'auto';
             e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+            
+            // Enable/disable send button based on input
+            sendBtn.disabled = !e.target.value.trim();
         });
 
         cancelReplyBtn.addEventListener('click', cancelReply);
 
+        // Auto-mark messages as viewed when scrolling
+        messagesContainer.addEventListener('scroll', () => {
+            if (!document.hidden) {
+                markMessagesAsViewed();
+            }
+        });
+
         // Utility Functions
         function scrollToBottom() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            setTimeout(() => {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }, 100);
         }
 
         function getTimeAgo(timestamp) {
@@ -911,9 +1134,10 @@
             }, 3000);
         }
 
-                // Initialize on load
+        // Initialize on load
         init();
     </script>
 </body>
 </html>
 
+                    
