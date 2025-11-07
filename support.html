@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,7 +108,8 @@
         }
         
         .message-wrapper.admin,
-        .message-wrapper.ai {
+        .message-wrapper.ai,
+        .message-wrapper.error {
             justify-content: flex-start;
         }
         
@@ -153,6 +149,14 @@
             color: var(--text-color);
             border: 1px solid var(--ai-color);
             border-bottom-left-radius: 4px;
+        }
+
+        .message-wrapper.error .message-bubble {
+            background: linear-gradient(135deg, rgba(255, 100, 100, 0.2), rgba(255, 152, 0, 0.2));
+            color: var(--text-color);
+            border: 1px solid var(--red);
+            border-bottom-left-radius: 4px;
+            cursor: default;
         }
 
         .reply-quote {
@@ -211,7 +215,8 @@
         }
         
         .message-wrapper.admin .message-time,
-        .message-wrapper.ai .message-time {
+        .message-wrapper.ai .message-time,
+        .message-wrapper.error .message-time {
             color: var(--text-secondary);
         }
 
@@ -478,6 +483,19 @@
             margin-bottom: 8px;
         }
 
+        .error-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            background-color: var(--red);
+            color: white;
+            font-size: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
         .admin-reply-notification {
             background-color: rgba(74, 105, 255, 0.15);
             border-left: 3px solid var(--primary-color);
@@ -595,7 +613,7 @@
         let replyToMessage = null;
         let allMessages = {};
         let aiUser = null;
-        let isProcessingAI = false; // Prevent duplicate AI responses
+        let isProcessingAI = false;
 
         const messagesContainer = document.getElementById('messagesContainer');
         const messageInput = document.getElementById('messageInput');
@@ -636,7 +654,6 @@
                     adminBadge.style.display = 'inline-flex';
                 }
 
-                // Get AI user
                 const { data: aiUserData } = await supabase
                     .from('users')
                     .select('*')
@@ -752,6 +769,13 @@
                 bubble.appendChild(aiBadge);
             }
 
+            if (msg.sender_role === 'error') {
+                const errorBadge = document.createElement('div');
+                errorBadge.className = 'error-badge';
+                errorBadge.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Error`;
+                bubble.appendChild(errorBadge);
+            }
+
             if (msg.reply_to_message_id && (msg.sender_role === 'admin' || msg.sender_role === 'ai') && currentUser.role !== 'admin' && currentUser.role !== 'ai') {
                 const replyNotification = document.createElement('div');
                 replyNotification.className = 'admin-reply-notification';
@@ -785,7 +809,7 @@
             const text = document.createElement('div');
             text.className = 'message-text';
             
-            if (msg.sender_role === 'ai' || msg.sender_role === 'admin') {
+            if (msg.sender_role === 'ai' || msg.sender_role === 'admin' || msg.sender_role === 'error') {
                 text.innerHTML = parseMarkdown(msg.message);
             } else {
                 text.textContent = msg.message;
@@ -815,11 +839,13 @@
             bubble.appendChild(time);
             wrapper.appendChild(bubble);
 
-            bubble.addEventListener('click', () => {
-                if (currentUser.role === 'admin' || currentUser.role === 'ai') {
-                    setReplyTo(msg);
-                }
-            });
+            if (msg.sender_role !== 'error') {
+                bubble.addEventListener('click', () => {
+                    if (currentUser.role === 'admin' || currentUser.role === 'ai') {
+                        setReplyTo(msg);
+                    }
+                });
+            }
 
             return wrapper;
         }
@@ -880,15 +906,17 @@
                             messagesContainer.appendChild(messageEl);
                             scrollToBottom();
                             
-                            if ((newMessage.sender_role === 'admin' || newMessage.sender_role === 'ai') && currentUser.role !== 'admin' && currentUser.role !== 'ai' && newMessage.user_id === currentUser.telegram_id) {
+                            if ((newMessage.sender_role === 'admin' || newMessage.sender_role === 'ai' || newMessage.sender_role === 'error') && currentUser.role !== 'admin' && currentUser.role !== 'ai'  && newMessage.user_id === currentUser.telegram_id) {
                                 if (tg.showPopup) {
+                                    const msgType = newMessage.sender_role === 'error' ? 'Error' : (newMessage.sender_role === 'ai' ? 'AI Assistant' : 'Admin');
                                     tg.showPopup({
-                                        title: 'New Reply',
-                                        message: `${newMessage.sender_role === 'ai' ? 'AI Assistant' : 'Admin'} replied to your message!`,
+                                        title: newMessage.sender_role === 'error' ? 'Error Occurred' : 'New Reply',
+                                        message: `$${msgType}$$ {newMessage.sender_role === 'error' ? 'message' : 'replied to your message'}!`,
                                         buttons: [{type: 'ok'}]
                                     });
                                 } else {
-                                    tg.showAlert(`${newMessage.sender_role === 'ai' ? 'AI Assistant' : 'Admin'} replied to your message!`);
+                                    const msgType = newMessage.sender_role === 'error' ? 'Error' : (newMessage.sender_role === 'ai' ? 'AI Assistant' : 'Admin');
+                                    tg.showAlert(`$${msgType}$$ {newMessage.sender_role === 'error' ? 'occurred' : 'replied to your message'}!`);
                                 }
                                 
                                 if (!document.hidden) {
@@ -897,9 +925,8 @@
                             }
                         }
 
-                        // **NEW: Auto AI Response - Respond immediately to user messages**
+                        // Auto AI Response
                         if (newMessage.sender_role === 'user' && !isProcessingAI && aiUser) {
-                            // Small delay to allow admin to respond first (3 seconds)
                             setTimeout(async () => {
                                 await handleNewUserMessage(newMessage);
                             }, 3000);
@@ -935,32 +962,30 @@
                 .subscribe();
         }
 
-        // **NEW FUNCTION: Handle new user messages and trigger AI response**
         async function handleNewUserMessage(userMessage) {
             if (isProcessingAI) return;
             
             try {
                 isProcessingAI = true;
 
-                // Check if admin has already replied
                 const hasAdminReply = await checkIfAdminReplied(userMessage.id);
                 if (hasAdminReply) {
                     isProcessingAI = false;
                     return;
                 }
 
-                // Check if AI has already replied
                 const hasAIReply = await checkIfAIReplied(userMessage.id);
                 if (hasAIReply) {
                     isProcessingAI = false;
                     return;
                 }
 
-                // Generate and send AI response
                 await generateAIResponse(userMessage);
 
             } catch (error) {
                 console.error('Error handling new user message:', error);
+                // **NEW: Send error message to user**
+                await sendErrorMessage(userMessage.user_id, userMessage.id, error.message || 'Failed to process your message');
             } finally {
                 isProcessingAI = false;
             }
@@ -1027,7 +1052,7 @@
 
             } catch (error) {
                 console.error('Error sending message:', error);
-                showAlert('Failed to send message', 'error');
+                showAlert('Failed to send message: ' + error.message, 'error');
                 
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.notificationOccurred('error');
@@ -1071,6 +1096,14 @@
                                      `${type === 'ai_reply' ? '🤖' : '👨‍💼'} ${type === 'ai_reply' ? 'AI Assistant' : currentUser.first_name || 'Support Team'}\n` +
                                      `💬 Reply: $${message.substring(0, 100)}$$ {message.length > 100 ? '...' : ''}\n\n` +
                                      `Open Support Chat to continue the conversation`;
+
+                    await sendTelegramMessage(chatId, notificationText);
+                } else if (type === 'error' && targetUserId) {
+                    chatId = targetUserId;
+                    notificationText = `⚠️ <b>Support Chat Error</b>\n\n` +
+                                     `❌ An error occurred while processing your message\n` +
+                                     `💬 Error: ${message}\n\n` +
+                                     `Please try again or contact support`;
 
                     await sendTelegramMessage(chatId, notificationText);
                 }
@@ -1145,11 +1178,56 @@
             }
         }
 
+        // **NEW FUNCTION: Send error message to user**
+        async function sendErrorMessage(userId, replyToMessageId, errorDetails) {
+            try {
+                console.error('Sending error message to user:', userId, errorDetails);
+                
+                const errorMessage = `⚠️ **Error Processing Your Message**\n\n` +
+                                   `We encountered an issue while generating a response:\n\n` +
+                                   `**Error Details:** ${errorDetails}\n\n` +
+                                   `Please try again or wait for an admin to respond. We apologize for the inconvenience.`;
+
+                const messageData = {
+                    user_id: userId,
+                    message: errorMessage,
+                    sender_role: 'error',
+                    reply_to_message_id: replyToMessageId,
+                    viewed: false,
+                    created_at: new Date().toISOString(),
+                    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+                };
+
+                const { data, error } = await supabase
+                    .from('support_messages')
+                    .insert(messageData)
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Failed to insert error message:', error);
+                    return;
+                }
+
+                console.log('Error message sent successfully to user');
+                
+                // Send Telegram notification about the error
+                await sendTelegramNotification(errorDetails, 'error', userId);
+
+            } catch (error) {
+                console.error('Error sending error message:', error);
+            }
+        }
+
         async function generateAIResponse(userMessage) {
             try {
                 console.log('Generating AI response for message:', userMessage.id);
                 
                 const aiResponse = await getGeminiResponse(userMessage.message);
+                
+                if (!aiResponse || aiResponse.trim() === '') {
+                    throw new Error('AI returned empty response');
+                }
                 
                 const messageData = {
                     user_id: userMessage.user_id,
@@ -1175,6 +1253,8 @@
 
             } catch (error) {
                 console.error('Error generating AI response:', error);
+                // **NEW: Send error message to user when AI fails**
+                await sendErrorMessage(userMessage.user_id, userMessage.id, 'AI service temporarily unavailable');
             }
         }
 
@@ -1200,6 +1280,10 @@
                     })
                 });
 
+                if (!response.ok) {
+                    throw new Error(`Gemini API error: $${response.status}$$ {response.statusText}`);
+                }
+
                 const data = await response.json();
                 
                 if (data.candidates && data.candidates[0] && data.candidates[0].content) {
@@ -1207,12 +1291,12 @@
                     aiText = sanitizeAIResponse(aiText);
                     return aiText;
                 } else {
-                    return getDefaultResponse(userQuestion);
+                    throw new Error('Invalid response format from AI');
                 }
 
             } catch (error) {
                 console.error('Error calling AI API:', error);
-                return getDefaultResponse(userQuestion);
+                throw error; // **NEW: Throw error instead of returning default response**
             }
         }
 
@@ -1261,28 +1345,6 @@ ${userQuestion}
             }
             
             return text;
-        }
-
-        function getDefaultResponse(userQuestion) {
-            const lowerQuestion = userQuestion.toLowerCase();
-            
-            if (lowerQuestion.includes('scam') || lowerQuestion.includes('fake') || lowerQuestion.includes('real')) {
-                return '**MineBits is 100% legitimate!** We have successfully **paid thousands of users** and continue to process withdrawals daily. Your funds are safe with us. 💰✅';
-            }
-            
-            if (lowerQuestion.includes('deposit') && (lowerQuestion.includes('why') || lowerQuestion.includes('before'))) {
-                return '**The initial deposit confirms you are human**, not a bot. This is a standard security measure. After your first deposit, **withdrawals are quick and easy**! Many users withdraw daily without issues. 🔒✅';
-            }
-            
-            if (lowerQuestion.includes('withdraw') || lowerQuestion.includes('payment')) {
-                return '**Withdrawals are processed quickly** on MineBits! Minimum withdrawal is **10 USDT**. Make sure you have completed the initial deposit verification. Most withdrawals are completed within 24 hours. 💳✨';
-            }
-            
-            if (lowerQuestion.includes('bonus') || lowerQuestion.includes('earn')) {
-                return 'You can **earn on MineBits** through:\n\n**• Daily bonus claims** 🎁\n**• Watching ads** 📺\n**• Mining USDT & cryptocurrencies** ⛏️\n\nStart earning today! 💰';
-            }
-            
-            return 'Thank you for reaching out! **Our support team is here to help you.** 💪✨\n\n**Platform Info:**\n• Min deposit: **10 USDT**\n• Min withdrawal: **10 USDT**\n• Daily bonuses available 🎁\n• Watch ads to boost earnings 📺\n\nWhat would you like to know more about?';
         }
 
         sendBtn.addEventListener('click', sendMessage);
@@ -1360,5 +1422,6 @@ ${userQuestion}
 
         init();
     </script>
-    </body>
+</body>
 </html>
+
