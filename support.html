@@ -1,3 +1,8 @@
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -590,6 +595,7 @@
         let replyToMessage = null;
         let allMessages = {};
         let aiUser = null;
+        let isProcessingAI = false; // Prevent duplicate AI responses
 
         const messagesContainer = document.getElementById('messagesContainer');
         const messageInput = document.getElementById('messageInput');
@@ -643,10 +649,6 @@
                 await markMessagesAsViewed();
                 await loadMessages();
                 subscribeToMessages();
-                
-                if (currentUser.role === 'ai' || currentUser.role === 'admin') {
-                    startAutoResponseChecker();
-                }
 
                 sendBtn.disabled = false;
 
@@ -866,7 +868,7 @@
                         schema: 'public', 
                         table: 'support_messages'
                     }, 
-                    (payload) => {
+                    async (payload) => {
                         const newMessage = payload.new;
                         
                         allMessages[newMessage.id] = newMessage;
@@ -893,6 +895,14 @@
                                     markMessageAsViewed(newMessage.id);
                                 }
                             }
+                        }
+
+                        // **NEW: Auto AI Response - Respond immediately to user messages**
+                        if (newMessage.sender_role === 'user' && !isProcessingAI && aiUser) {
+                            // Small delay to allow admin to respond first (3 seconds)
+                            setTimeout(async () => {
+                                await handleNewUserMessage(newMessage);
+                            }, 3000);
                         }
                     }
                 )
@@ -923,6 +933,37 @@
                     }
                 )
                 .subscribe();
+        }
+
+        // **NEW FUNCTION: Handle new user messages and trigger AI response**
+        async function handleNewUserMessage(userMessage) {
+            if (isProcessingAI) return;
+            
+            try {
+                isProcessingAI = true;
+
+                // Check if admin has already replied
+                const hasAdminReply = await checkIfAdminReplied(userMessage.id);
+                if (hasAdminReply) {
+                    isProcessingAI = false;
+                    return;
+                }
+
+                // Check if AI has already replied
+                const hasAIReply = await checkIfAIReplied(userMessage.id);
+                if (hasAIReply) {
+                    isProcessingAI = false;
+                    return;
+                }
+
+                // Generate and send AI response
+                await generateAIResponse(userMessage);
+
+            } catch (error) {
+                console.error('Error handling new user message:', error);
+            } finally {
+                isProcessingAI = false;
+            }
         }
 
         async function markMessageAsViewed(messageId) {
@@ -1066,46 +1107,7 @@
             }
         }
 
-        async function startAutoResponseChecker() {
-            setInterval(async () => {
-                await checkForUnansweredMessages();
-            }, 60000); // Check every minute
-        }
-
-        async function checkForUnansweredMessages() {
-            try {
-                if (!aiUser) return;
-
-                const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-
-                const { data: userMessages, error } = await supabase
-                    .from('support_messages')
-                    .select('*')
-                    .eq('sender_role', 'user')
-                    .lt('created_at', tenMinutesAgo)
-                    .order('created_at', { ascending: false });
-
-                if (error) throw error;
-                if (!userMessages || userMessages.length === 0) return;
-
-                for (const userMsg of userMessages) {
-                    const hasAdminReply = await checkIfAdminReplied(userMsg.id, userMsg.created_at);
-                    
-                    if (!hasAdminReply) {
-                        const hasAIReply = await checkIfAIReplied(userMsg.id);
-                        
-                        if (!hasAIReply) {
-                            await generateAIResponse(userMsg);
-                        }
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error checking unanswered messages:', error);
-            }
-        }
-
-        async function checkIfAdminReplied(messageId, userMessageTime) {
+        async function checkIfAdminReplied(messageId) {
             try {
                 const { data: replies, error } = await supabase
                     .from('support_messages')
@@ -1145,6 +1147,8 @@
 
         async function generateAIResponse(userMessage) {
             try {
+                console.log('Generating AI response for message:', userMessage.id);
+                
                 const aiResponse = await getGeminiResponse(userMessage.message);
                 
                 const messageData = {
@@ -1165,6 +1169,8 @@
 
                 if (error) throw error;
 
+                console.log('AI response sent successfully');
+                
                 await sendTelegramNotification(aiResponse, 'ai_reply', userMessage.user_id);
 
             } catch (error) {
@@ -1276,7 +1282,7 @@ ${userQuestion}
                 return 'You can **earn on MineBits** through:\n\n**• Daily bonus claims** 🎁\n**• Watching ads** 📺\n**• Mining USDT & cryptocurrencies** ⛏️\n\nStart earning today! 💰';
             }
             
-            return 'Thank you for reaching out! **Our admin team will review your message** and respond shortly. MineBits is here to help! 💪✨\n\n**Platform Info:**\n• Min deposit: **10 USDT**\n• Min withdrawal: **10 USDT**\n• Daily bonuses available 🎁\n• Watch ads to boost earnings 📺';
+            return 'Thank you for reaching out! **Our support team is here to help you.** 💪✨\n\n**Platform Info:**\n• Min deposit: **10 USDT**\n• Min withdrawal: **10 USDT**\n• Daily bonuses available 🎁\n• Watch ads to boost earnings 📺\n\nWhat would you like to know more about?';
         }
 
         sendBtn.addEventListener('click', sendMessage);
@@ -1354,7 +1360,5 @@ ${userQuestion}
 
         init();
     </script>
-</body>
+    </body>
 </html>
-
-                    
