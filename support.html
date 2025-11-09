@@ -25,8 +25,6 @@
             --reply-bg: rgba(74, 105, 255, 0.15);
             --reply-border: var(--primary-color);
             --ai-color: #9c27b0;
-            --link-color: #00d4ff;
-            --link-glow: rgba(0, 212, 255, 0.5);
         }
         
         * {
@@ -45,104 +43,6 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-        }
-        
-        /* **WEB APP RESTRICTION MODAL** */
-        .webapp-restriction-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .webapp-restriction-modal.active {
-            display: flex;
-            animation: fadeIn 0.5s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .restriction-content {
-            max-width: 500px;
-            animation: slideUp 0.6s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .restriction-icon {
-            font-size: 80px;
-            margin-bottom: 25px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .restriction-content h2 {
-            font-size: 28px;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, var(--primary-color), var(--link-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .restriction-content p {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            margin-bottom: 10px;
-        }
-
-        .restriction-content .highlight {
-            color: var(--link-color);
-            font-weight: 600;
-        }
-
-        .telegram-open-btn {
-            margin-top: 30px;
-            padding: 15px 40px;
-            background: linear-gradient(135deg, var(--primary-color), var(--link-color));
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(74, 105, 255, 0.4);
-        }
-
-        .telegram-open-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 30px rgba(74, 105, 255, 0.6);
-        }
-
-        .telegram-open-btn i {
-            margin-right: 8px;
         }
         
         .container {
@@ -305,105 +205,77 @@
             padding-left: 20px;
         }
 
-        /* **3D ANIMATED CLICKABLE LINKS** */
-        .message-text a,
-        .clickable-link {
-            color: var(--link-color);
+        /* 3D Animated Link Highlighting */
+        .message-text a {
+            color: #4fc3f7;
             text-decoration: none;
-            font-weight: 600;
             position: relative;
             display: inline-block;
-            padding: 4px 10px;
+            padding: 4px 8px;
+            margin: 2px 0;
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.2), rgba(74, 105, 255, 0.3));
             border-radius: 8px;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(74, 105, 255, 0.1));
-            border: 1px solid var(--link-color);
+            border: 1px solid rgba(79, 195, 247, 0.5);
             transition: all 0.3s ease;
-            cursor: pointer;
             transform-style: preserve-3d;
-            perspective: 1000px;
-        }
-
-        .message-text a:hover,
-        .clickable-link:hover {
-            transform: translateY(-3px) rotateX(10deg);
             box-shadow: 
-                0 10px 25px rgba(0, 212, 255, 0.4),
-                0 0 20px var(--link-glow),
-                inset 0 0 15px rgba(0, 212, 255, 0.2);
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(74, 105, 255, 0.2));
-            border-color: var(--link-color);
+                0 4px 8px rgba(79, 195, 247, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: linkPulse 2s infinite;
         }
 
-        .message-text a:active,
-        .clickable-link:active {
-            transform: translateY(-1px) rotateX(5deg);
+        @keyframes linkPulse {
+            0%, 100% {
+                box-shadow: 
+                    0 4px 8px rgba(79, 195, 247, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                    0 0 15px rgba(79, 195, 247, 0.3);
+            }
+            50% {
+                box-shadow: 
+                    0 4px 12px rgba(79, 195, 247, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+                    0 0 25px rgba(79, 195, 247, 0.5);
+            }
+        }
+
+        .message-text a:hover {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.4), rgba(74, 105, 255, 0.5));
+            border-color: #4fc3f7;
+            transform: translateY(-2px) scale(1.05);
             box-shadow: 
-                0 5px 15px rgba(0, 212, 255, 0.3),
-                0 0 10px var(--link-glow);
+                0 8px 16px rgba(79, 195, 247, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3),
+                0 0 30px rgba(79, 195, 247, 0.6);
         }
 
-        .message-text a::before,
-        .clickable-link::before {
+        .message-text a:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 
+                0 2px 4px rgba(79, 195, 247, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .message-text a::before {
+            content: '🔗';
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .message-text a::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, transparent, rgba(0, 212, 255, 0.3));
-            border-radius: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: -1;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
         }
 
-        .message-text a:hover::before,
-        .clickable-link:hover::before {
-            opacity: 1;
-            animation: shimmer 1.5s infinite;
-        }
-
-        @keyframes shimmer {
-            0% {
-                background-position: -100% 0;
-            }
-            100% {
-                background-position: 200% 0;
-            }
-        }
-
-        .message-text a::after,
-        .clickable-link::after {
-            content: '🔗';
-            margin-left: 5px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-
-        .message-text a i,
-        .clickable-link i {
-            margin-right: 5px;
-            animation: iconBounce 2s ease-in-out infinite;
-        }
-
-        @keyframes iconBounce {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(3px); }
-        }
-
-        /* **LINK GLOW EFFECT** */
-        @keyframes linkGlow {
-            0%, 100% {
-                box-shadow: 0 0 10px var(--link-glow);
-            }
-            50% {
-                box-shadow: 0 0 20px var(--link-glow), 0 0 30px var(--link-glow);
-            }
-        }
-
-        .message-text a,
-        .clickable-link {
-            animation: linkGlow 3s ease-in-out infinite;
+        .message-text a:hover::after {
+            transform: translateX(100%);
         }
         
         .message-time {
@@ -771,26 +643,6 @@
     </style>
 </head>
 <body>
-    <!-- **WEB APP RESTRICTION MODAL** -->
-    <div class="webapp-restriction-modal" id="restrictionModal">
-        <div class="restriction-content">
-            <div class="restriction-icon">🤖📱</div>
-            <h2>Telegram Web App Only</h2>
-            <p>
-                This is a <span class="highlight">Telegram Mini App</span> and can only be opened inside <span class="highlight">Telegram Messenger</span>.
-            </p>
-            <p>
-                It will <strong>not work</strong> in regular web browsers like Chrome, Safari, or Firefox.
-            </p>
-            <p>
-                Please open this app from your <span class="highlight">Telegram bot</span> to access the support chat.
-            </p>
-            <button class="telegram-open-btn" onclick="openInTelegram()">
-                <i class="fab fa-telegram"></i> Open in Telegram
-            </button>
-        </div>
-    </div>
-
     <div class="container">
         <div class="header">
             <h1>
@@ -848,33 +700,6 @@
         };
 
         const tg = window.Telegram.WebApp;
-        
-        // **CHECK IF OPENED IN TELEGRAM**
-        function checkTelegramEnvironment() {
-            const isTelegramWebApp = tg && tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0;
-            
-            if (!isTelegramWebApp) {
-                document.getElementById('restrictionModal').classList.add('active');
-                return false;
-            }
-            return true;
-        }
-
-        function openInTelegram() {
-            // Try to redirect to Telegram (this might not work on all browsers)
-            window.location.href = 'tg://resolve';
-            
-            // Show alert
-            alert('Please open this link from your Telegram app. This web app only works inside Telegram Messenger.');
-        }
-
-        // Check environment before initializing
-        if (!checkTelegramEnvironment()) {
-            console.warn('Not opened in Telegram Web App environment');
-            // Stop execution
-            throw new Error('This app can only be opened in Telegram');
-        }
-
         tg.expand();
         tg.ready();
 
@@ -1120,48 +945,19 @@
             return wrapper;
         }
 
-        // **ENHANCED MARKDOWN PARSER WITH 3D CLICKABLE LINKS**
         function parseMarkdownWithLinks(text) {
             text = escapeHtml(text);
             
-            // Convert URLs to clickable 3D links
+            // Convert URLs to clickable links with 3D animation
             const urlRegex = /(https?:\/\/[^\s]+)/g;
-            text = text.replace(urlRegex, (url) => {
-                return `<a href="${url}" target="_blank" class="clickable-link" onclick="handleLinkClick(event, '${url}')"><i class="fas fa-external-link-alt"></i>${url}</a>`;
-            });
+            text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
             
-            // Convert @username to Telegram links
-            const usernameRegex = /@([a-zA-Z0-9_]+)/g;
-            text = text.replace(usernameRegex, (match, username) => {
-                return `<a href="https://t.me/${username}" target="_blank" class="clickable-link" onclick="handleLinkClick(event, 'https://t.me/${username}')"><i class="fab fa-telegram"></i>@${username}</a>`;
-            });
-            
-            // Bold text
+            // Convert markdown formatting
             text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            
-            // Italic text
             text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            
-            // Line breaks
             text = text.replace(/\n/g, '<br>');
             
             return text;
-        }
-
-        // **HANDLE LINK CLICKS WITH HAPTIC FEEDBACK**
-        function handleLinkClick(event, url) {
-            event.stopPropagation(); // Prevent bubble click event
-            
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('medium');
-            }
-            
-            // Open link in external browser
-            if (tg.openLink) {
-                tg.openLink(url);
-            } else {
-                window.open(url, '_blank');
-            }
         }
 
         function setReplyTo(msg) {
@@ -1260,7 +1056,6 @@
                             }
                         }
 
-                        // **AUTO AI RESPONSE**
                         if (newMessage.sender_role === 'user' && !isProcessingAI && adminUser) {
                             if (aiResponseTimeout) {
                                 clearTimeout(aiResponseTimeout);
@@ -1651,6 +1446,9 @@
             const linkKeywords = ['link', 'group', 'chat', 'telegram group', 'support group', 'community'];
             const isLinkRequest = linkKeywords.some(keyword => lowerQuestion.includes(keyword));
 
+            const webAppKeywords = ['not opening', 'won\'t open', 'can\'t open', 'doesn\'t open', 'browser', 'web browser', 'wifi', 'wi-fi', 'internet', 'access', 'load', 'loading'];
+            const isWebAppQuestion = webAppKeywords.some(keyword => lowerQuestion.includes(keyword));
+
             const contextInfo = `\
 You are a helpful customer support assistant for MineBits, a cryptocurrency mining platform.
 
@@ -1670,7 +1468,19 @@ You are a helpful customer support assistant for MineBits, a cryptocurrency mini
 4. Keep responses concise and clear (2-3 sentences maximum)
 5. Be positive about MineBits platform
 6. If you detect someone is greeting (hi, hello, hey), respond warmly and ask how you can help
-7. **ALWAYS include clickable links in your responses when relevant** - format them properly as URLs
+7. Always include clickable links in your response when relevant (links will be automatically formatted)
+
+${isWebAppQuestion ? `
+**⚠️ WEB APP ACCESS ISSUE DETECTED:**
+The user is having trouble opening or accessing the platform. You MUST include this information:
+
+**Important Notice:**
+- This is a **Telegram Web App** and can **ONLY be opened within Telegram**
+- It **will NOT work** in regular web browsers (Chrome, Safari, Firefox, etc.)
+- It **will NOT work** if you try to open it from WiFi or internet browser
+- **Solution:** You must access it through the **Telegram app** by clicking the bot link or menu button
+- If you're trying to open it outside Telegram, that's why it's not working
+` : ''}
 
 ${isMinerQuestion ? `
 **⚠️ MINER DEACTIVATION POLICY:**
@@ -1681,30 +1491,28 @@ The user is asking about miners that have been deactivated, expired, or having i
 - Users with deactivated miners **have been fully refunded** for their investment
 - We apologize for any inconvenience caused
 - Future miners will have improved stability and performance
-- For detailed assistance, please join our support group chat: ${CONFIG.SUPPORT_GROUP_LINK}
+- For detailed assistance, please join our support group chat where our team can help with your specific situation
 ` : ''}
 
 ${isLinkRequest ? `
 **GROUP LINK REQUEST DETECTED:**
-The user is asking for a link or group. Provide the support group link: ${CONFIG.SUPPORT_GROUP_LINK}
-Make sure to format it as a proper URL so it becomes clickable.
+The user is asking for a link or group. Direct them to the support group chat at: ${CONFIG.SUPPORT_GROUP_LINK}
 ` : ''}
 
 **Common Questions & Answers:**
 - **Greetings (hi, hello, hey):** Respond warmly like "Hello! 👋 Welcome to MineBits Support! How can I assist you today?"
 - **"Is MineBits a scam?"** → "**MineBits is a real platform** that has **paid thousands of users** successfully. Deposits and withdrawals work smoothly."
 - **"Why deposit before withdrawal?"** → "The **initial deposit confirms you are a real human user**, not a bot. After the first deposit, **withdrawals become very easy** and are processed quickly."
+- **"Link/browser issues"** → Explain this is a **Telegram Web App only** and provide the support group link: ${CONFIG.SUPPORT_GROUP_LINK}
 - **Technical issues** → Provide helpful troubleshooting steps
 - **Payment issues** → Reassure them that payments are processed and provide timeline
 - **Miner issues** → Explain deactivation policy and refund status
 - **Link/Group requests** → Provide support group link: ${CONFIG.SUPPORT_GROUP_LINK}
 
-**IMPORTANT:** When providing links, make sure they are properly formatted as full URLs (starting with https://) so they become clickable 3D animated links.
-
 **User Question:**
 ${userQuestion}
 
-**Your Response (2-3 sentences maximum, use markdown formatting, include clickable links when relevant):**
+**Your Response (2-3 sentences maximum, use markdown formatting, include relevant links):**
 `;
             return contextInfo;
         }
@@ -1723,7 +1531,6 @@ ${userQuestion}
             return text.trim();
         }
 
-        // **EVENT LISTENERS**
         sendBtn.addEventListener('click', sendMessage);
 
         messageInput.addEventListener('keydown', (e) => {
@@ -1748,7 +1555,6 @@ ${userQuestion}
             }
         });
 
-        // **UTILITY FUNCTIONS**
         function scrollToBottom() {
             setTimeout(() => {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -1756,25 +1562,25 @@ ${userQuestion}
         }
 
         function getTimeAgo(timestamp) {
-            const now = new Date();
-            const time = new Date(timestamp);
+            const now = Date.now();
+            const time = new Date(timestamp).getTime();
             const diff = Math.floor((now - time) / 1000);
 
             if (diff < 60) return 'Just now';
-            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-            return Math.floor(diff / 86400) + 'd ago';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return `${Math.floor(diff / 86400)}d ago`;
         }
 
-        function getExpiresIn(timestamp) {
-            const now = new Date();
-            const expiry = new Date(timestamp);
-            const diff = Math.floor((expiry - now) / 1000);
+        function getExpiresIn(expiresAt) {
+            const now = Date.now();
+            const expires = new Date(expiresAt).getTime();
+            const diff = Math.floor((expires - now) / 1000);
 
-            if (diff < 0) return 'Expired';
-            if (diff < 3600) return 'in ' + Math.floor(diff / 60) + 'm';
-            if (diff < 86400) return 'in ' + Math.floor(diff / 3600) + 'h';
-            return 'in ' + Math.floor(diff / 86400) + 'd';
+            if (diff < 0) return 'expired';
+            if (diff < 3600) return `in ${Math.floor(diff / 60)}m`;
+            if (diff < 86400) return `in ${Math.floor(diff / 3600)}h`;
+            return `in ${Math.floor(diff / 86400)}d`;
         }
 
         function escapeHtml(text) {
@@ -1783,77 +1589,23 @@ ${userQuestion}
             return div.innerHTML;
         }
 
-        function showAlert(message, type = 'info') {
-            if (tg.showAlert) {
-                tg.showAlert(message);
-            } else {
-                alert(message);
-            }
+        function showAlert(message, type = 'error') {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
+                ${message}
+            `;
+           
+            document.body.insertBefore(alert, document.body.firstChild);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 3000);
         }
 
-        // **CLEANUP ON PAGE UNLOAD**
-        window.addEventListener('beforeunload', () => {
-            if (messagesSubscription) {
-                messagesSubscription.unsubscribe();
-            }
-            if (aiResponseTimeout) {
-                clearTimeout(aiResponseTimeout);
-            }
-        });
-
-        // **INITIALIZE APP**
-        initApp();
-
-        // **AUTO-REFRESH EXPIRED MESSAGES EVERY 60 SECONDS**
-        setInterval(() => {
-            const messageWrappers = document.querySelectorAll('.message-wrapper');
-            messageWrappers.forEach(wrapper => {
-                const messageId = wrapper.dataset.messageId;
-                const message = allMessages[messageId];
-                if (message) {
-                    const timeElement = wrapper.querySelector('.message-time');
-                    if (timeElement) {
-                        const timeAgo = getTimeAgo(message.created_at);
-                        const expiresIn = getExpiresIn(message.expires_at);
-                        
-                        let statusIcon = '';
-                        if (message.sender_role === currentUser.role || (currentUser.role === 'admin' && message.sender_role === 'ai')) {
-                            if (message.viewed) {
-                                statusIcon = '<span class="message-status viewed"><span class="tick-double"></span></span>';
-                            } else {
-                                statusIcon = '<span class="message-status"><span>✓</span></span>';
-                            }
-                        }
-                        
-                        timeElement.innerHTML = `
-                            ${timeAgo} • Expires ${expiresIn}
-                            ${statusIcon}
-                        `;
-                    }
-                }
-            });
-        }, 60000);
-
-        // **DELETE EXPIRED MESSAGES EVERY 5 MINUTES**
-        setInterval(async () => {
-            try {
-                const { error } = await supabase
-                    .from('support_messages')
-                    .delete()
-                    .lt('expires_at', new Date().toISOString());
-
-                if (error) {
-                    console.error('Error deleting expired messages:', error);
-                } else {
-                    console.log('Expired messages cleaned up successfully');
-                }
-            } catch (error) {
-                console.error('Error in cleanup interval:', error);
-            }
-        }, 5 * 60 * 1000);
-
+        init();
     </script>
 </body>
 </html>
-
 
