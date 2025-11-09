@@ -25,6 +25,8 @@
             --reply-bg: rgba(74, 105, 255, 0.15);
             --reply-border: var(--primary-color);
             --ai-color: #9c27b0;
+            --link-color: #00d4ff;
+            --link-glow: rgba(0, 212, 255, 0.5);
         }
         
         * {
@@ -43,6 +45,104 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
+        }
+        
+        /* **WEB APP RESTRICTION MODAL** */
+        .webapp-restriction-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .webapp-restriction-modal.active {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .restriction-content {
+            max-width: 500px;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .restriction-icon {
+            font-size: 80px;
+            margin-bottom: 25px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .restriction-content h2 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--link-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .restriction-content p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .restriction-content .highlight {
+            color: var(--link-color);
+            font-weight: 600;
+        }
+
+        .telegram-open-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, var(--primary-color), var(--link-color));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(74, 105, 255, 0.4);
+        }
+
+        .telegram-open-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(74, 105, 255, 0.6);
+        }
+
+        .telegram-open-btn i {
+            margin-right: 8px;
         }
         
         .container {
@@ -203,6 +303,107 @@
         .message-text ul, .message-text ol {
             margin: 8px 0;
             padding-left: 20px;
+        }
+
+        /* **3D ANIMATED CLICKABLE LINKS** */
+        .message-text a,
+        .clickable-link {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 600;
+            position: relative;
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(74, 105, 255, 0.1));
+            border: 1px solid var(--link-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .message-text a:hover,
+        .clickable-link:hover {
+            transform: translateY(-3px) rotateX(10deg);
+            box-shadow: 
+                0 10px 25px rgba(0, 212, 255, 0.4),
+                0 0 20px var(--link-glow),
+                inset 0 0 15px rgba(0, 212, 255, 0.2);
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(74, 105, 255, 0.2));
+            border-color: var(--link-color);
+        }
+
+        .message-text a:active,
+        .clickable-link:active {
+            transform: translateY(-1px) rotateX(5deg);
+            box-shadow: 
+                0 5px 15px rgba(0, 212, 255, 0.3),
+                0 0 10px var(--link-glow);
+        }
+
+        .message-text a::before,
+        .clickable-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(0, 212, 255, 0.3));
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .message-text a:hover::before,
+        .clickable-link:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -100% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .message-text a::after,
+        .clickable-link::after {
+            content: '🔗';
+            margin-left: 5px;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .message-text a i,
+        .clickable-link i {
+            margin-right: 5px;
+            animation: iconBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes iconBounce {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(3px); }
+        }
+
+        /* **LINK GLOW EFFECT** */
+        @keyframes linkGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px var(--link-glow);
+            }
+            50% {
+                box-shadow: 0 0 20px var(--link-glow), 0 0 30px var(--link-glow);
+            }
+        }
+
+        .message-text a,
+        .clickable-link {
+            animation: linkGlow 3s ease-in-out infinite;
         }
         
         .message-time {
@@ -570,6 +771,26 @@
     </style>
 </head>
 <body>
+    <!-- **WEB APP RESTRICTION MODAL** -->
+    <div class="webapp-restriction-modal" id="restrictionModal">
+        <div class="restriction-content">
+            <div class="restriction-icon">🤖📱</div>
+            <h2>Telegram Web App Only</h2>
+            <p>
+                This is a <span class="highlight">Telegram Mini App</span> and can only be opened inside <span class="highlight">Telegram Messenger</span>.
+            </p>
+            <p>
+                It will <strong>not work</strong> in regular web browsers like Chrome, Safari, or Firefox.
+            </p>
+            <p>
+                Please open this app from your <span class="highlight">Telegram bot</span> to access the support chat.
+            </p>
+            <button class="telegram-open-btn" onclick="openInTelegram()">
+                <i class="fab fa-telegram"></i> Open in Telegram
+            </button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>
@@ -623,10 +844,37 @@
             BOT_TOKEN: '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg',
             GEMINI_API_KEY: 'AIzaSyDkEjVT8SAHqCuDMiLRv0NThxDZJELA0eg',
             ADMIN_TELEGRAM_ID: '5727413041',
-            SUPPORT_GROUP_LINK: 'https://t.me/MineBitschat' // **ADD YOUR GROUP LINK HERE**
+            SUPPORT_GROUP_LINK: 'https://t.me/MineBitschat'
         };
 
         const tg = window.Telegram.WebApp;
+        
+        // **CHECK IF OPENED IN TELEGRAM**
+        function checkTelegramEnvironment() {
+            const isTelegramWebApp = tg && tg.initDataUnsafe && Object.keys(tg.initDataUnsafe).length > 0;
+            
+            if (!isTelegramWebApp) {
+                document.getElementById('restrictionModal').classList.add('active');
+                return false;
+            }
+            return true;
+        }
+
+        function openInTelegram() {
+            // Try to redirect to Telegram (this might not work on all browsers)
+            window.location.href = 'tg://resolve';
+            
+            // Show alert
+            alert('Please open this link from your Telegram app. This web app only works inside Telegram Messenger.');
+        }
+
+        // Check environment before initializing
+        if (!checkTelegramEnvironment()) {
+            console.warn('Not opened in Telegram Web App environment');
+            // Stop execution
+            throw new Error('This app can only be opened in Telegram');
+        }
+
         tg.expand();
         tg.ready();
 
@@ -832,7 +1080,7 @@
             text.className = 'message-text';
            
             if (msg.sender_role === 'ai' || msg.sender_role === 'admin' || msg.sender_role === 'error') {
-                text.innerHTML = parseMarkdown(msg.message);
+                text.innerHTML = parseMarkdownWithLinks(msg.message);
             } else {
                 text.textContent = msg.message;
             }
@@ -872,12 +1120,48 @@
             return wrapper;
         }
 
-        function parseMarkdown(text) {
+        // **ENHANCED MARKDOWN PARSER WITH 3D CLICKABLE LINKS**
+        function parseMarkdownWithLinks(text) {
             text = escapeHtml(text);
+            
+            // Convert URLs to clickable 3D links
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            text = text.replace(urlRegex, (url) => {
+                return `<a href="${url}" target="_blank" class="clickable-link" onclick="handleLinkClick(event, '${url}')"><i class="fas fa-external-link-alt"></i>${url}</a>`;
+            });
+            
+            // Convert @username to Telegram links
+            const usernameRegex = /@([a-zA-Z0-9_]+)/g;
+            text = text.replace(usernameRegex, (match, username) => {
+                return `<a href="https://t.me/${username}" target="_blank" class="clickable-link" onclick="handleLinkClick(event, 'https://t.me/${username}')"><i class="fab fa-telegram"></i>@${username}</a>`;
+            });
+            
+            // Bold text
             text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Italic text
             text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Line breaks
             text = text.replace(/\n/g, '<br>');
+            
             return text;
+        }
+
+        // **HANDLE LINK CLICKS WITH HAPTIC FEEDBACK**
+        function handleLinkClick(event, url) {
+            event.stopPropagation(); // Prevent bubble click event
+            
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+            
+            // Open link in external browser
+            if (tg.openLink) {
+                tg.openLink(url);
+            } else {
+                window.open(url, '_blank');
+            }
         }
 
         function setReplyTo(msg) {
@@ -918,7 +1202,7 @@
                     <div class="dots">
                         <span></span>
                         <span></span>
-                                                <span></span>
+                        <span></span>
                     </div>
                 </div>
             `;
@@ -976,14 +1260,12 @@
                             }
                         }
 
-                        // **AUTO AI RESPONSE - IMPROVED TIMING**
+                        // **AUTO AI RESPONSE**
                         if (newMessage.sender_role === 'user' && !isProcessingAI && adminUser) {
-                            // Clear any existing timeout
                             if (aiResponseTimeout) {
                                 clearTimeout(aiResponseTimeout);
                             }
                             
-                            // Set new timeout for AI response
                             aiResponseTimeout = setTimeout(async () => {
                                 await handleNewUserMessage(newMessage);
                             }, 1500);
@@ -1025,26 +1307,22 @@
             try {
                 isProcessingAI = true;
 
-                // Check if admin already replied
                 const hasAdminReply = await checkIfAdminReplied(userMessage.id);
                 if (hasAdminReply) {
                     isProcessingAI = false;
                     return;
                 }
 
-                // Check if AI already replied
                 const hasAIReply = await checkIfAIReplied(userMessage.id);
                 if (hasAIReply) {
                     isProcessingAI = false;
                     return;
                 }
 
-                // Show typing indicator
                 if (currentUser.telegram_id === userMessage.user_id || currentUser.role === 'admin') {
                     showTypingIndicator('Admin is typing');
                 }
 
-                // Generate AI response
                 await generateAIResponse(userMessage);
             } catch (error) {
                 console.error('Error handling new user message:', error);
@@ -1075,7 +1353,6 @@
             sendBtn.disabled = true;
             messageInput.disabled = true;
 
-            // Show typing indicator for admin/AI users
             if (currentUser.role === 'admin' || currentUser.role === 'ai') {
                 showTypingIndicator('Admin is typing');
             }
@@ -1108,7 +1385,6 @@
 
                 hideTypingIndicator();
 
-                // Send notifications
                 if (currentUser.role !== 'admin' && currentUser.role !== 'ai') {
                     await sendTelegramNotification(message, 'user_message', null);
                 } else if (replyToMessage && replyToMessage.user_id) {
@@ -1289,7 +1565,6 @@
                     throw new Error('Admin user not found. Cannot send AI response.');
                 }
 
-                // Simulate realistic typing delay (2-4 seconds)
                 const typingDelay = 2000 + Math.random() * 2000;
                 await new Promise(resolve => setTimeout(resolve, typingDelay));
                
@@ -1370,11 +1645,9 @@
         function buildAIPrompt(userQuestion) {
             const lowerQuestion = userQuestion.toLowerCase();
             
-            // **DETECT MINER-RELATED QUESTIONS**
             const minerKeywords = ['miner', 'miners', 'mining', 'deactivated', 'deactivate', 'expired', 'expire', 'issue', 'problem', 'not working', 'stopped', 'recover', 'recovery'];
             const isMinerQuestion = minerKeywords.some(keyword => lowerQuestion.includes(keyword));
 
-            // **DETECT LINK/GROUP REQUESTS**
             const linkKeywords = ['link', 'group', 'chat', 'telegram group', 'support group', 'community'];
             const isLinkRequest = linkKeywords.some(keyword => lowerQuestion.includes(keyword));
 
@@ -1397,6 +1670,7 @@ You are a helpful customer support assistant for MineBits, a cryptocurrency mini
 4. Keep responses concise and clear (2-3 sentences maximum)
 5. Be positive about MineBits platform
 6. If you detect someone is greeting (hi, hello, hey), respond warmly and ask how you can help
+7. **ALWAYS include clickable links in your responses when relevant** - format them properly as URLs
 
 ${isMinerQuestion ? `
 **⚠️ MINER DEACTIVATION POLICY:**
@@ -1407,12 +1681,13 @@ The user is asking about miners that have been deactivated, expired, or having i
 - Users with deactivated miners **have been fully refunded** for their investment
 - We apologize for any inconvenience caused
 - Future miners will have improved stability and performance
-- For detailed assistance, please join our support group chat where our team can help with your specific situation
+- For detailed assistance, please join our support group chat: ${CONFIG.SUPPORT_GROUP_LINK}
 ` : ''}
 
 ${isLinkRequest ? `
 **GROUP LINK REQUEST DETECTED:**
-The user is asking for a link or group. Direct them to the support group chat at: ${CONFIG.SUPPORT_GROUP_LINK}
+The user is asking for a link or group. Provide the support group link: ${CONFIG.SUPPORT_GROUP_LINK}
+Make sure to format it as a proper URL so it becomes clickable.
 ` : ''}
 
 **Common Questions & Answers:**
@@ -1424,21 +1699,21 @@ The user is asking for a link or group. Direct them to the support group chat at
 - **Miner issues** → Explain deactivation policy and refund status
 - **Link/Group requests** → Provide support group link: ${CONFIG.SUPPORT_GROUP_LINK}
 
+**IMPORTANT:** When providing links, make sure they are properly formatted as full URLs (starting with https://) so they become clickable 3D animated links.
+
 **User Question:**
 ${userQuestion}
 
-**Your Response (2-3 sentences maximum, use markdown formatting):**
+**Your Response (2-3 sentences maximum, use markdown formatting, include clickable links when relevant):**
 `;
             return contextInfo;
         }
 
         function sanitizeAIResponse(text) {
-            // Remove AI company names
             text = text.replace(/google|gemini|openai|chatgpt|claude|anthropic/gi, 'our AI system');
            
             const lowerText = text.toLowerCase();
             
-            // Ensure positive framing for scam questions
             if (lowerText.includes('scam') || lowerText.includes('is minebits')) {
                 if (!lowerText.includes('not a scam') && !lowerText.includes('real platform')) {
                     text = '**MineBits is a legitimate platform** that has successfully **paid thousands of users**. ' + text;
@@ -1481,25 +1756,25 @@ ${userQuestion}
         }
 
         function getTimeAgo(timestamp) {
-            const now = Date.now();
-            const time = new Date(timestamp).getTime();
+            const now = new Date();
+            const time = new Date(timestamp);
             const diff = Math.floor((now - time) / 1000);
 
             if (diff < 60) return 'Just now';
-            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-            return `${Math.floor(diff / 86400)}d ago`;
+            if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+            return Math.floor(diff / 86400) + 'd ago';
         }
 
-        function getExpiresIn(expiresAt) {
-            const now = Date.now();
-            const expires = new Date(expiresAt).getTime();
-            const diff = Math.floor((expires - now) / 1000);
+        function getExpiresIn(timestamp) {
+            const now = new Date();
+            const expiry = new Date(timestamp);
+            const diff = Math.floor((expiry - now) / 1000);
 
-            if (diff < 0) return 'expired';
-            if (diff < 3600) return `in ${Math.floor(diff / 60)}m`;
-            if (diff < 86400) return `in ${Math.floor(diff / 3600)}h`;
-            return `in ${Math.floor(diff / 86400)}d`;
+            if (diff < 0) return 'Expired';
+            if (diff < 3600) return 'in ' + Math.floor(diff / 60) + 'm';
+            if (diff < 86400) return 'in ' + Math.floor(diff / 3600) + 'h';
+            return 'in ' + Math.floor(diff / 86400) + 'd';
         }
 
         function escapeHtml(text) {
@@ -1508,24 +1783,77 @@ ${userQuestion}
             return div.innerHTML;
         }
 
-        function showAlert(message, type = 'error') {
-            const alert = document.createElement('div');
-            alert.className = `alert ${type}`;
-            alert.innerHTML = `
-                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
-                ${message}
-            `;
-           
-            document.body.insertBefore(alert, document.body.firstChild);
-
-            setTimeout(() => {
-                alert.remove();
-            }, 3000);
+        function showAlert(message, type = 'info') {
+            if (tg.showAlert) {
+                tg.showAlert(message);
+            } else {
+                alert(message);
+            }
         }
 
+        // **CLEANUP ON PAGE UNLOAD**
+        window.addEventListener('beforeunload', () => {
+            if (messagesSubscription) {
+                messagesSubscription.unsubscribe();
+            }
+            if (aiResponseTimeout) {
+                clearTimeout(aiResponseTimeout);
+            }
+        });
+
         // **INITIALIZE APP**
-        init();
+        initApp();
+
+        // **AUTO-REFRESH EXPIRED MESSAGES EVERY 60 SECONDS**
+        setInterval(() => {
+            const messageWrappers = document.querySelectorAll('.message-wrapper');
+            messageWrappers.forEach(wrapper => {
+                const messageId = wrapper.dataset.messageId;
+                const message = allMessages[messageId];
+                if (message) {
+                    const timeElement = wrapper.querySelector('.message-time');
+                    if (timeElement) {
+                        const timeAgo = getTimeAgo(message.created_at);
+                        const expiresIn = getExpiresIn(message.expires_at);
+                        
+                        let statusIcon = '';
+                        if (message.sender_role === currentUser.role || (currentUser.role === 'admin' && message.sender_role === 'ai')) {
+                            if (message.viewed) {
+                                statusIcon = '<span class="message-status viewed"><span class="tick-double"></span></span>';
+                            } else {
+                                statusIcon = '<span class="message-status"><span>✓</span></span>';
+                            }
+                        }
+                        
+                        timeElement.innerHTML = `
+                            ${timeAgo} • Expires ${expiresIn}
+                            ${statusIcon}
+                        `;
+                    }
+                }
+            });
+        }, 60000);
+
+        // **DELETE EXPIRED MESSAGES EVERY 5 MINUTES**
+        setInterval(async () => {
+            try {
+                const { error } = await supabase
+                    .from('support_messages')
+                    .delete()
+                    .lt('expires_at', new Date().toISOString());
+
+                if (error) {
+                    console.error('Error deleting expired messages:', error);
+                } else {
+                    console.log('Expired messages cleaned up successfully');
+                }
+            } catch (error) {
+                console.error('Error in cleanup interval:', error);
+            }
+        }, 5 * 60 * 1000);
+
     </script>
 </body>
 </html>
+
 
