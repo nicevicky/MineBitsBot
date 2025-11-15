@@ -394,23 +394,24 @@
         const SUPABASE_URL = 'https://tdcsvixxbhvwqhhlxcbe.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkY3N2aXh4Ymh2d3FoaGx4Y2JlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIzNzc2MzEsImV4cCI6MjA3Nzk1MzYzMX0.cCfMJEkTgiKSZW6Sl58VPzPlI3oM12TINJBM-k8o2J8';
         const BOT_TOKEN = '8252485024:AAGBhdEXbPbL2nZ1OxpClRLAMY6zQma2Yzg';
-    
+
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const tg = window.Telegram.WebApp;
         tg.expand();
-    
+
         let currentUser = null;
         let activeMinersInterval = null;
         let availableMinersData = [];
-        let processedMiners = new Set(); // Track already processed miners
-    
+        let processedMiners = new Set();
+        let isProcessing = false; // Prevent concurrent processing
+
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
         function formatCurrency(amount, decimals = 8) {
             return parseFloat(amount || 0).toFixed(decimals);
         }
-    
+
         function formatTime(ms) {
             if (ms <= 0) return 'Completed!';
             const seconds = Math.floor((ms / 1000) % 60).toString().padStart(2, '0');
@@ -418,12 +419,12 @@
             const hours = Math.floor((ms / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
             const days = Math.floor(ms / (1000 * 60 * 60 * 24));
             if (days > 0) {
-                return `${days}d ${hours}h ${seconds}s`;
+                return `${days}d ${hours}h ${minutes}m`;
             } else {
                 return `${hours}h ${minutes}m ${seconds}s`;
             }
         }
-    
+
         // ============================================
         // INITIALIZATION
         // ============================================
@@ -432,7 +433,7 @@
             await loadAvailableMiners();
             await loadActiveMiners();
         });
-    
+
         async function initUser() {
             const user = tg.initDataUnsafe?.user;
             if (!user) {
@@ -444,8 +445,15 @@
                     .from('users')
                     .select('*')
                     .eq('telegram_id', user.id)
-                    .single();
+                    .maybeSingle(); // Changed from .single() to .maybeSingle()
+                
                 if (error) throw error;
+                
+                if (!data) {
+                    showMessage('User not found in database', 'error');
+                    return;
+                }
+                
                 currentUser = data;
                 updateBalanceDisplay();
             } catch (error) {
@@ -453,14 +461,14 @@
                 showMessage('Error loading user data', 'error');
             }
         }
-    
+
         function updateBalanceDisplay() {
             if (currentUser) {
                 document.getElementById('userBalance').textContent =
                     formatCurrency(currentUser.balance, 8);
             }
         }
-    
+
         // ============================================
         // LOAD AVAILABLE MINERS FROM DATABASE
         // ============================================
@@ -482,7 +490,7 @@
                     '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners from database</div>';
             }
         }
-    
+
         // ============================================
         // TAB SWITCHING
         // ============================================
@@ -490,7 +498,7 @@
             const buttons = document.querySelectorAll('.tab-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.closest('.tab-btn').classList.add('active');
-          
+            
             if (tab === 'available') {
                 document.getElementById('availableMiners').style.display = 'grid';
                 document.getElementById('activeMiners').style.display = 'none';
@@ -505,7 +513,7 @@
                 startActiveMinersUpdate();
             }
         }
-    
+
         // ============================================
         // DISPLAY AVAILABLE MINERS
         // ============================================
@@ -571,7 +579,7 @@
                 container.appendChild(card);
             });
         }
-    
+
         // ============================================
         // PURCHASE MINER
         // ============================================
@@ -580,21 +588,20 @@
                 showMessage('User not loaded', 'error');
                 return;
             }
-          
-            // Fetch latest user balance to ensure accuracy
+            
             try {
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('balance')
                     .eq('telegram_id', currentUser.telegram_id)
-                    .single();
+                    .maybeSingle(); // Changed from .single()
             
                 if (userError) throw userError;
+                if (!userData) throw new Error('User not found');
             
                 const currentBalance = parseFloat(userData.balance);
                 const minerCost = parseFloat(miner.cost);
             
-                // Check if balance is sufficient
                 if (currentBalance < minerCost) {
                     showMessage(`Insufficient balance! You need ${formatCurrency(minerCost, 2)} ${miner.crypto} but only have ${formatCurrency(currentBalance, 2)} ${miner.crypto}`, 'error');
                     return;
@@ -606,7 +613,6 @@
                 const startTime = new Date();
                 const endTime = new Date(startTime.getTime() + (miner.duration_hours * 60 * 60 * 1000));
             
-                // Insert into miners table (user's purchased miners)
                 const { data: minerData, error: minerError } = await supabase
                     .from('miners')
                     .insert({
@@ -627,7 +633,6 @@
             
                 if (minerError) throw minerError;
             
-                // Deduct cost from user balance
                 const newBalance = currentBalance - minerCost;
                 const { error: balanceError } = await supabase
                     .from('users')
@@ -636,7 +641,6 @@
             
                 if (balanceError) throw balanceError;
             
-                // Record transaction
                 await supabase.from('transactions').insert({
                     user_id: currentUser.telegram_id,
                     type: 'purchase',
@@ -649,33 +653,30 @@
                 updateBalanceDisplay();
                 showMessage(`${miner.name} purchased successfully! Mining started.`, 'success');
             
-                // Send Telegram notification
                 await sendTelegramMessage(
                     currentUser.telegram_id,
-                    `Miner Activated!\n\n` +
+                    `✅ Miner Activated!\n\n` +
                     `${miner.name}\n` +
-                    `Earnings: ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
-                    `Duration: ${miner.duration_hours} hours\n` +
-                    `Total Earnings: ${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)} ${miner.crypto}\n\n` +
-                    `Mining will complete at: ${endTime.toLocaleString()}`
+                    `⛏ Earnings: ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
+                    `⏱ Duration: ${miner.duration_hours} hours\n` +
+                    `💰 Total Earnings: ${formatCurrency(miner.earnings_rate * miner.duration_hours, 2)} ${miner.crypto}\n\n` +
+                    `⏰ Mining will complete at: ${endTime.toLocaleString()}`
                 );
             } catch (error) {
                 console.error('Purchase error:', error);
                 showMessage('Purchase failed: ' + error.message, 'error');
             }
         }
-    
+
         // ============================================
         // LOAD ACTIVE MINERS
         // ============================================
         async function loadActiveMiners() {
             if (!currentUser) return;
-          
+            
             try {
-                // First, check and complete expired miners
                 await checkAndCompleteExpiredMiners();
             
-                // Then load only active miners
                 const { data: miners, error } = await supabase
                     .from('miners')
                     .select('*')
@@ -692,7 +693,7 @@
                     '<div class="message error"><i class="fas fa-exclamation-circle"></i> Error loading miners</div>';
             }
         }
-    
+
         function displayActiveMiners(miners) {
             const container = document.getElementById('activeMiners');
         
@@ -706,19 +707,19 @@
                 `;
                 return;
             }
-          
+            
             container.innerHTML = '';
             miners.forEach(miner => {
                 const card = createActiveMinerCard(miner);
                 container.appendChild(card);
             });
         }
-    
+
         function createActiveMinerCard(miner) {
             const card = document.createElement('div');
             card.className = 'miner-card active-miner-card';
             card.id = `miner-${miner.id}`;
-          
+            
             const now = new Date();
             const endTime = new Date(miner.end_time);
             const startTime = new Date(miner.start_time);
@@ -726,10 +727,10 @@
             const elapsed = now - startTime;
             const remaining = Math.max(0, endTime - now);
             const progress = Math.min(100, (elapsed / totalDuration) * 100);
-          
+            
             const currentEarnings = (elapsed / (1000 * 60 * 60)) * miner.earnings_rate;
             const totalEarnings = miner.duration_hours * miner.earnings_rate;
-          
+            
             card.innerHTML = `
                 <div class="miner-icon">
                     <i class="fas fa-server"></i>
@@ -771,20 +772,20 @@
                     <i class="fas fa-cog fa-spin"></i> Mining in Progress
                 </button>
             `;
-          
+            
             return card;
         }
-    
+
         // ============================================
-        // CHECK AND COMPLETE EXPIRED MINERS - UPDATED TO HANDLE MULTIPLE MINERS
+        // CHECK AND COMPLETE EXPIRED MINERS - FIXED
         // ============================================
         async function checkAndCompleteExpiredMiners() {
-            if (!currentUser) return;
-          
+            if (!currentUser || isProcessing) return;
+            
             try {
+                isProcessing = true;
                 const now = new Date();
             
-                // Get all active miners that have expired
                 const { data: expiredMiners, error } = await supabase
                     .from('miners')
                     .select('*')
@@ -793,32 +794,34 @@
                     .lte('end_time', now.toISOString());
             
                 if (error) throw error;
-               
-                // Handle case where expiredMiners might be null or not an array
+              
                 if (!expiredMiners || !Array.isArray(expiredMiners) || expiredMiners.length === 0) {
                     return;
                 }
             
                 console.log(`Found ${expiredMiners.length} expired miner(s)`);
             
-                // Process each expired miner individually
+                // Process each expired miner sequentially to avoid race conditions
                 for (const miner of expiredMiners) {
-                    // Check if this miner hasn't been processed yet
                     if (!processedMiners.has(miner.id)) {
-                                           console.log(`Processing expired miner: ${miner.miner_name} (ID: ${miner.id})`);
+                        console.log(`Processing expired miner: ${miner.miner_name} (ID: ${miner.id})`);
                         processedMiners.add(miner.id);
-                      
-                        // Complete each miner individually
+                        
                         await completeMiner(miner);
+                        
+                        // Add small delay between processing miners
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     } else {
                         console.log(`Miner ${miner.id} already processed, skipping`);
                     }
                 }
             } catch (error) {
                 console.error('Error checking expired miners:', error);
+            } finally {
+                isProcessing = false;
             }
         }
-    
+
         // ============================================
         // TIMER UPDATES
         // ============================================
@@ -826,7 +829,7 @@
             if (activeMinersInterval) {
                 clearInterval(activeMinersInterval);
             }
-          
+            
             activeMinersInterval = setInterval(async () => {
                 const cards = document.querySelectorAll('.active-miner-card');
             
@@ -835,28 +838,25 @@
                     await updateMinerCard(minerId);
                 }
             
-                // Check for expired miners every second
                 await checkAndCompleteExpiredMiners();
             }, 1000);
         }
-    
+
         async function updateMinerCard(minerId) {
             try {
                 const { data: miner, error } = await supabase
                     .from('miners')
                     .select('*')
                     .eq('id', minerId)
-                    .single();
+                    .maybeSingle(); // Changed from .single()
             
                 if (error || !miner) return;
             
-                // If miner is no longer active, remove the card
                 if (!miner.active) {
                     const card = document.getElementById(`miner-${minerId}`);
                     if (card) {
                         card.remove();
                     }
-                    // Check if there are no more active miners
                     const remainingCards = document.querySelectorAll('.active-miner-card');
                     if (remainingCards.length === 0) {
                         document.getElementById('activeMiners').innerHTML = `
@@ -889,7 +889,6 @@
                     progressElement.style.width = progress + '%';
                 }
             
-                // Update earnings display
                 const elapsed = now - startTime;
                 const currentEarnings = Math.min(
                     (elapsed / (1000 * 60 * 60)) * miner.earnings_rate,
@@ -903,9 +902,9 @@
                 console.error('Error updating miner card:', error);
             }
         }
-    
+
         // ============================================
-        // COMPLETE MINER - UPDATED TO HANDLE EACH MINER SEPARATELY
+        // COMPLETE MINER - FIXED WITH BETTER ERROR HANDLING
         // ============================================
         async function completeMiner(miner) {
             try {
@@ -913,16 +912,22 @@
             
                 const totalEarnings = parseFloat(miner.earnings_rate) * parseFloat(miner.duration_hours);
             
-                // Get current user data to ensure we have latest balance
+                // FIXED: Use maybeSingle() instead of single()
                 const { data: userData, error: userFetchError } = await supabase
                     .from('users')
                     .select('balance, total_earned')
                     .eq('telegram_id', currentUser.telegram_id)
-                    .single();
+                    .maybeSingle();
             
-                if (userFetchError) throw userFetchError;
+                if (userFetchError) {
+                    console.error('Error fetching user data:', userFetchError);
+                    throw userFetchError;
+                }
+               
+                if (!userData) {
+                    throw new Error('User not found');
+                }
             
-                // Calculate new values
                 const currentBalance = parseFloat(userData.balance || 0);
                 const currentTotalEarned = parseFloat(userData.total_earned || 0);
                 const newBalance = currentBalance + totalEarnings;
@@ -942,7 +947,8 @@
                         notified: true,
                         completed_at: new Date().toISOString()
                     })
-                    .eq('id', miner.id);
+                    .eq('id', miner.id)
+                    .eq('active', true); // Additional check to prevent double processing
             
                 if (minerError) {
                     console.error('Error updating miner:', minerError);
@@ -960,11 +966,15 @@
                     })
                     .eq('telegram_id', currentUser.telegram_id)
                     .select()
-                    .single();
+                    .maybeSingle(); // Changed from .single()
             
                 if (balanceError) {
                     console.error('Error updating user balance:', balanceError);
                     throw balanceError;
+                }
+               
+                if (!updatedUser) {
+                    throw new Error('Failed to update user balance');
                 }
             
                 console.log(`User balance updated successfully for miner ${miner.id}`);
@@ -983,7 +993,6 @@
             
                 if (transactionError) {
                     console.error('Error recording transaction:', transactionError);
-                    // Don't throw here, transaction recording is not critical
                 }
             
                 // Update local user data
@@ -991,7 +1000,7 @@
                 currentUser.total_earned = newTotalEarned;
                 updateBalanceDisplay();
             
-                // Send Telegram notification for THIS specific miner
+                // Send Telegram notification
                 await sendMinerCompletionMessage(miner, totalEarnings);
             
                 // Remove the card from UI
@@ -1012,20 +1021,19 @@
                     `;
                 }
             
-                // Show success message for THIS miner
-                showMessage(`${miner.miner_name} completed! Earned ${formatCurrency(totalEarnings, 8)} ${miner.crypto}`, 'success');
+                showMessage(`✅ ${miner.miner_name} completed! Earned ${formatCurrency(totalEarnings, 8)} ${miner.crypto}`, 'success');
             
                 console.log(`Miner ${miner.id} completion process finished successfully`);
             } catch (error) {
                 console.error(`Error completing miner ${miner.id}:`, error);
-                showMessage(`Error completing ${miner.miner_name}: ${error.message}`, 'error');
+                showMessage(`❌ Error completing ${miner.miner_name}: ${error.message}`, 'error');
                 // Remove from processed set so it can be retried
                 processedMiners.delete(miner.id);
             }
         }
-    
+
         // ============================================
-        // TELEGRAM BOT INTEGRATION - UPDATED FOR INDIVIDUAL MESSAGES
+        // TELEGRAM BOT INTEGRATION
         // ============================================
         async function sendTelegramMessage(chatId, text, replyMarkup = null) {
             try {
@@ -1054,56 +1062,52 @@
                 return false;
             }
         }
-    
-        // UPDATED: Now sends individual message for each completed miner
+
         async function sendMinerCompletionMessage(miner, totalEarnings) {
-            const message = `Mining Completed!
-Miner: ${miner.miner_name}
-Earnings Rate: ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour
-Duration: ${miner.duration_hours} hours
-Total Earned: ${formatCurrency(totalEarnings, 8)} ${miner.crypto}
-Your earnings have been added to your balance!
-New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
+            const message = `🎉 Mining Completed!\n` +
+                `⛏ Miner: ${miner.miner_name}\n` +
+                `📊 Earnings Rate: ${formatCurrency(miner.earnings_rate, 2)} ${miner.crypto}/hour\n` +
+                `⏱ Duration: ${miner.duration_hours} hours\n` +
+                `💰 Total Earned: ${formatCurrency(totalEarnings, 8)} ${miner.crypto}\n` +
+                `✅ Your earnings have been added to your balance!\n` +
+                `💵 New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
         
-            // Create inline keyboard with Renew button
             const keyboard = {
                 inline_keyboard: [
                     [
                         {
-                            text: 'Renew This Miner',
+                            text: '🔄 Renew This Miner',
                             callback_data: `renew_miner_${miner.miner_id}_${miner.id}`
                         }
                     ],
                     [
                         {
-                            text: 'Browse All Miners',
+                            text: '🛒 Browse All Miners',
                             web_app: { url: `${window.location.origin}/miners.html` }
                         }
                     ],
                     [
                         {
-                            text: 'View Balance',
+                            text: '💼 View Balance',
                             web_app: { url: `${window.location.origin}/index.html` }
                         }
                     ]
                 ]
             };
-          
-            // Send individual message for this miner
+            
             const messageSent = await sendTelegramMessage(currentUser.telegram_id, message, keyboard);
-           
+          
             if (messageSent) {
                 console.log(`Telegram notification sent for miner: ${miner.miner_name} (ID: ${miner.id})`);
             } else {
                 console.error(`Failed to send Telegram notification for miner: ${miner.miner_name} (ID: ${miner.id})`);
             }
         }
-    
+
         // ============================================
         // RENEW MINER FUNCTION
         // ============================================
         async function renewMiner(minerTemplateId) {
-            // Find the miner template from available miners
             const minerTemplate = availableMinersData.find(m => m.id == minerTemplateId);
         
             if (!minerTemplate) {
@@ -1113,12 +1117,11 @@ New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
         
             await purchaseMiner(minerTemplate);
         }
-    
-        // Make renewMiner globally accessible for callback handling
+
         window.renewMiner = renewMiner;
-    
+
         // ============================================
-        // UTILITY FUNCTIONS - UPDATED TO SUPPORT MULTIPLE MESSAGES
+        // UTILITY FUNCTIONS
         // ============================================
         function showMessage(text, type = 'success') {
             const container = document.getElementById('messageContainer');
@@ -1129,42 +1132,38 @@ New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
                 ${text}
             `;
         
-            // Don't clear existing messages, just add new one
             container.appendChild(message);
-          
-            // Auto-remove after 5 seconds
+            
             setTimeout(() => {
                 message.remove();
             }, 5000);
         }
-    
+
         // ============================================
         // AUTO-REFRESH BALANCE & CHECK EXPIRED
         // ============================================
         setInterval(async () => {
-            if (currentUser) {
+            if (currentUser && !isProcessing) {
                 try {
-                    // Refresh user balance and total_earned
                     const { data, error } = await supabase
                         .from('users')
                         .select('balance, total_earned')
                         .eq('telegram_id', currentUser.telegram_id)
-                        .single();
-                  
+                        .maybeSingle(); // Changed from .single()
+                    
                     if (data && !error) {
                         currentUser.balance = data.balance;
                         currentUser.total_earned = data.total_earned;
                         updateBalanceDisplay();
                     }
-                  
-                    // Check for expired miners even when not on active tab
+                    
                     await checkAndCompleteExpiredMiners();
                 } catch (error) {
                     console.error('Error refreshing data:', error);
                 }
             }
-        }, 5000); // Check every 5 seconds
-    
+        }, 5000);
+
         // ============================================
         // CLEANUP ON PAGE UNLOAD
         // ============================================
@@ -1173,17 +1172,16 @@ New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
                 clearInterval(activeMinersInterval);
             }
         });
-    
+
         // ============================================
         // HANDLE VISIBILITY CHANGE
         // ============================================
         document.addEventListener('visibilitychange', async () => {
             if (!document.hidden) {
-                // Page became visible, refresh data
                 if (currentUser) {
                     await initUser();
                     await loadAvailableMiners();
-                    await checkAndCompleteExpiredMiners(); // Check immediately
+                    await checkAndCompleteExpiredMiners();
                 
                     const activeTab = document.querySelector('.tab-btn.active');
                     if (activeTab && activeTab.textContent.includes('Active')) {
@@ -1193,9 +1191,10 @@ New Balance: ${formatCurrency(currentUser.balance, 8)} ${miner.crypto}`;
                 }
             }
         });
-    
+
         tg.ready();
     </script>
 </body>
 </html>
 
+                
